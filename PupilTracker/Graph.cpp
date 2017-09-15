@@ -9,6 +9,8 @@ IMPLEMENT_DYNAMIC(Graph, CStatic)
 Graph::Graph(Gaze* g)
 {
 	frame_count = 0;
+	turn = 0;
+	frozen = false;
 	m_pGaze = g;
 }
 
@@ -27,7 +29,21 @@ BEGIN_MESSAGE_MAP(Graph, CStatic)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
+void Graph::freeze() {
+	
 
+	if (!frozen) {
+		frozen = true;
+		frozen_pupil = pupilsize.back();
+	}
+	else {
+		frozen = false;
+		pupilsize.clear();
+		frame_count = 0;
+		turn = 0;
+	}
+
+}
 
 void Graph::OnPaint()
 {
@@ -65,20 +81,21 @@ void Graph::Paint(CDC* dc)
 	dc->SetBkColor(RGB(0, 0, 0));
 	dc->SetBkMode(OPAQUE);
 
-   // plots pupil over time in blue
+	// plots pupil over time in blue
 
 	char szText[100];
-	HPEN hPen, hPenOld;
+	HPEN hPenWht, hPenMag, hPenGrn;
 	RECT rect;
 	GetClientRect(&rect);
 
-	SetTextColor(*dc, RGB(100, 200, 255));
-	sprintf(szText, "Pupil Size [mm]");
+	SetTextColor(*dc, RGB(255, 255, 255));
+	sprintf(szText, "Pupil Size [mm]:");
 	TextOut(*dc, rect.right / 2 - 50, 10, CA2W(szText), strlen(szText));
 
-	hPen = CreatePen(PS_SOLID, 1, RGB(100, 200, 255));					// blue pen
-	hPenOld = (HPEN)SelectObject(*dc, hPen);
-	SelectObject(*dc, GetStockObject(NULL_BRUSH));
+	hPenWht = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));				// white pen
+	hPenMag = CreatePen(PS_SOLID, 1, RGB(255, 0, 255));					// magenta pen
+	hPenGrn = CreatePen(PS_SOLID, 1, RGB(0, 255, 0));					// green pen
+	SelectObject(*dc, hPenWht);
 
 	for (int i = 0; i < 6; i++)
 	{
@@ -87,9 +104,6 @@ void Graph::Paint(CDC* dc)
 		sprintf(szText, "%d", i + 2);
 		TextOut(*dc, 10, 172 - 28 * i, CA2W(szText), strlen(szText));
 	}
-
-	SetTextColor(*dc, RGB(255, 255, 255));
-	SetDCPenColor(*dc, RGB(255, 255, 255));
 
 	for (int i = 0; i < 16; i++)
 	{
@@ -105,19 +119,47 @@ void Graph::Paint(CDC* dc)
 	sprintf(szText, "time [sec]");
 	TextOut(*dc, 490, rect.bottom - 20, CA2W(szText), strlen(szText));
 
-	float pupil = (m_pGaze->getPupilDia() - 3) * 28;
+	pupilsize.push_back((m_pGaze->getPupilDia() - 3) * 28);
+	if (!pupilsize.empty())
+	MoveToEx(*dc, 25, pupilsize[0], NULL);
 
-	for (int i = 0; i < frame_count; i++) {
-		Ellipse(*dc, i-1 + 27,
-			100 -(int)pupil - 1,
-			i+1 + 27,
-			100 -(int)pupil + 1);
+	sprintf(szText, "%.1f", m_pGaze->getPupilDia());
+	TextOut(*dc, rect.right / 2 + 60, 10, CA2W(szText), strlen(szText));
+	
+	SelectObject(*dc, hPenGrn);
+	
+	if (!frozen) {
+		
+		for (int i = 0; i < frame_count; i++) {
+			LineTo(*dc, i + 25,
+				150 - (int)pupilsize[i + turn]
+			);
+		}
 	}
 
-	DeleteObject(hPen);											// delete blue pen
+	else {
+		for (int i = 0; i < frame_count; i++) {
+			LineTo(*dc, i + 25,
+				150 - (int)pupilsize[i + turn]
+			);
+		}
+		for (int i = 0; i < frame_count; i++) {
+			SetPixel(*dc, i + 25,
+				150 - frozen_pupil,
+				RGB(255, 0, 255)
+			);
+		}
 
-	if (frame_count > rect.right - 40)
+	}
+
+	DeleteObject(hPenGrn);
+	DeleteObject(hPenMag);
+	DeleteObject(hPenWht);
+
+	if (frame_count > rect.right - 40) {
+		turn = turn + frame_count;
 		frame_count = 0;
+	}
 	frame_count++;
 
 }

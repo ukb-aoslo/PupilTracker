@@ -70,9 +70,9 @@ void Gaze::Paint(CDC* dc)
 	SelectObject(*dc, GetStockObject(NULL_BRUSH));
 
 	// gaze x/y plot
-	SetTextColor(*dc, RGB(255, 0, 150));
-	sprintf(szText, "Pupil Position [px]");
-	TextOut(*dc, rect.Width() / 2 - 55, rect.Height() *.05f, CA2W(szText), strlen(szText));
+	SetTextColor(*dc, RGB(255, 255, 255));
+	sprintf(szText, "Pupil Offset [px]");
+	TextOut(*dc, rect.Width() / 2 - 52, rect.Height() *.05f, CA2W(szText), strlen(szText));
 
 	// plot the axes for the x/y gaze plot
 	SetTextColor(*dc, RGB(255, 255, 255));
@@ -91,12 +91,13 @@ void Gaze::Paint(CDC* dc)
 	TextOut(*dc, rect.Width() / 2 + 3, rect.Height() - box_size + 5, CA2W(szText), strlen(szText));
 	TextOut(*dc, 35, rect.Height() / 2 - 20, CA2W(szText), strlen(szText));
 
+
 	DeleteObject(hPen);											// delete white pen
 
 																// draw circles at 20, 40 and 60 deg in gray
 	hPen = CreatePen(PS_SOLID, 1, RGB(100, 100, 100));			// gray pen
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
-	SelectObject(*dc, GetStockObject(NULL_BRUSH));
+	
 
 	int radius = 24; 	// note, currently 80 deg map on 'x_shift' (=384) pixels
 						// or 4.8 pixel per degree, or 30 deg = 144 pixels
@@ -114,11 +115,12 @@ void Gaze::Paint(CDC* dc)
 
 	hPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 150));					// pink pen
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
-	SelectObject(*dc, GetStockObject(NULL_BRUSH));
+	//SelectObject(*dc, GetStockObject(NULL_BRUSH));
+
 
 	CPen hPenPal[40];
 	for (int i = 1; i < 40; i++) {
-		hPenPal[i].CreatePen(PS_SOLID, 1, RGB(255 - (i*6.375), 0, 150 - (i*3.75)));
+		hPenPal[i].CreatePen(PS_SOLID, 1, RGB(0, 255 - (i*6.375), 0));
 	}
 
 	// then in x/y plot
@@ -128,15 +130,84 @@ void Gaze::Paint(CDC* dc)
 		GazePX.back().y < 60 &&
 		GazePX.back().y > -60)
 	{
+		// verbose offset between locked and current pupil
+
+		int ave_gazePx_x(0), ave_gazePx_y(0), ave_curPos_x(0), ave_curPos_y(0);
+		std::vector<coords>::reverse_iterator ave_rit;
+		
+		for (ave_rit = GazePX.rbegin(); ave_rit != GazePX.rbegin() + 15; ++ave_rit)
+			ave_gazePx_x += (int)ave_rit->x;
+		ave_gazePx_x /= 15;
+		
+		for (ave_rit = GazePX.rbegin(); ave_rit != GazePX.rbegin() + 15; ++ave_rit)
+			ave_gazePx_y += (int)ave_rit->y;
+		ave_gazePx_y /= 15;
+
+		for (ave_rit = Pupil.rbegin(); ave_rit != Pupil.rbegin() + 15; ++ave_rit)
+			ave_curPos_x += (int)ave_rit->x;
+		ave_curPos_x /= 15;
+
+		for (ave_rit = Pupil.rbegin(); ave_rit != Pupil.rbegin() + 15; ++ave_rit)
+			ave_curPos_y += (int)ave_rit->y;
+		ave_curPos_y /= 15;
+
+		CFont* pOldFont = dc->GetCurrentFont();
+
+		CFont newFont;
+		VERIFY(newFont.CreateFont(
+			22,                        // nHeight
+			0,                         // nWidth
+			0,                         // nEscapement
+			0,                         // nOrientation
+			FW_HEAVY,					// nWeight
+			FALSE,                     // bItalic
+			FALSE,                     // bUnderline
+			0,                         // cStrikeOut
+			ANSI_CHARSET,              // nCharSet
+			OUT_DEFAULT_PRECIS,        // nOutPrecision
+			CLIP_DEFAULT_PRECIS,       // nClipPrecision
+			DEFAULT_QUALITY,           // nQuality
+			DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
+			_T("Arial")));                 // lpszFacename
+
+		dc->SelectObject(&newFont);
+		
+		sprintf(szText, "x: %d", -1 * ave_gazePx_x);
+		TextOut(*dc, rect.Width() / 2 - 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
+		sprintf(szText, "y: %d", -1 * ave_gazePx_y);
+		TextOut(*dc, rect.Width() / 2 + 15, rect.Height() *.1f, CA2W(szText), strlen(szText));
+
+		dc->SelectObject(pOldFont);
+		
+		sprintf(szText, "Current Position");
+		TextOut(*dc, 35, rect.Height() - 40, CA2W(szText), strlen(szText));
+		sprintf(szText, "x: %d", ave_curPos_x);
+		TextOut(*dc, 35, rect.Height() - 20, CA2W(szText), strlen(szText));
+		sprintf(szText, "y: %d", ave_curPos_y);
+		TextOut(*dc, 85, rect.Height() - 20, CA2W(szText), strlen(szText));
+
+		sprintf(szText, "Locked Positon");
+		TextOut(*dc, rect.Width() / 2 - 40, rect.Height() - 40, CA2W(szText), strlen(szText));
+		sprintf(szText, "x: %d", (int)FrozenPupil.back().x);
+		TextOut(*dc, rect.Width() / 2 - 40, rect.Height() - 20, CA2W(szText), strlen(szText));
+		sprintf(szText, "y: %d", (int)FrozenPupil.back().y);
+		TextOut(*dc, rect.Width() / 2 + 10, rect.Height() - 20, CA2W(szText), strlen(szText));
+
+
+
+		// draw offset into x/y plot
+
+		//SelectObject(*dc, GetStockObject(DC_BRUSH));
+
 		std::vector<coords>::reverse_iterator rit;
 		std::vector<coords>::reverse_iterator pre_rit = GazePX.rbegin();
 		int i = 1;
 		for (rit = GazePX.rbegin()+1; rit != GazePX.rbegin() + 40; ++rit)
 		{
-			Ellipse(*dc, rect.Width() / 2 - (int)(rit->x * 4.83) - 2,
-				rect.Height() / 2 + (int)(rit->y * 4.83) - 2,
-				rect.Width() / 2 - (int)(rit->x * 4.83) + 2,
-				rect.Height() / 2 + (int)(rit->y * 4.83) + 2);
+			Ellipse(*dc, rect.Width() / 2 - (int)(rit->x * 4.83) - 4,
+				rect.Height() / 2 + (int)(rit->y * 4.83) - 4,
+				rect.Width() / 2 - (int)(rit->x * 4.83) + 4,
+				rect.Height() / 2 + (int)(rit->y * 4.83) + 4);
 			if ((std::abs(rit->x) - std::abs(pre_rit->x)) > 5 |
 				(std::abs(rit->y) - std::abs(pre_rit->y)) > 5 )  {
 				i++;
@@ -206,11 +277,17 @@ void Gaze::addGazePX(float x, float y)
 	GazePX.push_back(c);
 }
 
-Gaze::coords Gaze::getGazePX() {
-	if(!GazePX.empty())
-		return GazePX.back();
-	return coords();
+void Gaze::addFrozenPupil(float x, float y)
+{
+	coords c{ x,y };
+	FrozenPupil.push_back(c);
 }
+
+//Gaze::coords Gaze::getGazePX() {
+//	if(!GazePX.empty())
+//		return GazePX.back();
+//	return coords();
+//}
 
 
 // Gaze message handlers

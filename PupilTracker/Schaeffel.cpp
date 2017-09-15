@@ -253,10 +253,11 @@ void Schaeffel::freezePupil() {
 		ave_y_right_fr = ave_y_right;
 		pupil_right_fr = pupil_right;
 	}
+	m_pGaze->addFrozenPupil(ave_x_right_fr, ave_y_right_fr);
 
 }
 
-void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap, const tsMediaSampleDesc& MediaSampleDesc) 
+void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap, const tsMediaSampleDesc& MediaSampleDesc)
 {
 	// clear screen
 	pBitmap->fill(RGB(0, 0, 0));
@@ -271,7 +272,7 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 	if (pBitmap->getEnable() == true) // Draw only, if the overlay bitmap is enabled.
 	{
-		
+
 		/*************************************************************************************/
 		/*****   this is now the place where pixels are marked and all data are displayed ****/
 		/*************************************************************************************/
@@ -289,7 +290,7 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 		if (m_ave_bright < 10)
 		{
 			sprintf(szText, " IMAGE TOO DARK - open camera aperture");
-			pBitmap->drawText(RGB(255, 0, 0), dim.cx / 2 - 120 , dim.cy / 2, szText);
+			pBitmap->drawText(RGB(255, 0, 0), dim.cx / 2 - 120, dim.cy / 2, szText);
 		}
 
 		//// user help
@@ -311,7 +312,7 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 		// draw yellow box in life video to show the range in which the pupil should be
 		if (opts & BoxBoundary)
-		pBitmap->drawFrameRect(RGB(255, 255, 0), CRect(box_size, box_size, dim.cx - box_size, dim.cy - box_size));
+			pBitmap->drawFrameRect(RGB(255, 255, 0), CRect(box_size, box_size, dim.cx - box_size, dim.cy - box_size));
 
 		//// draw cross in video frame
 		//pBitmap->drawLine(RGB(255, 255, 0), dim.cx / 2, box_size, dim.cx / 2, dim.cy - box_size);
@@ -319,64 +320,62 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 		//
 
 		// mark pixels yellow that are darker than 0.52 *ave
-		
+
 		/*for(i = 0; i < max; i++)
 		pBitmap->drawLine(RGB(255, 255, 0), x[i]-1, Height-y[i]-1, x[i]+1, Height-y[i]+1);*/
 
 		// pixels supposed to be in the pupil
 
-		for(i = 0; i < xyp; i++)
-		//Ellipse( memDC, x_shift+xp[i]-5, Height-yp[i]-5, x_shift+xp[i]+5, Height-yp[i]+5);
+		/*for (i = 0; i < xyp; i++)
+			//Ellipse( memDC, x_shift+xp[i]-5, Height-yp[i]-5, x_shift+xp[i]+5, Height-yp[i]+5);
 			pBitmap->drawFrameEllipse(RGB(255, 255, 0), CRect(
-			xp[i] - 5,
-			Height - yp[i] - 5,
-			xp[i] + 5,
-			Height - yp[i] + 5)
-		);
+				xp[i] - 5,
+				Height - yp[i] - 5,
+				xp[i] + 5,
+				Height - yp[i] + 5)
+			);*/
 
 		// draw pupil outline
 		if (ave_x_right > 0)
 		{
+
 			pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect(
 				(int)ave_x_right - (int)pupil_right / 2,
 				Height - (int)ave_y_right - (int)pupil_right / 2,
 				(int)ave_x_right + (int)pupil_right / 2,
 				Height - (int)ave_y_right + (int)pupil_right / 2));
-		}
-		
-		// draw pupil center
-		
-		if (ave_x_right > 0)
-		{
+
+			// draw pupil center
+
 			pBitmap->drawSolidEllipse(RGB(0, 255, 0), CRect(
-				ave_x_right-1,
-				Height - ave_y_right-1,
-				ave_x_right +1,
-				Height - ave_y_right +1));
-		}
-		
-	}
-
-	if (frozen) {
-
-		if (ave_x_right_fr > 0)
-		{
-			pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect(
-				(int)ave_x_right_fr - (int)pupil_right_fr / 2,
-				Height - (int)ave_y_right_fr - (int)pupil_right_fr / 2,
-				(int)ave_x_right_fr + (int)pupil_right_fr / 2,
-				Height - (int)ave_y_right_fr + (int)pupil_right_fr / 2));
+				ave_x_right - 1,
+				Height - ave_y_right - 1,
+				ave_x_right + 1,
+				Height - ave_y_right + 1));
 		}
 
-		// draw pupil center
+		if (frozen) {
 
-		if (ave_x_right_fr > 0)
-		{
-			pBitmap->drawSolidEllipse(RGB(0, 255, 0), CRect(
-				ave_x_right_fr - 1,
-				Height - ave_y_right_fr - 1,
-				ave_x_right_fr + 1,
-				Height - ave_y_right_fr + 1));
+			if (ave_x_right_fr > 0)
+			{
+				pBitmap->drawFrameEllipse(RGB(255, 0, 255), CRect(
+					(int)ave_x_right_fr - (int)pupil_right_fr / 2,
+					Height - (int)ave_y_right_fr - (int)pupil_right_fr / 2,
+					(int)ave_x_right_fr + (int)pupil_right_fr / 2,
+					Height - (int)ave_y_right_fr + (int)pupil_right_fr / 2));
+			}
+
+			// draw pupil center
+
+			if (ave_x_right_fr > 0)
+			{
+				pBitmap->drawSolidEllipse(RGB(255, 0, 255), CRect(
+					ave_x_right_fr - 1,
+					Height - ave_y_right_fr - 1,
+					ave_x_right_fr + 1,
+					Height - ave_y_right_fr + 1));
+			}
+
 		}
 
 	}

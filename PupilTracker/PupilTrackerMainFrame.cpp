@@ -453,7 +453,7 @@ void CPupilTrackerMainFrame::reAdjustView(){
 	AdjustWindowRect(&cRect, this->GetStyle(), TRUE);
 	MoveWindow(wRect.left, wRect.top, cRect.right - cRect.left, cRect.bottom - cRect.top, true);
 
-	m_wndView->m_pWndGaze->MoveWindow(m_vidRect.Width(), m_tbRect.Height()+4, m_gazeRect.right, m_gazeRect.Height(), true);
+	m_wndView->m_pWndGaze->MoveWindow(m_vidRect.Width() + 2, m_tbRect.Height()+4, m_gazeRect.right, m_gazeRect.Height(), true);
 	m_wndView->m_pWndGraph->MoveWindow(0, m_vidRect.Height() + m_tbRect.Height() + 4, m_graphRect.Width(), m_graphRect.Height(), true);
 }
 
@@ -532,8 +532,10 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 		switch (pMsg->wParam) {
 		case VK_SPACE:
 		
-			if (m_cGrabber.isDevValid() &&  m_cGrabber.isLive())
+			if (m_cGrabber.isDevValid() && m_cGrabber.isLive()) {
 				s->freezePupil();
+				m_cMethod.getGraph()->freeze();
+			}
 				return true;
 			break;
 		}

@@ -14,6 +14,7 @@ private:
 
 	std::vector<coords>Pupil;
 	std::vector<coords>GazePX;
+	std::vector<coords>FrozenPupil;
 	std::vector<float>PupilDia;
 
 	int box_size;						// box in which pixels are searched that belong to the pupil in step 4
@@ -26,6 +27,7 @@ public:
 	void addPupilCenter(float x, float y);
 	void addPupilDia(float);
 	void addGazePX(float x, float y);
+	void addFrozenPupil(float x, float y);
 	void Save(FILE* pFile);
 	void Paint(CDC* dc);
 
@@ -33,7 +35,7 @@ public:
 	int getHirschbergRatio();
 	float getPupilDia();
 	float getMagnif() { return magnif; };
-	coords getGazePX();
+	//coords getGazePX();
 
 protected:
 	DECLARE_MESSAGE_MAP()

@@ -9,12 +9,18 @@ class Graph : public CStatic
 public:
 	Graph();
 	Graph(Gaze* g);
+	void freeze();
 	virtual ~Graph();
 
 private:
 
 	Gaze* m_pGaze;
 	int frame_count;
+	int turn;
+	int frozen_pupil;
+	bool frozen;
+
+	std::vector<int>pupilsize;
 	void Paint(CDC* dc);
 
 protected:
