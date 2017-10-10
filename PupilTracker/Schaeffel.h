@@ -24,13 +24,15 @@ public:
 
 	DWORD opts;
 
-	float m_ave_bright;					
-	float pupil_right;
+	double m_ave_bright;					
+	double pupil_right;
 	
 	int m_iBitmapWidth;
 	int m_iBitmapHeight;
 
+	float magnif;						// magnification of the video image (pixel/mm)
 	int box_size;
+
 	BYTE threshold;
 	
 	int count_old;						// count of processed frames

@@ -1,6 +1,7 @@
 // Gaze.cpp : implementation file
 #include "stdafx.h"
 #include "Gaze.h"
+#include "Schaeffel.h"
 
 // Gaze
 
@@ -8,11 +9,8 @@ IMPLEMENT_DYNAMIC(Gaze, CStatic)
 
 Gaze::Gaze()
 {
-	magnif = (float)22.2;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
-								// old magnif was 26.8
-	box_size = 100;             // radius in which the pupil edges can be located 
-	Hirschberg_ratio = 12;
-
+	record = false;
+	conv = 9.3f;
 }
 
 Gaze::~Gaze()
@@ -24,13 +22,6 @@ BEGIN_MESSAGE_MAP(Gaze, CStatic)
 	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
-int Gaze::getBoxSize() {
-	return box_size;
-}
-
-int Gaze::getHirschbergRatio() {
-	return Hirschberg_ratio;
-}
 
 void Gaze::Paint(CDC* dc)
 {
@@ -41,6 +32,7 @@ void Gaze::Paint(CDC* dc)
 	GetClientRect(&rect);
 
 	char szText[100];
+	bool ready = (GazePX.size() > 40);
 
 	//paint it black
 	dc->SetBkColor(RGB(0, 0, 0));
@@ -64,32 +56,79 @@ void Gaze::Paint(CDC* dc)
 	/*                     now come the different plots over time                     */
 	/**********************************************************************************/
 
-	// plot axes in white
-	hPen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));					// white pen
-	hPenOld = (HPEN)SelectObject(*dc, hPen);
 	SelectObject(*dc, GetStockObject(NULL_BRUSH));
+	hPen = CreatePen(PS_SOLID, 1, RGB(0, 60, 0));					// dark green pen
+	hPenOld = (HPEN)SelectObject(*dc, hPen);
+
+	// plot trail history in the back
+	if (ready) {
+
+		int history = 500;
+		for (auto iter = GazePX.rbegin() + 40; iter != GazePX.rend(); iter++)
+			{
+				Ellipse(*dc, rect.Width() / 2 - (int)(iter->x * conv) - 4,
+					rect.Height() / 2 + (int)(iter->y * conv) - 4,
+					rect.Width() / 2 - (int)(iter->x * conv) + 4,
+					rect.Height() / 2 + (int)(iter->y * conv) + 4);
+				if (history == 0) break;
+				history--;
+			}
+	}
+
+	DeleteObject(hPen);
+
+	// plot axes in white
+	hPen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));				// white pen
+	hPenOld = (HPEN)SelectObject(*dc, hPen);
 
 	// gaze x/y plot
 	SetTextColor(*dc, RGB(255, 255, 255));
 	sprintf(szText, "Pupil Offset [px]");
-	TextOut(*dc, rect.Width() / 2 - 52, rect.Height() *.05f, CA2W(szText), strlen(szText));
+	TextOut(*dc, rect.Width() / 2 - 50, rect.Height() *.05f, CA2W(szText), strlen(szText));
+
+	CFont* pOldFont = dc->GetCurrentFont();
+
+	CFont newFont;
+	VERIFY(newFont.CreateFont(
+		22,							// nHeight
+		0,							// nWidth
+		0,							// nEscapement
+		0,							// nOrientation
+		FW_HEAVY,					// nWeight
+		FALSE,                     // bItalic
+		FALSE,                     // bUnderline
+		0,                         // cStrikeOut
+		ANSI_CHARSET,              // nCharSet
+		OUT_DEFAULT_PRECIS,        // nOutPrecision
+		CLIP_DEFAULT_PRECIS,       // nClipPrecision
+		DEFAULT_QUALITY,           // nQuality
+		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
+		_T("Arial")));                 // lpszFacename
+
+	dc->SelectObject(&newFont);
+
+	sprintf(szText, "x:");
+	TextOut(*dc, rect.Width() / 2 - 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
+	sprintf(szText, "y:");
+	TextOut(*dc, rect.Width() / 2 + 35, rect.Height() *.1f, CA2W(szText), strlen(szText));
+
+	dc->SelectObject(pOldFont);
 
 	// plot the axes for the x/y gaze plot
-	SetTextColor(*dc, RGB(255, 255, 255));
 
-	MoveToEx(*dc, rect.Width() / 2, box_size - 15, NULL); // vert
-	LineTo(*dc, rect.Width() / 2, rect.Height() - box_size + 15);
-	MoveToEx(*dc, rect.Width()*.10f, rect.Height() / 2, NULL);        // horiz
-	LineTo(*dc, rect.Width() - 45, rect.Height() / 2);
+	MoveToEx(*dc, rect.Width() / 2 * .28f, rect.Height() / 2, NULL);		// horizontal bar
+	LineTo(*dc, rect.Width() / 2 + 144, rect.Height() / 2);
+	MoveToEx(*dc, rect.Width() / 2, rect.Height() / 2 * .40f, NULL);		// vertical bar
+	LineTo(*dc, rect.Width() / 2, rect.Height() - 97);
 
 	// labels gaze axes with numbers
-	sprintf(szText, "30 px");
-	TextOut(*dc, rect.Width() / 2 + 3, box_size - 20, CA2W(szText), strlen(szText));
-	TextOut(*dc, rect.Width() - 60, rect.Height() / 2 - 20, CA2W(szText), strlen(szText));
+	sprintf(szText, "15 px");
+	TextOut(*dc, rect.Width() / 2 - 15, 80, CA2W(szText), strlen(szText));
+	TextOut(*dc, rect.Width() - 55, rect.Height() / 2 - 8, CA2W(szText), strlen(szText));
 
-	sprintf(szText, "-30 px");
-	TextOut(*dc, rect.Width() / 2 + 3, rect.Height() - box_size + 5, CA2W(szText), strlen(szText));
-	TextOut(*dc, 35, rect.Height() / 2 - 20, CA2W(szText), strlen(szText));
+	sprintf(szText, "-15 px");
+	TextOut(*dc, rect.Width() / 2 - 19, rect.Height() - 97, CA2W(szText), strlen(szText));
+	TextOut(*dc, 14, rect.Height() / 2 - 8, CA2W(szText), strlen(szText));
 
 
 	DeleteObject(hPen);											// delete white pen
@@ -97,7 +136,7 @@ void Gaze::Paint(CDC* dc)
 																// draw circles at 20, 40 and 60 deg in gray
 	hPen = CreatePen(PS_SOLID, 1, RGB(100, 100, 100));			// gray pen
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
-	
+
 
 	int radius = 24; 	// note, currently 80 deg map on 'x_shift' (=384) pixels
 						// or 4.8 pixel per degree, or 30 deg = 144 pixels
@@ -111,116 +150,92 @@ void Gaze::Paint(CDC* dc)
 
 	DeleteObject(hPen);											// delete gray pen
 
+	sprintf(szText, "Current Position");
+	TextOut(*dc, 35, rect.Height() - 40, CA2W(szText), strlen(szText));
+	sprintf(szText, "x:");
+	TextOut(*dc, 35, rect.Height() - 20, CA2W(szText), strlen(szText));
+	sprintf(szText, "y:");
+	TextOut(*dc, 85, rect.Height() - 20, CA2W(szText), strlen(szText));
+
+	sprintf(szText, "Locked Positon");
+	TextOut(*dc, rect.Width() / 2 + 60, rect.Height() - 40, CA2W(szText), strlen(szText));
+	sprintf(szText, "x:");
+	TextOut(*dc, rect.Width() / 2 + 60, rect.Height() - 20, CA2W(szText), strlen(szText));
+	sprintf(szText, "y:");
+	TextOut(*dc, rect.Width() / 2 + 110, rect.Height() - 20, CA2W(szText), strlen(szText));
 
 
-	hPen = CreatePen(PS_SOLID, 1, RGB(255, 0, 150));					// pink pen
-	hPenOld = (HPEN)SelectObject(*dc, hPen);
-	//SelectObject(*dc, GetStockObject(NULL_BRUSH));
-
-
+	// create trail palette
 	CPen hPenPal[40];
-	for (int i = 1; i < 40; i++) {
-		hPenPal[i].CreatePen(PS_SOLID, 1, RGB(0, 255 - (i*6.375), 0));
+	for (int i = 0; i < 39; i++) {
+		hPenPal[i].CreatePen(PS_SOLID, 1, RGB(0, 60 + i * 4.875, 0));
 	}
 
-	// then in x/y plot
-	if (GazePX.size() > 80 &&
-		GazePX.back().x < 60 &&
-		GazePX.back().x > -60 &&
-		GazePX.back().y < 60 &&
-		GazePX.back().y > -60)
+	// color the head of the snake in some yellow
+	hPenPal[39].CreatePen(PS_SOLID, 1, RGB(255, 255, 100));
+
+	if (ready)
 	{
 		// verbose offset between locked and current pupil
 
 		int ave_gazePx_x(0), ave_gazePx_y(0), ave_curPos_x(0), ave_curPos_y(0);
-		std::vector<coords>::reverse_iterator ave_rit;
-		
-		for (ave_rit = GazePX.rbegin(); ave_rit != GazePX.rbegin() + 15; ++ave_rit)
-			ave_gazePx_x += (int)ave_rit->x;
-		ave_gazePx_x /= 15;
-		
-		for (ave_rit = GazePX.rbegin(); ave_rit != GazePX.rbegin() + 15; ++ave_rit)
-			ave_gazePx_y += (int)ave_rit->y;
-		ave_gazePx_y /= 15;
+		int a = 0;
+	
+		for (auto ave_rit_gaze = GazePX.rbegin(); ave_rit_gaze != GazePX.rbegin() + 15; ave_rit_gaze++) {
+			ave_gazePx_x += ave_rit_gaze->x;
+			ave_gazePx_y += ave_rit_gaze->y;
+			a++;
+		}
 
-		for (ave_rit = Pupil.rbegin(); ave_rit != Pupil.rbegin() + 15; ++ave_rit)
-			ave_curPos_x += (int)ave_rit->x;
-		ave_curPos_x /= 15;
+		ave_gazePx_x /= a;
+		ave_gazePx_y /= a;
 
-		for (ave_rit = Pupil.rbegin(); ave_rit != Pupil.rbegin() + 15; ++ave_rit)
-			ave_curPos_y += (int)ave_rit->y;
-		ave_curPos_y /= 15;
+		a = 0;
+	
+		for (auto ave_rit_pupil = Pupil.rbegin(); ave_rit_pupil != Pupil.rbegin() + 15; ave_rit_pupil++) {
+			ave_curPos_x += ave_rit_pupil->x;
+			ave_curPos_y += ave_rit_pupil->y;
+			a++;
+		}
 
-		CFont* pOldFont = dc->GetCurrentFont();
-
-		CFont newFont;
-		VERIFY(newFont.CreateFont(
-			22,                        // nHeight
-			0,                         // nWidth
-			0,                         // nEscapement
-			0,                         // nOrientation
-			FW_HEAVY,					// nWeight
-			FALSE,                     // bItalic
-			FALSE,                     // bUnderline
-			0,                         // cStrikeOut
-			ANSI_CHARSET,              // nCharSet
-			OUT_DEFAULT_PRECIS,        // nOutPrecision
-			CLIP_DEFAULT_PRECIS,       // nClipPrecision
-			DEFAULT_QUALITY,           // nQuality
-			DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-			_T("Arial")));                 // lpszFacename
+		ave_curPos_x /= a;
+		ave_curPos_y /= a;
 
 		dc->SelectObject(&newFont);
-		
-		sprintf(szText, "x: %d", -1 * ave_gazePx_x);
-		TextOut(*dc, rect.Width() / 2 - 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
-		sprintf(szText, "y: %d", -1 * ave_gazePx_y);
-		TextOut(*dc, rect.Width() / 2 + 15, rect.Height() *.1f, CA2W(szText), strlen(szText));
+
+		sprintf(szText, "%d", -1 * ave_gazePx_x);
+		TextOut(*dc, rect.Width() / 2 - 35, rect.Height() *.1f, CA2W(szText), strlen(szText));
+		sprintf(szText, "%d", -1 * ave_gazePx_y);
+		TextOut(*dc, rect.Width() / 2 + 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
 
 		dc->SelectObject(pOldFont);
-		
-		sprintf(szText, "Current Position");
-		TextOut(*dc, 35, rect.Height() - 40, CA2W(szText), strlen(szText));
-		sprintf(szText, "x: %d", ave_curPos_x);
-		TextOut(*dc, 35, rect.Height() - 20, CA2W(szText), strlen(szText));
-		sprintf(szText, "y: %d", ave_curPos_y);
-		TextOut(*dc, 85, rect.Height() - 20, CA2W(szText), strlen(szText));
 
-		sprintf(szText, "Locked Positon");
-		TextOut(*dc, rect.Width() / 2 - 40, rect.Height() - 40, CA2W(szText), strlen(szText));
-		sprintf(szText, "x: %d", (int)FrozenPupil.back().x);
-		TextOut(*dc, rect.Width() / 2 - 40, rect.Height() - 20, CA2W(szText), strlen(szText));
-		sprintf(szText, "y: %d", (int)FrozenPupil.back().y);
-		TextOut(*dc, rect.Width() / 2 + 10, rect.Height() - 20, CA2W(szText), strlen(szText));
+		SetTextColor(*dc, RGB(0, 255, 0));
+		sprintf(szText, "%d", ave_curPos_x);
+		TextOut(*dc, 50, rect.Height() - 20, CA2W(szText), strlen(szText));
+		sprintf(szText, "%d", ave_curPos_y);
+		TextOut(*dc, 100, rect.Height() - 20, CA2W(szText), strlen(szText));
 
-
+		SetTextColor(*dc, RGB(255, 0, 255));
+		sprintf(szText, "%d", (int)FrozenPupil.back().x);
+		TextOut(*dc, rect.Width() / 2 + 75, rect.Height() - 20, CA2W(szText), strlen(szText));
+		sprintf(szText, "%d", (int)FrozenPupil.back().y);
+		TextOut(*dc, rect.Width() / 2 + 125, rect.Height() - 20, CA2W(szText), strlen(szText));
 
 		// draw offset into x/y plot
 
-		//SelectObject(*dc, GetStockObject(DC_BRUSH));
-
-		std::vector<coords>::reverse_iterator rit;
-		std::vector<coords>::reverse_iterator pre_rit = GazePX.rbegin();
-		int i = 1;
-		for (rit = GazePX.rbegin()+1; rit != GazePX.rbegin() + 40; ++rit)
-		{
-			Ellipse(*dc, rect.Width() / 2 - (int)(rit->x * 4.83) - 4,
-				rect.Height() / 2 + (int)(rit->y * 4.83) - 4,
-				rect.Width() / 2 - (int)(rit->x * 4.83) + 4,
-				rect.Height() / 2 + (int)(rit->y * 4.83) + 4);
-			if ((std::abs(rit->x) - std::abs(pre_rit->x)) > 5 |
-				(std::abs(rit->y) - std::abs(pre_rit->y)) > 5 )  {
-				i++;
-				pre_rit = rit;
-			}
-			else {
-				i=1;
-			}
-			SelectObject(*dc, hPenPal[i]);
+		for (size_t i = GazePX.size() - 40, y = 0; i < GazePX.size(); i++, y++) {
+			SelectObject(*dc, hPenPal[y]);
+			Ellipse(*dc, rect.Width() / 2 - (int)(GazePX[i].x * conv) - 4,
+				rect.Height() / 2 + (int)(GazePX[i].y * conv) - 4,
+				rect.Width() / 2 - (int)(GazePX[i].x * conv) + 4,
+				rect.Height() / 2 + (int)(GazePX[i].y * conv) + 4);
 		}
+
 	}
 
-	DeleteObject(hPen);											// delete pink pen
+	DeleteObject(hPen);
+
 }
 
 void Gaze::OnPaint() {
@@ -237,7 +252,7 @@ void Gaze::OnPaint() {
 
 	memBM.CreateCompatibleBitmap(&dc, rc.right - rc.left, rc.bottom - rc.top);
 	CBitmap *pBM = memDC.SelectObject(&memBM);
-	hbrBkGnd.CreateSolidBrush(RGB(0,0,0));
+	hbrBkGnd.CreateSolidBrush(RGB(0, 0, 0));
 	memDC.FillRect(&rc, &hbrBkGnd);
 	Paint(&memDC);
 
@@ -262,19 +277,14 @@ void Gaze::addPupilCenter(float x, float y)
 void Gaze::addPupilDia(float x)
 {
 	PupilDia.push_back(x);
-}
-
-float Gaze::getPupilDia()
-{
-	if(!PupilDia.empty())
-		return PupilDia.back();
-	return 0;
+	std::cerr << "pupil diameter size: " << PupilDia.size() << "\n";
 }
 
 void Gaze::addGazePX(float x, float y)
 {
 	Gaze::coords c{ x,y };
 	GazePX.push_back(c);
+	std::cerr << "gaze in pixel size: " << GazePX.size() << "\n";
 }
 
 void Gaze::addFrozenPupil(float x, float y)
@@ -283,30 +293,60 @@ void Gaze::addFrozenPupil(float x, float y)
 	FrozenPupil.push_back(c);
 }
 
-//Gaze::coords Gaze::getGazePX() {
-//	if(!GazePX.empty())
-//		return GazePX.back();
-//	return coords();
-//}
-
-
-// Gaze message handlers
-
-void Gaze::Save(FILE* pFile)
-{
-	fprintf(pFile, "***************************************************************************************\n");
-	fprintf(pFile, "********** Gaze Tracker Data						version October 26, 2005 **********\n");
-	fprintf(pFile, "***************************************************************************************\n\n");
-
-	fprintf(pFile, "\nNOTE: gaze data are in degrees, measured from the distance of pupil center to Purkinje image center\n");
-
-	fprintf(pFile, "\n\ndata are: frame number, pupil size [mm], gaze horizontal [deg], gaze vertical [deg] \n");
-
-	for (int i = 0; i < Pupil.size(); i++) {
-		fprintf(pFile, "%d	%2.2f	%2.1f	%2.1f\n", i, Pupil[i], GazePX[i].x, GazePX[i].y);
-	}
-
+void Gaze::stop() {
+	if (record) Save();
+	GazePX.clear();
+	Pupil.clear();
+	PupilDia.clear();
 }
+
+void Gaze::Save()
+{
+	CString szFileName;
+	FILE *pFile;
+	CFileDialog cFileDlg(
+		FALSE,
+		(LPCTSTR)NULL,
+		(LPCTSTR)NULL,
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_LONGNAMES | OFN_OVERWRITEPROMPT | OFN_CREATEPROMPT,
+		_T("All Files (*.*)|*.*|"),
+		NULL);
+	cFileDlg.m_ofn.lpstrInitialDir = _T(".\\");
+
+	if (cFileDlg.DoModal() == IDOK)
+	{
+		szFileName = cFileDlg.GetPathName();
+		MessageBox(szFileName, _T("Would you like to save your data to this file?"), MB_ICONINFORMATION | MB_OK | MB_DEFBUTTON1);
+		_wfopen_s(&pFile, szFileName, L"w");
+
+		if (pFile)
+		{
+			// this saves the data to the file
+
+			fprintf(pFile, "***************************************************************************************\n");
+			fprintf(pFile, "********** Offset Tracker Data												 **********\n");
+			fprintf(pFile, "***************************************************************************************\n\n");
+
+			fprintf(pFile, "\nNOTE: gaze data are in degrees, measured from the distance of pupil center to Purkinje image center\n");
+
+			fprintf(pFile, "\n\ndata are: frame number, pupil size [mm], gaze horizontal [deg], gaze vertical [deg] \n");
+
+			for (int i = 0; i < GazePX.size(); i++) {
+				fprintf(pFile, "%d\t%2.2f\t%2.1f\t%2.1f\n", i, PupilDia[PupilDia.size() - GazePX.size() + i], GazePX[i].x, GazePX[i].y);
+			}
+
+			fclose(pFile);
+
+		}
+
+		else
+		{
+			MessageBox(_T("Failed to open file!"), _T("Error"), MB_ICONHAND | MB_OK | MB_DEFBUTTON1);
+		}
+
+	}
+}
+
 
 BOOL Gaze::OnEraseBkgnd(CDC* pDC)
 {

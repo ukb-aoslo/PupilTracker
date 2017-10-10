@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "Schaeffel.h"
-
+#include <mutex>
 
 Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 {
@@ -8,6 +8,9 @@ Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 	m_pGraph = gr;
 	frozen = false;
 	threshold = 50;
+	box_size = 130;
+	magnif = (float)15.5114;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
+									// old magnif was 26.8
 	opts = BoxBoundary | PupilPixels;
 }
 
@@ -19,11 +22,11 @@ Schaeffel::~Schaeffel()
 
 void Schaeffel::frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber)
 {
-	//pBuffer->lock();
+
 	DoImageProcessing(pBuffer);
-	m_pGaze->Invalidate();
-	m_pGraph->Invalidate();
-	//pBuffer->unlock();
+	m_pGaze->RedrawWindow();
+	m_pGraph->RedrawWindow();
+
 }
 
 void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
@@ -55,9 +58,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	// ii = y coordinate, i = x coordnate
 
 	m_ave_bright = 0;
-	int Hirschberg_ratio = m_pGaze->getHirschbergRatio();
-	float magnif = m_pGaze->getMagnif();
-	int box_size = m_pGaze->getBoxSize();
+	//int Hirschberg_ratio = m_pGaze->getHirschbergRatio();
 
 	int n = 0;
 	int i, ii;
@@ -104,7 +105,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	// step 2: identify those pixels marked in step 1 
 	// that are surrounded by at least 'size/2' bright pixels
 	// in the vertical and the horizontal direction
-	// then accept only those were the vertical and horiz diameter are very similar
+	// then accept only those where the vertical and horiz diameter are very similar
 
 	int count_up, count_down, count_left, count_right;
 	int size = 30; // minimal size of spot to be accepted
@@ -124,7 +125,6 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		{
 			for (ii = 0; ii < size; ii++)
 			{
-
 				if (pImageData[y[i] * Width + x[i] + ii] > threshold) count_right++;
 				if (pImageData[y[i] * Width + x[i] - ii] > threshold) count_left++;
 				if (pImageData[(y[i] + ii) * Width + x[i]] > threshold) count_up++;
@@ -227,9 +227,10 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	}
 
 	// step 5: take x and y coordinate of pupil center as a measure of gaze position
-
+	
 	m_pGaze->addPupilCenter(ave_x_right, ave_y_right);
 	m_pGaze->addPupilDia(pupil_right / magnif);
+	m_pGraph->addPupilDia(pupil_right / magnif);
 
 	// important: if pupil is in center of the video frame (320/240) 
 	// this is assumed to be gaze straight 
@@ -239,21 +240,24 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	if (y_gaze_r != 0) y_gaze_r = Hirschberg_ratio * (Height / 2 - y_gaze_r) / magnif;
 	m_pGaze->addGazePX(-x_gaze_r, -y_gaze_r);*/
 
-	m_pGaze->addGazePX(ave_x_right - ave_x_right_fr, ave_y_right - ave_y_right_fr);
-
+		if (frozen)	m_pGaze->addGazePX(ave_x_right - ave_x_right_fr, (ave_y_right - ave_y_right_fr));
 
 	//if (count < 22500) count++; // advance frame counter
 
 }
 
 void Schaeffel::freezePupil() {
+	
+	// toggle between normal and frozen state
 	frozen ? frozen = false : frozen = true;
 	if (frozen) {
 		ave_x_right_fr = ave_x_right;
 		ave_y_right_fr = ave_y_right;
 		pupil_right_fr = pupil_right;
+		m_pGaze->addFrozenPupil(ave_x_right_fr, ave_y_right_fr);
 	}
-	m_pGaze->addFrozenPupil(ave_x_right_fr, ave_y_right_fr);
+	else
+		m_pGaze->stop();
 
 }
 
@@ -262,8 +266,6 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 	// clear screen
 	pBitmap->fill(RGB(0, 0, 0));
 
-	// get gaze params
-	int box_size = m_pGaze->getBoxSize();
 
 	// for text display
 	char szText[200];
@@ -347,11 +349,18 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 			// draw pupil center
 
-			pBitmap->drawSolidEllipse(RGB(0, 255, 0), CRect(
-				ave_x_right - 1,
-				Height - ave_y_right - 1,
-				ave_x_right + 1,
-				Height - ave_y_right + 1));
+			pBitmap->drawLine(RGB(0, 255, 0),
+				(int)ave_x_right,
+				Height - (int)ave_y_right - 1,
+				(int)ave_x_right,
+				Height - (int)ave_y_right + 2);
+
+			pBitmap->drawLine(RGB(0, 255, 0),
+				(int)ave_x_right - 1,
+				Height - (int)ave_y_right,
+				(int)ave_x_right + 2,
+				Height - (int)ave_y_right);
+
 		}
 
 		if (frozen) {
@@ -369,11 +378,17 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 			if (ave_x_right_fr > 0)
 			{
-				pBitmap->drawSolidEllipse(RGB(255, 0, 255), CRect(
-					ave_x_right_fr - 1,
-					Height - ave_y_right_fr - 1,
-					ave_x_right_fr + 1,
-					Height - ave_y_right_fr + 1));
+				pBitmap->drawLine(RGB(255, 0, 255),
+					(int)ave_x_right_fr,
+					Height - (int)ave_y_right_fr - 1,
+					(int)ave_x_right_fr,
+					Height - (int)ave_y_right_fr + 2);
+
+				pBitmap->drawLine(RGB(255, 0, 255),
+					(int)ave_x_right_fr - 1,
+					Height - (int)ave_y_right_fr,
+					(int)ave_x_right_fr + 2,
+					Height - (int)ave_y_right_fr);
 			}
 
 		}

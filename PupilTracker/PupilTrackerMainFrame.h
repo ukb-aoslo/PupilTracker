@@ -53,4 +53,6 @@ public:
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnViewParameters();
 	void setParams();
+	afx_msg void OnRecord();
+	afx_msg void OnUpdateRecord(CCmdUI *pCmdUI);
 };

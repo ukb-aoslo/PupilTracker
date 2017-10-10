@@ -7,7 +7,7 @@ Method::Method()
 
 	name = L"Schaeffel";
 	gaze = new Gaze;
-	graph = new Graph(gaze);
+	graph = new Graph();
 	listener = new Schaeffel(gaze, graph);
 	push_back(*this);
 

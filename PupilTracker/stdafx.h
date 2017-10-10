@@ -24,6 +24,10 @@
 #include <afxdlgs.h>
 #include <afxcontrolbars.h>
 
+#include <iostream>
+
+
+
 //#ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC  
 //#include <stdlib.h>  

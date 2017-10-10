@@ -18,6 +18,8 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_COMMAND (ID_STOP, OnStop)
 	ON_COMMAND (ID_PLAY, OnPlay)
 	ON_COMMAND(ID_VIEW_PARAMETERS, &CPupilTrackerMainFrame::OnViewParameters)
+	ON_COMMAND(ID_RECORD, &CPupilTrackerMainFrame::OnRecord)
+	ON_UPDATE_COMMAND_UI(ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -238,38 +240,6 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 void CPupilTrackerMainFrame::OnClose()
 {
 	m_cGrabber.stopLive();
-
-	//CString szFileName;
-	//FILE *pFile;
-	//CFileDialog cFileDlg(
-	//	FALSE,
-	//	(LPCTSTR)NULL,
-	//	(LPCTSTR)NULL,
-	//	OFN_ENABLESIZING | OFN_EXPLORER | OFN_LONGNAMES | OFN_OVERWRITEPROMPT | OFN_CREATEPROMPT,
-	//	_T("All Files (*.*)|*.*|"),
-	//	NULL);
-	//cFileDlg.m_ofn.lpstrInitialDir = _T(".\\");
-
-	//if (cFileDlg.DoModal() == IDOK)
-	//{
-	//	szFileName = cFileDlg.GetPathName();
-	//	MessageBox(szFileName, _T("Would you like to save your data to this file?"), MB_ICONINFORMATION | MB_OK | MB_DEFBUTTON1);
-	//	_wfopen_s(&pFile, szFileName, L"w");
-	//	if (pFile)
-	//	{
-	//		// this saves the data to the file
-
-	//		Gaze* g = m_cMethod.getGaze();
-	//		g->Save(pFile);
-
-	//		fclose(pFile);
-	//	}
-	//	else
-	//	{
-	//		MessageBox(_T("Failed to open file!"), _T("Error"), MB_ICONHAND | MB_OK | MB_DEFBUTTON1);
-	//	}
-
-	//}
 	CFrameWnd::OnClose();
 }
 
@@ -565,5 +535,27 @@ void CPupilTrackerMainFrame::setParams()
 		s->threshold = (BYTE)ppData[0];
 		delete ppData;
 	}
+
+}
+
+
+void CPupilTrackerMainFrame::OnRecord()
+{
+	// TODO: Add your command handler code here
+	
+	Schaeffel* s = (Schaeffel*)m_pListener;
+	s->m_pGaze->record? s->m_pGaze->record = false: s->m_pGaze->record = true;
+
+}
+
+
+void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+	Schaeffel* s = (Schaeffel*)m_pListener;
+	
+	if (s->m_pGaze->record == true) pCmdUI->SetCheck(1);
+	else
+		pCmdUI->SetCheck(0);
 
 }

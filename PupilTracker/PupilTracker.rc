@@ -86,6 +86,16 @@ BEGIN
     0
 END
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDR_MAINFRAME           ICON                    "res\\PupilTracker.ico"
+
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -143,16 +153,6 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDR_MAINFRAME           ICON                    "res\\Augen.ico"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Toolbar
 //
 
@@ -163,6 +163,7 @@ BEGIN
     SEPARATOR
     BUTTON      ID_PLAY
     BUTTON      ID_STOP
+    BUTTON      ID_RECORD
     SEPARATOR
     BUTTON      ID_APP_ABOUT
 END
@@ -205,8 +206,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,0,0,1
- PRODUCTVERSION 1,0,0,1
+ FILEVERSION 1,2,0,0
+ PRODUCTVERSION 1,2,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -221,14 +222,14 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "UKB"
-            VALUE "FileDescription", "Tracking movements of a human pupil given by a camera live stream"
-            VALUE "FileVersion", "1.0.0.1"
+            VALUE "CompanyName", "AG Harmening"
+            VALUE "FileDescription", "Pupil Tracker"
+            VALUE "FileVersion", "1.2.0.0"
             VALUE "InternalName", "PupilTracker.exe"
-            VALUE "LegalCopyright", "(C)2017 Universitäts-Augenklinik Bonn.  All rights reserved."
+            VALUE "LegalCopyright", "(C)2017 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.0.0.1"
+            VALUE "ProductVersion", "1.2.0.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -250,6 +251,7 @@ BEGIN
     ID_PLAY                 "Start live stream"
     ID_STOP                 "Stop live stream"
     ID_CAMERA_SETTINGS      "Change camera settings"
+    ID_RECORD               "Record tracking data"
 END
 
 STRINGTABLE
