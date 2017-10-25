@@ -4,12 +4,13 @@
 
 #pragma once
 
-#define _WIN32_WINNT 0x0501
-
+#define _WIN32_WINNT _WIN32_WINNT_MAXVER
 #define _ATL_CSTRING_EXPLICIT_CONSTRUCTORS	// some CString constructors will be explicit
 
 // turns off MFC's hiding of some common and often safely ignored warning messages
 #define _AFX_ALL_WARNINGS
+
+#define WM_UPDATE_CONTROL    WM_APP + 0x10
 
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
@@ -24,9 +25,13 @@
 #include <afxdlgs.h>
 #include <afxcontrolbars.h>
 
+#include <queue>
 #include <iostream>
+#include <thread>
+#include <mutex>
 
-
+// user defines
+#define PI (atan(1) * 4)
 
 //#ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC  

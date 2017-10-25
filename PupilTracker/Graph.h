@@ -9,16 +9,18 @@ class Graph : public CStatic
 public:
 	Graph();
 	void freeze();
-	void addPupilDia(float x);
+	void addPupilDia(double x);
 	virtual ~Graph();
 
 private:
 	int frame_count;
 	int turn;
-	float frozen_pupil;
+	double frozen_pupil;
 	bool frozen;
+	
+	LRESULT OnUpdateControl(WPARAM wParam, LPARAM lParam);
 
-	std::vector<float>PupilDia;
+	std::vector<double>PupilDia;
 	void Paint(CDC* dc);
 
 protected:

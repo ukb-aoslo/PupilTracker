@@ -1,17 +1,17 @@
 // PupilTracker.cpp : Implements the classes for the application.
 //
-
 #include "stdafx.h"
 #include "PupilTracker.h"
 #include "PupilTrackerMainFrame.h"
-
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
 
-
 // CPupilTrackerApp
+
+// for global thread synchronization (necessary because of listener callback-functions)
+std::mutex g_mutex;
 
 BEGIN_MESSAGE_MAP(CPupilTrackerApp, CWinApp)
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
@@ -29,7 +29,6 @@ CPupilTrackerApp::CPupilTrackerApp()
 // The one and only CPupilTrackerApp object
 
 CPupilTrackerApp theApp;
-
 
 // CPupilTrackerApp initialization
 

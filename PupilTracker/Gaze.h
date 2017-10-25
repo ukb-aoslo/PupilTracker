@@ -1,5 +1,4 @@
 #pragma once
-#include "concurrent_vector.h"
 // Gaze
 
 class Gaze : public CStatic
@@ -9,24 +8,27 @@ class Gaze : public CStatic
 private:
 
 	struct coords {
-		float x;
-		float y;
+		double x;
+		double y;
 	};
 
 	std::vector<coords>Pupil;
 	std::vector<coords>GazePX;
 	std::vector<coords>FrozenPupil;
-	std::vector<float>PupilDia;
+	std::vector<double>PupilDia;
 
 	float conv;
+
+	LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam);
+
 
 public:
 	Gaze();
 	~Gaze();
-	void addPupilCenter(float x, float y);
-	void addPupilDia(float);
-	void addGazePX(float x, float y);
-	void addFrozenPupil(float x, float y);
+	void addPupilCenter(double x, double y);
+	void addPupilDia(double);
+	void addGazePX(double x, double y);
+	void addFrozenPupil(double x, double y);
 	void stop();
 	void Save();
 	void Paint(CDC* dc);

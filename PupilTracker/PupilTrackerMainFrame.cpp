@@ -4,12 +4,13 @@
 #include "PupilTracker.h"
 #include "PupilTrackerMainFrame.h"
 
+extern std::mutex g_mutex;
+
 // Save some typing...
 using namespace DShowLib;
 
 BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_WM_PAINT()
-	ON_WM_CLOSE()
 	ON_WM_DESTROY()
 	ON_WM_SHOWWINDOW()
 	ON_WM_CREATE()
@@ -73,9 +74,9 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 {
 
-	delete m_pListener;
 	delete m_wndView;
 	delete m_pParams;
+	//delete m_pListener;
 
 }
 
@@ -179,7 +180,7 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 		m_cGrabber.showVCDPropertyPage(this->m_hWnd);
 		m_cGrabber.saveDeviceStateToFile("device.xml");
 	}
-	m_wndView->Invalidate();
+	m_wndView->RedrawWindow();
 	
 }
 
@@ -239,8 +240,16 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 
 void CPupilTrackerMainFrame::OnClose()
 {
-	m_cGrabber.stopLive();
+	
+
 	CFrameWnd::OnClose();
+
+	if (m_cGrabber.isDevOpen())
+	{
+		m_cGrabber.closeDev();
+	}
+
+
 }
 
 void CPupilTrackerMainFrame::updateWindowTitle()
@@ -267,7 +276,7 @@ void CPupilTrackerMainFrame::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
 {
 	// TODO: Add your message handler code here and/or call default
 
-	Schaeffel* s = (Schaeffel*)m_pListener;
+	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
 	TRACE("Taste %d\n", nChar); // Nur zur Ausgabe des Tastencodes.
 
 	if (nChar == 32) // Leertaste
@@ -332,6 +341,7 @@ void CPupilTrackerMainFrame::OnPlay()
 void CPupilTrackerMainFrame::OnStop()
 {
 
+
 	if (m_cGrabber.isLive())
 	{
 
@@ -355,7 +365,7 @@ void CPupilTrackerMainFrame::OnDestroy()
 	GetWindowPlacement(&wp);
 	AfxGetApp()->WriteProfileBinary(L"Settings", L"WP", (LPBYTE)&wp, sizeof(wp));
 
-	CFrameWnd::OnDestroy();
+	//CFrameWnd::OnDestroy();
 
 	// TODO: Add your message handler code here
 }
@@ -476,7 +486,6 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		MessageBox(error, L"Error", MB_ICONERROR);
 	}
 
-	m_cGrabber.getOverlay()->setEnable(true);
 	m_cGrabber.getOverlay(ePP_DEVICE)->setColorMode(OverlayBitmap::eBESTFIT);
 	m_cGrabber.getOverlay(ePP_SINK)->setColorMode(OverlayBitmap::eGRAYSCALE);
 	m_cGrabber.getOverlay(ePP_DISPLAY)->setColorMode(OverlayBitmap::eBESTFIT);
@@ -488,6 +497,7 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	}
 
 	updateWindowTitle();
+	
 	return 0;
 }
 
@@ -495,7 +505,7 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: Add your specialized code here and/or call the base class
 
-	Schaeffel* s = (Schaeffel*)m_pListener;
+	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
 
 	if (pMsg->message == WM_KEYDOWN)
 	{
@@ -506,15 +516,14 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 				s->freezePupil();
 				m_cMethod.getGraph()->freeze();
 			}
-				return true;
 			break;
 		}
 		
+		return TRUE;
 	}
 
-	s = NULL;
-	delete s;
 	return __super::PreTranslateMessage(pMsg);
+	
 }
 
 void CPupilTrackerMainFrame::OnViewParameters()
@@ -529,12 +538,21 @@ void CPupilTrackerMainFrame::setParams()
 {
 	UINT n;
 	LPBYTE ppData;
-	Schaeffel* s = (Schaeffel*)m_pListener;
+	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_thresh", &ppData, &n)) {
 		s->threshold = (BYTE)ppData[0];
-		delete ppData;
 	}
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_opts", &ppData, &n)) {
+		s->opts = (BYTE)ppData[0];
+	}
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_bufsize", &ppData, &n)) {
+		s->buf_size = (BYTE)ppData[0];
+	}
+
+	delete ppData;
 
 }
 
@@ -543,7 +561,7 @@ void CPupilTrackerMainFrame::OnRecord()
 {
 	// TODO: Add your command handler code here
 	
-	Schaeffel* s = (Schaeffel*)m_pListener;
+	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
 	s->m_pGaze->record? s->m_pGaze->record = false: s->m_pGaze->record = true;
 
 }
@@ -552,7 +570,7 @@ void CPupilTrackerMainFrame::OnRecord()
 void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
-	Schaeffel* s = (Schaeffel*)m_pListener;
+	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
 	
 	if (s->m_pGaze->record == true) pCmdUI->SetCheck(1);
 	else

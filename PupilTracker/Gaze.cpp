@@ -3,12 +3,15 @@
 #include "Gaze.h"
 #include "Schaeffel.h"
 
+extern std::mutex g_mutex;
+
 // Gaze
 
 IMPLEMENT_DYNAMIC(Gaze, CStatic)
 
 Gaze::Gaze()
 {
+	
 	record = false;
 	conv = 9.3f;
 }
@@ -20,18 +23,25 @@ Gaze::~Gaze()
 BEGIN_MESSAGE_MAP(Gaze, CStatic)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
+	ON_MESSAGE(WM_UPDATE_CONTROL, OnUpdateControl)
 END_MESSAGE_MAP()
 
+LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam)
+{
+	RedrawWindow();
+	return 0;
+}
 
 void Gaze::Paint(CDC* dc)
 {
+	
 	//CPaintDC dc(this); // device context for painting
 	//				   // TODO: Add your message handler code here
 	//				   // Do not call CStatic::OnPaint() for painting messages
 	CRect rect;
 	GetClientRect(&rect);
 
-	char szText[100];
+	CString szText;
 	bool ready = (GazePX.size() > 40);
 
 	//paint it black
@@ -61,9 +71,9 @@ void Gaze::Paint(CDC* dc)
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
 
 	// plot trail history in the back
-	if (ready) {
+	if (ready && g_mutex.try_lock()) {
 
-		int history = 500;
+		int history = 300;
 		for (auto iter = GazePX.rbegin() + 40; iter != GazePX.rend(); iter++)
 			{
 				Ellipse(*dc, rect.Width() / 2 - (int)(iter->x * conv) - 4,
@@ -73,6 +83,7 @@ void Gaze::Paint(CDC* dc)
 				if (history == 0) break;
 				history--;
 			}
+		g_mutex.unlock();
 	}
 
 	DeleteObject(hPen);
@@ -83,8 +94,8 @@ void Gaze::Paint(CDC* dc)
 
 	// gaze x/y plot
 	SetTextColor(*dc, RGB(255, 255, 255));
-	sprintf(szText, "Pupil Offset [px]");
-	TextOut(*dc, rect.Width() / 2 - 50, rect.Height() *.05f, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("Pupil Offset [px]"));
+	dc->TextOutW(rect.Width() / 2 - 50, 10, szText);
 
 	CFont* pOldFont = dc->GetCurrentFont();
 
@@ -107,28 +118,28 @@ void Gaze::Paint(CDC* dc)
 
 	dc->SelectObject(&newFont);
 
-	sprintf(szText, "x:");
-	TextOut(*dc, rect.Width() / 2 - 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
-	sprintf(szText, "y:");
-	TextOut(*dc, rect.Width() / 2 + 35, rect.Height() *.1f, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("x:"));
+	dc->TextOutW(rect.Width() / 2 - 55, rect.Height() / 10, szText);
+	szText.Format(TEXT("y:"));
+	dc->TextOutW(rect.Width() / 2 + 35, rect.Height() / 10, szText);
 
 	dc->SelectObject(pOldFont);
 
 	// plot the axes for the x/y gaze plot
 
-	MoveToEx(*dc, rect.Width() / 2 * .28f, rect.Height() / 2, NULL);		// horizontal bar
+	MoveToEx(*dc, rect.Width() / 2 - 144, rect.Height() / 2, NULL);		// horizontal bar
 	LineTo(*dc, rect.Width() / 2 + 144, rect.Height() / 2);
-	MoveToEx(*dc, rect.Width() / 2, rect.Height() / 2 * .40f, NULL);		// vertical bar
+	MoveToEx(*dc, rect.Width() / 2, rect.Height() / 2 - 144, NULL);		// vertical bar
 	LineTo(*dc, rect.Width() / 2, rect.Height() - 97);
 
 	// labels gaze axes with numbers
-	sprintf(szText, "15 px");
-	TextOut(*dc, rect.Width() / 2 - 15, 80, CA2W(szText), strlen(szText));
-	TextOut(*dc, rect.Width() - 55, rect.Height() / 2 - 8, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("15 px"));
+	dc->TextOutW(rect.Width() / 2 - 15, 80, szText);
+	dc->TextOutW(rect.Width() - 55, rect.Height() / 2 - 8, szText);
 
-	sprintf(szText, "-15 px");
-	TextOut(*dc, rect.Width() / 2 - 19, rect.Height() - 97, CA2W(szText), strlen(szText));
-	TextOut(*dc, 14, rect.Height() / 2 - 8, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("-15 px"));
+	dc->TextOutW(rect.Width() / 2 - 19, rect.Height() - 97, szText);
+	dc->TextOutW(14, rect.Height() / 2 - 8, szText);
 
 
 	DeleteObject(hPen);											// delete white pen
@@ -150,19 +161,19 @@ void Gaze::Paint(CDC* dc)
 
 	DeleteObject(hPen);											// delete gray pen
 
-	sprintf(szText, "Current Position");
-	TextOut(*dc, 35, rect.Height() - 40, CA2W(szText), strlen(szText));
-	sprintf(szText, "x:");
-	TextOut(*dc, 35, rect.Height() - 20, CA2W(szText), strlen(szText));
-	sprintf(szText, "y:");
-	TextOut(*dc, 85, rect.Height() - 20, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("Current Position"));
+	dc->TextOutW(35, rect.Height() - 40, szText);
+	szText.Format(TEXT("x:"));
+	dc->TextOutW(35, rect.Height() - 20, szText);
+	szText.Format(TEXT("y:"));
+	dc->TextOutW(85, rect.Height() - 20, szText);
 
-	sprintf(szText, "Locked Positon");
-	TextOut(*dc, rect.Width() / 2 + 60, rect.Height() - 40, CA2W(szText), strlen(szText));
-	sprintf(szText, "x:");
-	TextOut(*dc, rect.Width() / 2 + 60, rect.Height() - 20, CA2W(szText), strlen(szText));
-	sprintf(szText, "y:");
-	TextOut(*dc, rect.Width() / 2 + 110, rect.Height() - 20, CA2W(szText), strlen(szText));
+	szText.Format(TEXT("Locked Positon"));
+	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 40, szText);
+	szText.Format(TEXT("x:"));
+	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 20, szText);
+	szText.Format(TEXT("y:"));
+	dc->TextOutW(rect.Width() / 2 + 110, rect.Height() - 20, szText);
 
 
 	// create trail palette
@@ -174,7 +185,7 @@ void Gaze::Paint(CDC* dc)
 	// color the head of the snake in some yellow
 	hPenPal[39].CreatePen(PS_SOLID, 1, RGB(255, 255, 100));
 
-	if (ready)
+	if (ready && g_mutex.try_lock())
 	{
 		// verbose offset between locked and current pupil
 
@@ -182,8 +193,8 @@ void Gaze::Paint(CDC* dc)
 		int a = 0;
 	
 		for (auto ave_rit_gaze = GazePX.rbegin(); ave_rit_gaze != GazePX.rbegin() + 15; ave_rit_gaze++) {
-			ave_gazePx_x += ave_rit_gaze->x;
-			ave_gazePx_y += ave_rit_gaze->y;
+			ave_gazePx_x += (int)ave_rit_gaze->x;
+			ave_gazePx_y += (int)ave_rit_gaze->y;
 			a++;
 		}
 
@@ -193,8 +204,8 @@ void Gaze::Paint(CDC* dc)
 		a = 0;
 	
 		for (auto ave_rit_pupil = Pupil.rbegin(); ave_rit_pupil != Pupil.rbegin() + 15; ave_rit_pupil++) {
-			ave_curPos_x += ave_rit_pupil->x;
-			ave_curPos_y += ave_rit_pupil->y;
+			ave_curPos_x += (int)ave_rit_pupil->x;
+			ave_curPos_y += (int)ave_rit_pupil->y;
 			a++;
 		}
 
@@ -203,24 +214,24 @@ void Gaze::Paint(CDC* dc)
 
 		dc->SelectObject(&newFont);
 
-		sprintf(szText, "%d", -1 * ave_gazePx_x);
-		TextOut(*dc, rect.Width() / 2 - 35, rect.Height() *.1f, CA2W(szText), strlen(szText));
-		sprintf(szText, "%d", -1 * ave_gazePx_y);
-		TextOut(*dc, rect.Width() / 2 + 55, rect.Height() *.1f, CA2W(szText), strlen(szText));
+		szText.Format(TEXT("%d"), -1 * ave_gazePx_x);
+		dc->TextOutW(rect.Width() / 2 - 35, rect.Height() / 10, szText);
+		szText.Format(TEXT("%d"), -1 * ave_gazePx_y);
+		dc->TextOutW(rect.Width() / 2 + 55, rect.Height() / 10, szText);
 
 		dc->SelectObject(pOldFont);
 
 		SetTextColor(*dc, RGB(0, 255, 0));
-		sprintf(szText, "%d", ave_curPos_x);
-		TextOut(*dc, 50, rect.Height() - 20, CA2W(szText), strlen(szText));
-		sprintf(szText, "%d", ave_curPos_y);
-		TextOut(*dc, 100, rect.Height() - 20, CA2W(szText), strlen(szText));
+		szText.Format(TEXT("%d"), ave_curPos_x);
+		dc->TextOutW(50, rect.Height() - 20, szText);
+		szText.Format(TEXT("%d"), ave_curPos_y);
+		dc->TextOutW(100, rect.Height() - 20, szText);
 
 		SetTextColor(*dc, RGB(255, 0, 255));
-		sprintf(szText, "%d", (int)FrozenPupil.back().x);
-		TextOut(*dc, rect.Width() / 2 + 75, rect.Height() - 20, CA2W(szText), strlen(szText));
-		sprintf(szText, "%d", (int)FrozenPupil.back().y);
-		TextOut(*dc, rect.Width() / 2 + 125, rect.Height() - 20, CA2W(szText), strlen(szText));
+		szText.Format(TEXT("%d"), (int)FrozenPupil.back().x);
+		dc->TextOutW(rect.Width() / 2 + 75, rect.Height() - 20, szText);
+		szText.Format(TEXT("%d"), (int)FrozenPupil.back().y);
+		dc->TextOutW(rect.Width() / 2 + 125, rect.Height() - 20, szText);
 
 		// draw offset into x/y plot
 
@@ -232,6 +243,7 @@ void Gaze::Paint(CDC* dc)
 				rect.Height() / 2 + (int)(GazePX[i].y * conv) + 4);
 		}
 
+		g_mutex.unlock();
 	}
 
 	DeleteObject(hPen);
@@ -268,26 +280,26 @@ void Gaze::OnPaint() {
 
 }
 
-void Gaze::addPupilCenter(float x, float y)
+void Gaze::addPupilCenter(double x, double y)
 {
 	coords c{ x,y };
 	Pupil.push_back(c);
 }
 
-void Gaze::addPupilDia(float x)
+void Gaze::addPupilDia(double x)
 {
 	PupilDia.push_back(x);
-	std::cerr << "pupil diameter size: " << PupilDia.size() << "\n";
+	//std::cerr << "pupil diameter size: " << PupilDia.size() << "\n";
 }
 
-void Gaze::addGazePX(float x, float y)
+void Gaze::addGazePX(double x, double y)
 {
 	Gaze::coords c{ x,y };
 	GazePX.push_back(c);
-	std::cerr << "gaze in pixel size: " << GazePX.size() << "\n";
+	//std::cerr << "gaze in pixel size: " << GazePX.size() << "\n";
 }
 
-void Gaze::addFrozenPupil(float x, float y)
+void Gaze::addFrozenPupil(double x, double y)
 {
 	coords c{ x,y };
 	FrozenPupil.push_back(c);
@@ -331,7 +343,7 @@ void Gaze::Save()
 
 			fprintf(pFile, "\n\ndata are: frame number, pupil size [mm], gaze horizontal [deg], gaze vertical [deg] \n");
 
-			for (int i = 0; i < GazePX.size(); i++) {
+			for (size_t i = 0; i < GazePX.size(); i++) {
 				fprintf(pFile, "%d\t%2.2f\t%2.1f\t%2.1f\n", i, PupilDia[PupilDia.size() - GazePX.size() + i], GazePX[i].x, GazePX[i].y);
 			}
 

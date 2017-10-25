@@ -17,6 +17,9 @@
 #define IDC_CHECK3                      1013
 #define IDC_CHECK4                      1014
 #define IDC_EDIT3                       1015
+#define IDE_BUFVAL                      1015
+#define IDC_DEFAULTPARAM                1016
+#define IDC_DEFAULTPARAMS               1016
 #define ID_VIEW_PARAMETERS              32771
 #define ID_CAMERA_DEVICES               32772
 #define ID_PLAY                         32773
@@ -30,7 +33,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        140
 #define _APS_NEXT_COMMAND_VALUE         32777
-#define _APS_NEXT_CONTROL_VALUE         1016
+#define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -11,13 +11,10 @@ IMPLEMENT_DYNAMIC(CChildView, CWnd)
 
 CChildView::CChildView(CPupilTrackerMainFrame* parent): m_pParent(parent)
 {
-
 }
 
 CChildView::~CChildView()
 {
-	delete m_pWndGaze;
-	delete m_pWndGraph;
 }
 
 BEGIN_MESSAGE_MAP(CChildView, CWnd)

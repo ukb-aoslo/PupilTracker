@@ -8,6 +8,7 @@
 
 class CPupilTrackerMainFrame : public CFrameWnd, public DShowLib::GrabberListener
 {
+
 // Construction
 public:
 	CPupilTrackerMainFrame();	// standard constructor
@@ -25,7 +26,7 @@ public:
 	void drawOverlay(DShowLib::tPathPosition pos);
 	void setSink();
 	void reAdjustView();
-
+	
 protected:
 	
 	HICON m_hIcon;

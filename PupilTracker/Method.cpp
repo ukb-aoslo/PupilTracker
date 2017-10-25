@@ -7,7 +7,7 @@ Method::Method()
 
 	name = L"Schaeffel";
 	gaze = new Gaze;
-	graph = new Graph();
+	graph = new Graph;
 	listener = new Schaeffel(gaze, graph);
 	push_back(*this);
 
@@ -27,11 +27,10 @@ Method::Method(const Method &obj)
 
 Method::~Method()
 {
-
 }
 
 void Method::setActive(CString name) {
-	for (std::vector<Method>::iterator it = this->begin(); it != this->end(); ++it) {
+	for (auto it = this->begin(); it != this->end(); ++it) {
 		if (it->name == name)
 			it->active = true;
 		else
@@ -41,30 +40,30 @@ void Method::setActive(CString name) {
 
 void* Method::getListener()
 {
-	for (std::vector<Method>::iterator it = this->begin(); it != this->end(); ++it) {
+	for (auto it = this->begin(); it != this->end(); ++it) {
 		if (it->active)
 			return it->listener;
-		else
-			return nullptr;
 	}
+
+	return nullptr;
 }
 
 Gaze* Method::getGaze()
 {
-	for (std::vector<Method>::iterator it = this->begin(); it != this->end(); ++it) {
+	for (auto it = this->begin(); it != this->end(); ++it) {
 		if (it->active)
 			return it->gaze;
-		else
-			return nullptr;
 	}
+
+	return nullptr;
 }
 
 Graph* Method::getGraph()
 {
-	for (std::vector<Method>::iterator it = this->begin(); it != this->end(); ++it) {
+	for (auto it = this->begin(); it != this->end(); ++it) {
 		if (it->active)
 			return it->graph;
-		else
-			return nullptr;
 	}
+	
+	return nullptr;
 };

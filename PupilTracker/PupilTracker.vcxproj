@@ -210,9 +210,7 @@
     <None Include="res\PupilTracker.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\..\..\Pictures\PupilTracker.ico" />
     <Image Include="res\Augen.ico" />
-    <Image Include="res\icon1.ico" />
     <Image Include="res\PupilTracker.ico" />
     <Image Include="res\Toolbar.bmp" />
   </ItemGroup>
