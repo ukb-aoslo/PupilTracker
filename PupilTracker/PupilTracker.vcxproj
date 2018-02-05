@@ -101,7 +101,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(WindowsSdkDir_81)Lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(WindowsSdkDir_81)Lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug;C:\Program Files (x86)\Visual Leak Detector\lib\Win32</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>version.lib</AdditionalDependencies>
     </Link>

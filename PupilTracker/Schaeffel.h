@@ -14,7 +14,7 @@ class Schaeffel : public CListener
 {
 public:
 	Schaeffel(Gaze* gz, Graph* gr);
-	~Schaeffel();
+	virtual ~Schaeffel();
 
 	Gaze* m_pGaze;
 	Graph* m_pGraph;

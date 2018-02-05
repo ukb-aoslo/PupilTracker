@@ -8,6 +8,7 @@
 #endif
 
 #include "resource.h"		// main symbols
+#include "PupilTrackerMainFrame.h"
 
 
 // CPupilTrackerApp:
@@ -16,10 +17,10 @@
 
 class CPupilTrackerApp : public CWinApp
 {
+
 public:
 	CPupilTrackerApp();
 	bool GetProductAndVersion(CString & strProductName, CString & strProductVersion);
-
 
 // Overrides
 	public:
@@ -29,6 +30,7 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+
 };
 
 extern CPupilTrackerApp theApp;

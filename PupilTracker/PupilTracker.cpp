@@ -22,7 +22,6 @@ END_MESSAGE_MAP()
 
 CPupilTrackerApp::CPupilTrackerApp()
 {
-
 }
 
 
@@ -70,7 +69,8 @@ BOOL CPupilTrackerApp::InitInstance()
 	// such as the name of your company or organization
 	SetRegistryKey(_T("AG Harmening"));
 
-	CPupilTrackerMainFrame* pFrame = new CPupilTrackerMainFrame;
+	
+	CPupilTrackerMainFrame* pFrame = new CPupilTrackerMainFrame();
 	m_pMainWnd = pFrame;
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();

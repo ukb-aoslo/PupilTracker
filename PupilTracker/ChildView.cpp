@@ -15,6 +15,8 @@ CChildView::CChildView(CPupilTrackerMainFrame* parent): m_pParent(parent)
 
 CChildView::~CChildView()
 {
+	//m_pWndGaze = NULL;
+	//m_pWndGraph = NULL;
 }
 
 BEGIN_MESSAGE_MAP(CChildView, CWnd)

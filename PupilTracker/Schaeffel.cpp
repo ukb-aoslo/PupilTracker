@@ -31,16 +31,16 @@ void Schaeffel::frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD F
 {
 
 	if (bufchange && g_mutex.try_lock()) {				// buffer changed?
-		pupil_rightBuf.clear();
-		ave_x_rightBuf.clear();
-		ave_y_rightBuf.clear();
-		bufchange = false;
-		g_mutex.unlock();
-	
+
+			pupil_rightBuf.clear();
+			ave_x_rightBuf.clear();
+			ave_y_rightBuf.clear();
+			bufchange = false;
+			g_mutex.unlock();
+
 	}
 
 	if (g_mutex.try_lock()) {
-
 		// go find that pupil
 		DoImageProcessing(pBuffer);
 
@@ -53,11 +53,12 @@ void Schaeffel::frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD F
 		}
 
 		g_mutex.unlock();
-	
 	}
+
 
 	PostMessage(m_pGraph->GetSafeHwnd(), WM_UPDATE_CONTROL, 0, 0);
 	PostMessage(m_pGaze->GetSafeHwnd(), WM_UPDATE_CONTROL, 0, 0);
+
 
 }
 
@@ -264,7 +265,17 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	m_pGaze->addPupilDia(pupil_right / magnif);
 	m_pGraph->addPupilDia(pupil_right / magnif);
 
-	if (frozen)	m_pGaze->addGazePX(ave_x_right - ave_x_right_fr, (ave_y_right - ave_y_right_fr));
+	if (frozen) {
+		
+		FILETIME ft;
+		SYSTEMTIME st;
+		GetSystemTimeAsFileTime(&ft);
+		FileTimeToSystemTime(&ft, &st);
+		GetLocalTime(&st);
+		m_pGaze->addTimeStamp(st);
+		m_pGaze->addGazePX(ave_x_right - ave_x_right_fr, (ave_y_right - ave_y_right_fr));
+		
+	};
 
 }
 
@@ -309,7 +320,7 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 		// messages regarding brightness of video image 
 
-		if (m_ave_bright > 85)
+		/*if (m_ave_bright > 85)
 		{
 			szText.Format(TEXT(" IMAGE TOO BRIGHT - reduce camera aperture "));
 			pBitmap->drawText(RGB(255, 0, 0), dim.cx / 2 - 120, dim.cy / 2, LPCTSTR(szText));
@@ -318,7 +329,7 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 		{
 			szText.Format(TEXT(" IMAGE TOO DARK - open camera aperture"));
 			pBitmap->drawText(RGB(255, 0, 0), dim.cx / 2 - 120, dim.cy / 2, LPCTSTR(szText));
-		}
+		}*/
 
 		if (opts & FrameCounter)
 		{
@@ -424,7 +435,7 @@ void Schaeffel::reduceJitter() {
 
 
 	// pupil cache
-	while ((pupil_rightBuf.size() != buf_size)) {
+	while (pupil_rightBuf.size() != buf_size) {
 		pupil_rightBuf.push_back(pupil_right);
 	}
 
@@ -434,7 +445,7 @@ void Schaeffel::reduceJitter() {
 	pBuf = getMedian(pupil_rightBuf);
 
 	// ave_x cache
-	while ((ave_x_rightBuf.size() != buf_size)) {
+	while (ave_x_rightBuf.size() != buf_size) {
 		ave_x_rightBuf.push_back(ave_x_right);
 	}
 
@@ -444,7 +455,7 @@ void Schaeffel::reduceJitter() {
 	xBuf = getMedian(ave_x_rightBuf);
 
 	// ave_y cache
-	while ((ave_y_rightBuf.size() != buf_size)) {
+	while (ave_y_rightBuf.size() != buf_size) {
 		ave_y_rightBuf.push_back(ave_y_right);
 	}
 

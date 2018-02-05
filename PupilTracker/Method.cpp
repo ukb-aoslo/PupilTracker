@@ -4,7 +4,6 @@
 Method::Method()
 {
 	// the Schaeffel method
-
 	name = L"Schaeffel";
 	gaze = new Gaze;
 	graph = new Graph;
@@ -22,11 +21,19 @@ Method::Method(const Method &obj)
 	gaze = obj.gaze;
 	graph = obj.graph;
 	listener = obj.listener;
-
 }
 
 Method::~Method()
 {
+	for (auto it = this->begin(); it != this->end(); it++) {
+		delete it->gaze;
+		delete it->graph;
+		if (it->name == "Schaeffel") {
+			Schaeffel* s = (Schaeffel*) getListener();
+			s->~Schaeffel();
+		}
+		delete listener;
+	}
 }
 
 void Method::setActive(CString name) {

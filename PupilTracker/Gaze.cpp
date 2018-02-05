@@ -11,7 +11,6 @@ IMPLEMENT_DYNAMIC(Gaze, CStatic)
 
 Gaze::Gaze()
 {
-	
 	record = false;
 	conv = 9.3f;
 }
@@ -24,6 +23,7 @@ BEGIN_MESSAGE_MAP(Gaze, CStatic)
 	ON_WM_PAINT()
 	ON_WM_ERASEBKGND()
 	ON_MESSAGE(WM_UPDATE_CONTROL, OnUpdateControl)
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam)
@@ -34,7 +34,7 @@ LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam)
 
 void Gaze::Paint(CDC* dc)
 {
-	
+
 	//CPaintDC dc(this); // device context for painting
 	//				   // TODO: Add your message handler code here
 	//				   // Do not call CStatic::OnPaint() for painting messages
@@ -42,13 +42,12 @@ void Gaze::Paint(CDC* dc)
 	GetClientRect(&rect);
 
 	CString szText;
-	bool ready = (GazePX.size() > 40);
+	ready = (GazePX.size() > 40);
 
 	//paint it black
 	dc->SetBkColor(RGB(0, 0, 0));
 	dc->SetBkMode(OPAQUE);
 	HPEN hPen, hPenOld;
-
 
 	/************************** title of the screen display *******************************************/
 
@@ -75,14 +74,14 @@ void Gaze::Paint(CDC* dc)
 
 		int history = 300;
 		for (auto iter = GazePX.rbegin() + 40; iter != GazePX.rend(); iter++)
-			{
-				Ellipse(*dc, rect.Width() / 2 - (int)(iter->x * conv) - 4,
-					rect.Height() / 2 + (int)(iter->y * conv) - 4,
-					rect.Width() / 2 - (int)(iter->x * conv) + 4,
-					rect.Height() / 2 + (int)(iter->y * conv) + 4);
-				if (history == 0) break;
-				history--;
-			}
+		{
+			Ellipse(*dc, rect.Width() / 2 - (int)(iter->x * conv) - 4,
+				rect.Height() / 2 + (int)(iter->y * conv) - 4,
+				rect.Width() / 2 - (int)(iter->x * conv) + 4,
+				rect.Height() / 2 + (int)(iter->y * conv) + 4);
+			if (history == 0) break;
+			history--;
+		}
 		g_mutex.unlock();
 	}
 
@@ -98,8 +97,8 @@ void Gaze::Paint(CDC* dc)
 	dc->TextOutW(rect.Width() / 2 - 50, 10, szText);
 
 	CFont* pOldFont = dc->GetCurrentFont();
+	CFont  newFont;
 
-	CFont newFont;
 	VERIFY(newFont.CreateFont(
 		22,							// nHeight
 		0,							// nWidth
@@ -149,9 +148,8 @@ void Gaze::Paint(CDC* dc)
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
 
 
-	int radius = 24; 	// note, currently 80 deg map on 'x_shift' (=384) pixels
-						// or 4.8 pixel per degree, or 30 deg = 144 pixels
-						// and 5 deg = 24 pixels
+	int radius = 24;
+
 	for (int i = 1; i < 7; i++)
 	{
 		Ellipse(*dc, rect.Width() / 2 - i*radius, rect.Height() / 2 - i*radius,
@@ -166,14 +164,14 @@ void Gaze::Paint(CDC* dc)
 	szText.Format(TEXT("x:"));
 	dc->TextOutW(35, rect.Height() - 20, szText);
 	szText.Format(TEXT("y:"));
-	dc->TextOutW(85, rect.Height() - 20, szText);
+	dc->TextOutW(90, rect.Height() - 20, szText);
 
 	szText.Format(TEXT("Locked Positon"));
 	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 40, szText);
 	szText.Format(TEXT("x:"));
 	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 20, szText);
 	szText.Format(TEXT("y:"));
-	dc->TextOutW(rect.Width() / 2 + 110, rect.Height() - 20, szText);
+	dc->TextOutW(rect.Width() / 2 + 115, rect.Height() - 20, szText);
 
 
 	// create trail palette
@@ -189,52 +187,62 @@ void Gaze::Paint(CDC* dc)
 	{
 		// verbose offset between locked and current pupil
 
-		int ave_gazePx_x(0), ave_gazePx_y(0), ave_curPos_x(0), ave_curPos_y(0);
-		int a = 0;
-	
-		for (auto ave_rit_gaze = GazePX.rbegin(); ave_rit_gaze != GazePX.rbegin() + 15; ave_rit_gaze++) {
-			ave_gazePx_x += (int)ave_rit_gaze->x;
-			ave_gazePx_y += (int)ave_rit_gaze->y;
-			a++;
-		}
+		////take average of last 15 frames
+		//int ave_gazePx_x(0), ave_gazePx_y(0), ave_curPos_x(0), ave_curPos_y(0);
+		//int a = 0;
 
-		ave_gazePx_x /= a;
-		ave_gazePx_y /= a;
+		//for (auto ave_rit_gaze = GazePX.rbegin(); ave_rit_gaze != GazePX.rbegin() + 15; ave_rit_gaze++) {
+		//	ave_gazePx_x += (int)ave_rit_gaze->x;
+		//	ave_gazePx_y += (int)ave_rit_gaze->y;
+		//	a++;
+		//}
 
-		a = 0;
-	
-		for (auto ave_rit_pupil = Pupil.rbegin(); ave_rit_pupil != Pupil.rbegin() + 15; ave_rit_pupil++) {
-			ave_curPos_x += (int)ave_rit_pupil->x;
-			ave_curPos_y += (int)ave_rit_pupil->y;
-			a++;
-		}
+		//ave_gazePx_x /= a;
+		//ave_gazePx_y /= a;
 
-		ave_curPos_x /= a;
-		ave_curPos_y /= a;
+		//a = 0;
+
+		//for (auto ave_rit_pupil = Pupil.rbegin(); ave_rit_pupil != Pupil.rbegin() + 15; ave_rit_pupil++) {
+		//	ave_curPos_x += (int)ave_rit_pupil->x;
+		//	ave_curPos_y += (int)ave_rit_pupil->y;
+		//	a++;
+		//}
+
+		//ave_curPos_x /= a;
+		//ave_curPos_y /= a;
+
+		//CClientDC dc(this);
+		//CString szText;
+		//CRect rect;
+		//GetClientRect(&rect);
+
+		CFont* pOldFont = dc->GetCurrentFont();
 
 		dc->SelectObject(&newFont);
 
-		szText.Format(TEXT("%d"), -1 * ave_gazePx_x);
+		// offset
+		szText.Format(TEXT("%.1f"), -1 * offset.x);
 		dc->TextOutW(rect.Width() / 2 - 35, rect.Height() / 10, szText);
-		szText.Format(TEXT("%d"), -1 * ave_gazePx_y);
+		szText.Format(TEXT("%.1f"), -1 * offset.y);
 		dc->TextOutW(rect.Width() / 2 + 55, rect.Height() / 10, szText);
-
 		dc->SelectObject(pOldFont);
 
+		// current position
 		SetTextColor(*dc, RGB(0, 255, 0));
-		szText.Format(TEXT("%d"), ave_curPos_x);
+		szText.Format(TEXT("%.1f"), current.x);
 		dc->TextOutW(50, rect.Height() - 20, szText);
-		szText.Format(TEXT("%d"), ave_curPos_y);
-		dc->TextOutW(100, rect.Height() - 20, szText);
+		szText.Format(TEXT("%.1f"), current.y);
+		dc->TextOutW(105, rect.Height() - 20, szText);
 
+
+		// locked position
 		SetTextColor(*dc, RGB(255, 0, 255));
-		szText.Format(TEXT("%d"), (int)FrozenPupil.back().x);
+		szText.Format(TEXT("%.1f"), locked.x);
 		dc->TextOutW(rect.Width() / 2 + 75, rect.Height() - 20, szText);
-		szText.Format(TEXT("%d"), (int)FrozenPupil.back().y);
-		dc->TextOutW(rect.Width() / 2 + 125, rect.Height() - 20, szText);
+		szText.Format(TEXT("%.1f"), locked.y);
+		dc->TextOutW(rect.Width() / 2 + 130, rect.Height() - 20, szText);
 
 		// draw offset into x/y plot
-
 		for (size_t i = GazePX.size() - 40, y = 0; i < GazePX.size(); i++, y++) {
 			SelectObject(*dc, hPenPal[y]);
 			Ellipse(*dc, rect.Width() / 2 - (int)(GazePX[i].x * conv) - 4,
@@ -244,9 +252,11 @@ void Gaze::Paint(CDC* dc)
 		}
 
 		g_mutex.unlock();
+
 	}
 
 	DeleteObject(hPen);
+
 
 }
 
@@ -264,7 +274,11 @@ void Gaze::OnPaint() {
 
 	memBM.CreateCompatibleBitmap(&dc, rc.right - rc.left, rc.bottom - rc.top);
 	CBitmap *pBM = memDC.SelectObject(&memBM);
-	hbrBkGnd.CreateSolidBrush(RGB(0, 0, 0));
+	if (ready && (offset.x <= -3.0f || offset.x >= 3.0f) | (offset.y <= -3.0f || offset.y >= 3.0f))
+			hbrBkGnd.CreateSolidBrush(RGB(255, 0, 0));
+	else
+		hbrBkGnd.CreateSolidBrush(RGB(0, 0, 0));
+
 	memDC.FillRect(&rc, &hbrBkGnd);
 	Paint(&memDC);
 
@@ -308,6 +322,7 @@ void Gaze::addFrozenPupil(double x, double y)
 void Gaze::stop() {
 	if (record) Save();
 	GazePX.clear();
+	TimeStamps.clear();
 	Pupil.clear();
 	PupilDia.clear();
 }
@@ -339,12 +354,12 @@ void Gaze::Save()
 			fprintf(pFile, "********** Offset Tracker Data												 **********\n");
 			fprintf(pFile, "***************************************************************************************\n\n");
 
-			fprintf(pFile, "\nNOTE: gaze data are in degrees, measured from the distance of pupil center to Purkinje image center\n");
+			fprintf(pFile, "\nNOTE: offset data are in (sub)pixels, measured from the distance of pupil center to Purkinje image center\n");
 
-			fprintf(pFile, "\n\ndata are: frame number, pupil size [mm], gaze horizontal [deg], gaze vertical [deg] \n");
+			fprintf(pFile, "\n\ndata are: time [hour:min:sec:msec] frame number, pupil size [mm], offset horizontal [pxx], offset vertical [pxy] \n");
 
 			for (size_t i = 0; i < GazePX.size(); i++) {
-				fprintf(pFile, "%d\t%2.2f\t%2.1f\t%2.1f\n", i, PupilDia[PupilDia.size() - GazePX.size() + i], GazePX[i].x, GazePX[i].y);
+				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], GazePX[i].x, GazePX[i].y);
 			}
 
 			fclose(pFile);
@@ -366,4 +381,28 @@ BOOL Gaze::OnEraseBkgnd(CDC* pDC)
 
 	return true;
 
+}
+
+void Gaze::addTimeStamp(SYSTEMTIME t) {
+
+	TimeStamps.push_back(t);
+}
+
+void Gaze::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	if (nIDEvent && ready)
+	{
+		if (g_mutex.try_lock()) {
+			offset.x = GazePX.back().x;
+			offset.y = GazePX.back().y;
+			current.x = Pupil.back().x;
+			current.y = Pupil.back().y;
+			locked.x = FrozenPupil.back().x;
+			locked.y = FrozenPupil.back().y;
+		  g_mutex.unlock();
+		}
+	}
+
+	CStatic::OnTimer(nIDEvent);
 }

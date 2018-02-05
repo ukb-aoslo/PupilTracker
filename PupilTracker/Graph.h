@@ -19,8 +19,8 @@ private:
 	bool frozen;
 	
 	LRESULT OnUpdateControl(WPARAM wParam, LPARAM lParam);
-
 	std::vector<double>PupilDia;
+
 	void Paint(CDC* dc);
 
 protected:

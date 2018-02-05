@@ -11,6 +11,7 @@ using namespace DShowLib;
 
 BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_WM_PAINT()
+	ON_WM_CLOSE()
 	ON_WM_DESTROY()
 	ON_WM_SHOWWINDOW()
 	ON_WM_CREATE()
@@ -73,11 +74,10 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 
 CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 {
-
+	
 	delete m_wndView;
 	delete m_pParams;
-	//delete m_pListener;
-
+	
 }
 
 void CPupilTrackerMainFrame::setSink() {
@@ -240,15 +240,22 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 
 void CPupilTrackerMainFrame::OnClose()
 {
-	
 
-	CFrameWnd::OnClose();
+	// If live video is running, stop it.
+
+
+	if (m_cGrabber.isDevValid() && m_cGrabber.isLive())
+	{
+		m_cGrabber.stopLive();
+	}
 
 	if (m_cGrabber.isDevOpen())
 	{
 		m_cGrabber.closeDev();
 	}
 
+
+	CFrameWnd::OnClose();
 
 }
 
@@ -351,6 +358,7 @@ void CPupilTrackerMainFrame::OnStop()
 			{
 				AfxMessageBox(m_cGrabber.getLastError().toStringW().c_str());
 			}
+
 		}
 
 	}
@@ -360,12 +368,12 @@ void CPupilTrackerMainFrame::OnStop()
 
 void CPupilTrackerMainFrame::OnDestroy()
 {
-
+	
 	WINDOWPLACEMENT wp;
 	GetWindowPlacement(&wp);
 	AfxGetApp()->WriteProfileBinary(L"Settings", L"WP", (LPBYTE)&wp, sizeof(wp));
 
-	//CFrameWnd::OnDestroy();
+	CFrameWnd::OnDestroy();
 
 	// TODO: Add your message handler code here
 }
@@ -405,6 +413,7 @@ void CPupilTrackerMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
 	m_cGrabber.startLive();
 	reAdjustView();
 
+	m_wndView->m_pWndGaze->SetTimer(1, 333, NULL);
 }
 
 void CPupilTrackerMainFrame::reAdjustView(){
@@ -536,6 +545,7 @@ void CPupilTrackerMainFrame::OnViewParameters()
 
 void CPupilTrackerMainFrame::setParams()
 {
+	
 	UINT n;
 	LPBYTE ppData;
 	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
@@ -544,9 +554,13 @@ void CPupilTrackerMainFrame::setParams()
 		s->threshold = (BYTE)ppData[0];
 	}
 
+	delete ppData;
+
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_opts", &ppData, &n)) {
 		s->opts = (BYTE)ppData[0];
 	}
+
+	delete ppData;
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_bufsize", &ppData, &n)) {
 		s->buf_size = (BYTE)ppData[0];
