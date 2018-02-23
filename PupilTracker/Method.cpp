@@ -36,6 +36,18 @@ Method::~Method()
 	}
 }
 
+void Method::refresh() {
+	CString listener = getActive();
+	
+	for (auto it = this->begin(); it != this->end(); ++it) {
+		if (it->name == listener) {
+			this->erase(it);
+			this->Method::Method();
+			return;
+		}
+	}
+}
+
 void Method::setActive(CString name) {
 	for (auto it = this->begin(); it != this->end(); ++it) {
 		if (it->name == name)
@@ -43,6 +55,15 @@ void Method::setActive(CString name) {
 		else
 			it->active = false;
 	}
+}
+
+CString Method::getActive() {
+	for (auto it = this->begin(); it != this->end(); ++it) {
+		if (it->active)
+			return it->name;
+	}
+
+	return L"N/A";
 }
 
 void* Method::getListener()

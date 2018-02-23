@@ -23,6 +23,8 @@ private:
 
 	void Paint(CDC* dc);
 
+public:
+
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

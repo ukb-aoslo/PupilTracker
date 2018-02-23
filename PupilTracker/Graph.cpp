@@ -41,7 +41,7 @@ void Graph::freeze() {
 		frozen_pupil = PupilDia.back();
 	}
 
-	else {
+	else{
 		frozen = false;
 		PupilDia.clear();
 		frame_count = 0;

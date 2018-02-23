@@ -320,7 +320,6 @@ void Gaze::addFrozenPupil(double x, double y)
 }
 
 void Gaze::stop() {
-	if (record) Save();
 	GazePX.clear();
 	TimeStamps.clear();
 	Pupil.clear();
@@ -343,7 +342,6 @@ void Gaze::Save()
 	if (cFileDlg.DoModal() == IDOK)
 	{
 		szFileName = cFileDlg.GetPathName();
-		MessageBox(szFileName, _T("Would you like to save your data to this file?"), MB_ICONINFORMATION | MB_OK | MB_DEFBUTTON1);
 		_wfopen_s(&pFile, szFileName, L"w");
 
 		if (pFile)
@@ -354,15 +352,17 @@ void Gaze::Save()
 			fprintf(pFile, "********** Offset Tracker Data												 **********\n");
 			fprintf(pFile, "***************************************************************************************\n\n");
 
-			fprintf(pFile, "\nNOTE: offset data are in (sub)pixels, measured from the distance of pupil center to Purkinje image center\n");
+			fprintf(pFile, "\nNOTE: offset data is in (sub)pixels\n");
 
-			fprintf(pFile, "\n\ndata are: time [hour:min:sec:msec] frame number, pupil size [mm], offset horizontal [pxx], offset vertical [pxy] \n");
+			fprintf(pFile, "\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], center offset horizontal [pxx], center offset vertical [pxy] \n");
 
 			for (size_t i = 0; i < GazePX.size(); i++) {
-				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], GazePX[i].x, GazePX[i].y);
+				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\t%2.1f\t%2.1f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], Pupil[i].x, Pupil[i].y, GazePX[i].x, GazePX[i].y);
 			}
 
 			fclose(pFile);
+			
+			MessageBox(szFileName, _T("Data saved!"), MB_ICONINFORMATION | MB_OK | MB_DEFBUTTON1);
 
 		}
 

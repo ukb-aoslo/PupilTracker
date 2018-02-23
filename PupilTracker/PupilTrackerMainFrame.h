@@ -2,6 +2,7 @@
 #include "afxwin.h"
 #include "Gaze.h"
 #include "Graph.h"
+#include "Schaeffel.h"
 #include "ChildView.h"
 #include "Method.h"
 #include "Parameters.h"
@@ -15,10 +16,12 @@ public:
 	~CPupilTrackerMainFrame();
 
 	DShowLib::Grabber					m_cGrabber;		// The instance of the Grabber class.
-
-	Method								m_cMethod;		// Tracking method will be managed by this object.
 	smart_ptr<FrameHandlerSink>			m_pSink;
-	CListener*							m_pListener;
+	smart_ptr<MemBufferCollection>		m_pMemBuf;
+	Schaeffel*							m_pListener;
+	Gaze*								m_pGaze;
+	Graph*								m_pGraph;
+	smart_com<IFrameFilter>				m_pDeBayer;
 	Parameters*							m_pParams;
 	bool								m_cGazeOn, m_cGraphOn;
 
@@ -26,6 +29,8 @@ public:
 	void drawOverlay(DShowLib::tPathPosition pos);
 	void setSink();
 	void reAdjustView();
+	void setFilter();
+	void initCam();
 	
 protected:
 	
@@ -34,6 +39,8 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
 	DECLARE_MESSAGE_MAP()
+
+
 
 	void OnPlay();
 	void OnStop();
@@ -45,15 +52,17 @@ protected:
 	CToolBar    m_wndToolBar;
 		
 public:
+
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
+	void setParams();
+
 	afx_msg void OnBnClickedButtondevice();
 	afx_msg void OnBnClickedButtonimagesettings();
-	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnDestroy();
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 	afx_msg void OnViewParameters();
-	void setParams();
 	afx_msg void OnRecord();
 	afx_msg void OnUpdateRecord(CCmdUI *pCmdUI);
+
 };

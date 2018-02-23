@@ -16,11 +16,12 @@ public:
 	~Method();
 
 	void setActive(CString name);
+	CString getActive();
 	
 	void*										getListener();
 	Graph*										getGraph();
 	Gaze*										getGaze();
-
+	void refresh();
 
 protected:
 	

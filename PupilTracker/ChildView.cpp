@@ -11,12 +11,12 @@ IMPLEMENT_DYNAMIC(CChildView, CWnd)
 
 CChildView::CChildView(CPupilTrackerMainFrame* parent): m_pParent(parent)
 {
+	m_pWndGaze = m_pParent->m_pGaze;
+	m_pWndGraph = m_pParent->m_pGraph;
 }
 
 CChildView::~CChildView()
 {
-	//m_pWndGaze = NULL;
-	//m_pWndGraph = NULL;
 }
 
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
@@ -25,11 +25,6 @@ END_MESSAGE_MAP()
 
 // ChildView message handlers
 
-void CChildView::connectWnd(Method* m)
-{
-	m_pWndGaze = m->getGaze();
-	m_pWndGraph = m->getGraph();
-}
 
 BOOL CChildView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext)
 {

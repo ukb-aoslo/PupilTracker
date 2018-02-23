@@ -16,7 +16,7 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 {
 	m_pParent = pParent;
 	m_pPupilTracker = (CPupilTrackerMainFrame*)m_pParent;
-	s = (Schaeffel*)m_pPupilTracker->m_cMethod.getListener();
+	s = (Schaeffel*)m_pPupilTracker->m_pListener;
 	thresh = &s->threshold;
 	cur_thresh = s->threshold;
 	spot_size = &s->spot_size;

@@ -34,13 +34,20 @@ static UINT indicators[] =
 
 CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	// Set active tracking method
-	m_cMethod.setActive(L"Schaeffel");
+	
 	m_cGazeOn = true;
 	m_cGraphOn = true;
-		
+
 	// Add the C object to the the Grabber object
-	m_pListener = reinterpret_cast<CListener*>(m_cMethod.getListener());
+	m_pGaze = new Gaze();
+	m_pGraph = new Graph();
+	m_pListener = new Schaeffel(m_pGaze, m_pGraph);
+	
+	// Add listener(s) to grabber
 	m_cGrabber.addListener(m_pListener, DShowLib::GrabberListener::eOVERLAYCALLBACK | DShowLib::GrabberListener::eFRAMEREADY);
+	
+	// Set filter
+	//setFilter();
 
 	// Set the sink
 	setSink();
@@ -71,23 +78,77 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 
 }
 
-
 CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 {
-	
+	delete m_pListener;
+	delete m_pGaze;
+	delete m_pGraph;
 	delete m_wndView;
 	delete m_pParams;
 	
 }
 
+void CPupilTrackerMainFrame::initCam() {
+
+	Grabber::tVidCapDevListPtr pVidCapDevList = m_cGrabber.getAvailableVideoCaptureDevices();
+	if (pVidCapDevList == 0 || pVidCapDevList->empty())
+	{
+		AfxMessageBox(L"No signal found! Please plugin camera.", MB_OK); // No device available.
+	}
+
+	m_cGrabber.openDev(pVidCapDevList->at(0));
+
+	// Now retrieve the video formats.
+
+	Grabber::tVidFmtListPtr pVidFmtList = m_cGrabber.getAvailableVideoFormats();
+	if (pVidFmtList == 0) // No video formats available?
+	{
+		std::string str = "Error : " + m_cGrabber.getLastError().toString();
+		AfxMessageBox((CString)str.c_str(), MB_OK);
+
+	}
+
+	std::string format, required;
+
+	for (auto it = pVidFmtList->begin(); it != pVidFmtList->end(); it++) {
+		format = it->toString();
+		if (format == "Y800 (640x480)")
+			required = format;
+	}
+
+	if (!m_cGrabber.setVideoFormat(required))
+		AfxMessageBox(L"Couldn't switch to the required video format!", MB_OK);
+
+}
+
+void CPupilTrackerMainFrame::setFilter() {
+
+
+	// Get a list with all available frame filters.
+	std::vector<FilterInfo> filterInfos = FilterLoader::getAvailableFrameFilters(eFC_ALL);
+
+	// Get the index of the currently selected filter.
+	if (filterInfos.size() > 0)
+	{
+		
+		// Filters can only be set when live mode is stopped.
+		bool bIsLive = m_cGrabber.isLive();
+		if (bIsLive)
+			m_cGrabber.stopLive();
+
+		// Create the new filter instances.
+		m_pDeBayer = FilterLoader::createFilter("DeNoise");
+		m_cGrabber.setDeviceFrameFilters(m_pDeBayer.get());
+
+	}
+
+}
+
+
 void CPupilTrackerMainFrame::setSink() {
 
-	// Create a FrameTypeInfoArray data structure describing the allowed color formats.
-	FrameTypeInfoArray acceptedTypes = FrameTypeInfoArray::createRGBArray();
-
 	// Create the frame handler sink
-	//smart_ptr<FrameHandlerSink> pSink = FrameHandlerSink::create(acceptedTypes, 5);
-	 m_pSink = FrameHandlerSink::create(eRGB8, 5);
+	m_pSink = FrameHandlerSink::create(eRGB8, 5);
 
 	// disable snap mode (formerly tFrameGrabberMode::eSNAP).
 	m_pSink->setSnapMode(false);
@@ -279,36 +340,6 @@ void CPupilTrackerMainFrame::updateWindowTitle()
 	SetWindowText(title);
 }
 
-void CPupilTrackerMainFrame::OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags)
-{
-	// TODO: Add your message handler code here and/or call default
-
-	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
-	TRACE("Taste %d\n", nChar); // Nur zur Ausgabe des Tastencodes.
-
-	if (nChar == 32) // Leertaste
-	{
-		if (m_cGrabber.isDevValid())
-		{
-			if (m_cGrabber.isLive())
-			{
-				// OnStop();
-				s->freezePupil();
-			}
-			else
-			{
-				// Call startLive with "false", because the live display is done
-				// by the CListener object.
-				m_cGrabber.startLive(false);
-			}
-	
-		}
-	}
-
-	delete s;
-	CFrameWnd::OnKeyUp(nChar, nRepCnt, nFlags);
-}
-
 void CPupilTrackerMainFrame::OnPlay()
 {
 	if (m_cGrabber.isLive())
@@ -414,6 +445,7 @@ void CPupilTrackerMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
 	reAdjustView();
 
 	m_wndView->m_pWndGaze->SetTimer(1, 333, NULL);
+
 }
 
 void CPupilTrackerMainFrame::reAdjustView(){
@@ -451,10 +483,13 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
-
+	
 	// Try to load the previously used video capture device.
 	if (!m_cGrabber.loadDeviceStateFromFile("device.xml"))
 		m_cGrabber.showDevicePage(this->m_hWnd);
+
+	// must be done here, not in constructor like it should
+	initCam();
 
 	if (!m_wndStatusBar.Create(this) ||
 		!m_wndStatusBar.SetIndicators(indicators,
@@ -479,7 +514,6 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Attach View to active tracking Method
 	m_wndView = new CChildView(this);
-	m_wndView->connectWnd(&m_cMethod);
 
 	// create a view to occupy the client area of the frame
 	if (!m_wndView->Create(NULL, NULL, WS_VISIBLE | WS_CHILD, CRect(), this, AFX_IDW_PANE_FIRST, NULL))
@@ -495,9 +529,9 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		MessageBox(error, L"Error", MB_ICONERROR);
 	}
 
-	m_cGrabber.getOverlay(ePP_DEVICE)->setColorMode(OverlayBitmap::eBESTFIT);
-	m_cGrabber.getOverlay(ePP_SINK)->setColorMode(OverlayBitmap::eGRAYSCALE);
-	m_cGrabber.getOverlay(ePP_DISPLAY)->setColorMode(OverlayBitmap::eBESTFIT);
+	//m_cGrabber.getOverlay(ePP_DEVICE)->setColorMode(OverlayBitmap::eBESTFIT);
+	//m_cGrabber.getOverlay(ePP_SINK)->setColorMode(OverlayBitmap::eGRAYSCALE);
+	m_cGrabber.getOverlay(ePP_DISPLAY)->setColorMode(OverlayBitmap::eCOLOR);
 	drawOverlay(ePP_DISPLAY);
 
 	if (m_cGrabber.getLastError().isError())
@@ -514,17 +548,17 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: Add your specialized code here and/or call the base class
 
-	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
-
 	if (pMsg->message == WM_KEYDOWN)
 	{
 		switch (pMsg->wParam) {
 		case VK_SPACE:
 		
+			
 			if (m_cGrabber.isDevValid() && m_cGrabber.isLive()) {
-				s->freezePupil();
-				m_cMethod.getGraph()->freeze();
+				m_pListener->freezePupil();
+				m_pGraph->freeze();
 			}
+
 			break;
 		}
 		
@@ -548,22 +582,33 @@ void CPupilTrackerMainFrame::setParams()
 	
 	UINT n;
 	LPBYTE ppData;
-	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
-
+	
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_thresh", &ppData, &n)) {
-		s->threshold = (BYTE)ppData[0];
+		m_pListener->threshold = (BYTE)ppData[0];
 	}
 
 	delete ppData;
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_opts", &ppData, &n)) {
-		s->opts = (BYTE)ppData[0];
+		m_pListener->opts = (BYTE)ppData[0];
 	}
 
 	delete ppData;
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_bufsize", &ppData, &n)) {
-		s->buf_size = (BYTE)ppData[0];
+		m_pListener->buf_size = (BYTE)ppData[0];
+	}
+	
+	delete ppData;
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_spotsize", &ppData, &n)) {
+		m_pListener->spot_size = (BYTE)ppData[0];
+	}
+
+	delete ppData;
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_boxsize", &ppData, &n)) {
+		m_pListener->box_size = (BYTE)ppData[0];
 	}
 
 	delete ppData;
@@ -575,19 +620,24 @@ void CPupilTrackerMainFrame::OnRecord()
 {
 	// TODO: Add your command handler code here
 	
-	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
-	s->m_pGaze->record? s->m_pGaze->record = false: s->m_pGaze->record = true;
+	if (m_pListener->m_pGaze->record == true) {
+		m_pListener->m_pGaze->record = false;
+		OnStop();
+		m_pListener->m_pGaze->Save();
+		OnPlay();
+	}
+	else
+		m_pListener->m_pGaze->record = true;
 
 }
+
 
 
 void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
-	Schaeffel* s = dynamic_cast<Schaeffel*>(m_pListener);
-	
-	if (s->m_pGaze->record == true) pCmdUI->SetCheck(1);
-	else
+	if (m_pGaze->record)
+		pCmdUI->SetCheck(1);
+	else 
 		pCmdUI->SetCheck(0);
-
 }

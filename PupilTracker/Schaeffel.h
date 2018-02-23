@@ -18,11 +18,7 @@ public:
 
 	Gaze* m_pGaze;
 	Graph* m_pGraph;
-
-	void freezePupil();
-	void reduceJitter();
-	double getMedian(std::deque<double> val);
-
+	
 	SIZE dim;							// video size
 
 	short opts;							// checkbox options for overlay items
@@ -33,10 +29,14 @@ public:
 	
 	std::deque<double>pupil_rightBuf;	// buffers for jitter reduction in overlay
 	double pBuf;						// median of pupil buffer
+	double xBuf;						// median of ave_x_right buffer
+	double yBuf;						// median of ave_y_right buffer
 	bool bufchange;						// take into account live parameter change
 
 	int m_iBitmapWidth;
 	int m_iBitmapHeight;
+
+	int display;						// small frames counter
 
 	double magnif;						// magnification of the video image (pixel/mm)
 	BYTE box_size;
@@ -48,25 +48,28 @@ public:
 
 	int Width, Height;					// video frame size
 	
-	int pixel[1024];					// to read pixels at certain places for ave_brightness
+	//int pixel[1024];					// to read pixels at certain places for ave_brightness
 
 	int x[10000], y[10000], max;		// to mark pixels brighter than factor*m_ave_bright
-	int xp[1000], yp[1000], xyp;		// to find pixels in a pupil
-	
+	int xp[10000], yp[10000], xyp;		// to find pixels in a pupil
+
 	// for pupil center coarse and fine
 	double ave_xp_right, ave_yp_right;	// coarse pupil centers
 	double ave_x_right, ave_y_right;	// precision pupil centers
 
 	std::deque<double>ave_x_rightBuf;	// buffers for jitter reduction in overlay
 	std::deque<double>ave_y_rightBuf;
-	double xBuf;						// median of ave_x_right buffer
-	double yBuf;						// median of ave_y_right buffer
-
+	
 	// freeze stuff
 	bool frozen;
 	double ave_x_right_fr, ave_y_right_fr;
 	double pupil_right_fr;
 
+public:
+
+	void freezePupil();
+	void reduceJitter();
+	double getMedian(std::deque<double> val);
 
 protected:
 	

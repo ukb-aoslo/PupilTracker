@@ -9,17 +9,19 @@ Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 	pBuf = 0;
 	xBuf = 0;
 	yBuf = 0;
+	display = 0;
 	m_pGaze = gz;
 	m_pGraph = gr;
 	frozen = false;
 	threshold = 50;
 	spot_size = 30;
-	box_size = 130;
+	box_size = 230; // was: 130
 	buf_size = 40;
 	bufchange = false;
 	frames = 0;
-	magnif = (float)15.5114;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
+	magnif = (double)32.2;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
 									// old magnif was 26.8
+
 }
 
 
@@ -29,36 +31,40 @@ Schaeffel::~Schaeffel()
 
 void Schaeffel::frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber)
 {
+	pBuffer->lock();
 
-	if (bufchange && g_mutex.try_lock()) {				// buffer changed?
+		if (bufchange && g_mutex.try_lock()) {				// buffer change?
 
-			pupil_rightBuf.clear();
-			ave_x_rightBuf.clear();
-			ave_y_rightBuf.clear();
-			bufchange = false;
-			g_mutex.unlock();
+				pupil_rightBuf.clear();
+				ave_x_rightBuf.clear();
+				ave_y_rightBuf.clear();
+				bufchange = false;
+				g_mutex.unlock();
 
-	}
-
-	if (g_mutex.try_lock()) {
-		// go find that pupil
-		DoImageProcessing(pBuffer);
-
-		// reduce pupil jitter if desired
-		if (buf_size > 2) reduceJitter();
-		else {
-			pBuf = pupil_right;
-			xBuf = ave_x_right;
-			yBuf = ave_y_right;
 		}
 
-		g_mutex.unlock();
-	}
+		if (g_mutex.try_lock()) {
+
+			// go find that pupil
+			DoImageProcessing(pBuffer);
+
+			// reduce pupil jitter if desired
+			if (buf_size > 2) reduceJitter();
+			else {
+				pBuf = pupil_right;
+				xBuf = ave_x_right;
+				yBuf = ave_y_right;
+			}
+
+			g_mutex.unlock();
+		}
+
+	pBuffer->unlock();
 
 
+	// now it's time for updating other windows as well
 	PostMessage(m_pGraph->GetSafeHwnd(), WM_UPDATE_CONTROL, 0, 0);
 	PostMessage(m_pGaze->GetSafeHwnd(), WM_UPDATE_CONTROL, 0, 0);
-
 
 }
 
@@ -75,8 +81,14 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 
 	BYTE* pImageData = pBuffer->getPtr();
 
-	//// Calculate the size of the image.
-	int iImageSize = pInf->biWidth * pInf->biHeight * pInf->biBitCount / 8;
+	int planes = pInf->biPlanes;
+
+	if (planes > 1) {
+		AfxMessageBox(_T("Wrong color format!\n 8-bit mono !"), MB_ICONERROR);
+		PostQuitMessage(0);
+
+	}
+
 
 	// make negative image for black pupil tracker
 	//for (int i = 0; i < iImageSize; i++)
@@ -86,6 +98,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	//}
 
 	Width = pInf->biWidth; Height = pInf->biHeight; // load video format in global variables
+
 
 	// now read pixels only in certain places to determine average brightness
 	// but ignore specular refractions (> 250)
@@ -133,6 +146,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 			}
 		}
 	}
+
 	max = n;
 
 
@@ -176,11 +190,10 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		{
 			xp[n] = x[i];			// xp[i] and yp[i] are now from pixels supposed to be 
 			yp[n] = y[i];			// in the pupil - global variables, defined in listener.h
-			if (n < 1000)n++;
+			if (n < 10000)n++;
 		}
 
 	}
-
 
 	xyp = n;						// xyp: number pixels for which the condition is true
 
@@ -207,38 +220,85 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		ave_yp_right = ave_yp_right / n_right; // of the right pupil centers
 	}
 
+
+
+
 	// step 4: find center of pupils with high precision
 	// * take center of mass of all bright pixels in an area of box_size
 	//   around the pupils centers located in step 3 
 	// * determine pupil radius from number of bright pixels
 	// * detect first Purkinje image
 
+
+	//ave_x_right = 0, ave_y_right = 0; // high resolution coordinates
+	//n_right = 0;
+	//pupil_right = 0;	// number of pixels whose 
+	//					// positions are averaged (same variables as already used in step 3)
+	//int bright;        // pixels that are presumed to belong to the pupil
+
+
+	//// right eye
+	//if (ave_xp_right > 0)
+	//{
+	//	for (ii = 0; ii < box_size; ii++)
+	//	{
+	//		for (i = 0; i < box_size; i++)
+	//		{
+	//			bright = pImageData[((int)ave_yp_right - box_size / 2 + ii) * Width + (int)ave_xp_right - box_size / 2 + i];
+
+	//			if (bright > threshold) // locate pixels that are brighter than threshold 
+	//			{
+	//				ave_x_right = ave_x_right + (ave_xp_right - (double)(box_size / 2) + i);
+	//				ave_y_right = ave_y_right + (ave_yp_right - (double)(box_size / 2) + ii);
+
+	//				n_right++;
+
+	//			}
+	//		}
+
+	//	}
+	//}
+
+
+
+
+	// OUR NEW step 4
+
+	double pupil_dia = 2 * (sqrt(double(n_right * 25) / PI));
+	int searchbox = (int)(pupil_dia + spot_size * 2.2);
+	
 	ave_x_right = 0, ave_y_right = 0; // high resolution coordinates
 	n_right = 0;
 	pupil_right = 0;	// number of pixels whose 
 						// positions are averaged (same variables as already used in step 3)
-
-
 	int bright;        // pixels that are presumed to belong to the pupil
+	int inPupil;		// check valid pImageData range
 
-	// right eye
 	if (ave_xp_right > 0)
 	{
-		for (ii = 0; ii < box_size; ii++)
+		for (ii = 0; ii < searchbox; ii++)
 		{
-			for (i = 0; i < box_size; i++)
+			for (i = 0; i < searchbox; i++)
 			{
-				bright = pImageData[((int)ave_yp_right - box_size / 2 + ii) * Width + (int)ave_xp_right - box_size / 2 + i];
+				inPupil = ((int)ave_yp_right - searchbox / 2 + ii) * Width + (int)ave_xp_right - searchbox / 2 + i;
+				if (inPupil > dim.cx * dim.cy || inPupil < 0)
+					break;
+				bright = pImageData[inPupil];
 
 				if (bright > threshold) // locate pixels that are brighter than threshold 
 				{
-					ave_x_right = ave_x_right + (ave_xp_right - (float)(box_size / 2) + i);
-					ave_y_right = ave_y_right + (ave_yp_right - (float)(box_size / 2) + ii);
+					ave_x_right = ave_x_right + (ave_xp_right - (double)(searchbox / 2) + i);
+					ave_y_right = ave_y_right + (ave_yp_right - (double)(searchbox / 2) + ii);
+
 					n_right++;
+
 				}
 			}
+
 		}
 	}
+
+	
 
 	// right eye
 	if (n_right > 0) // verify that some pixels were found
@@ -247,8 +307,9 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		ave_y_right = ave_y_right / ((double)n_right);
 
 
-		// pupil radius in Pixels determined from n_right: circle area pi*r*r
-		pupil_right = (2 * (2 + sqrt(double(n_right) / PI)));
+		// pupil diameter in Pixels determined from n_right: circle area pi*r*r
+		pupil_right = 2 * ( sqrt(double(n_right) / PI));
+	
 	}
 
 	else
@@ -258,6 +319,13 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		ave_y_right = 0;
 
 	}
+
+
+	//// ADDED to test step 5 
+	//ave_x_right = ave_xp_right;
+	//ave_y_right = ave_yp_right;
+	//pupil_right = 2 * (sqrt(double(n_right*25) / PI));
+
 
 	// step 5: take x and y coordinate of pupil center as a measure of gaze position
 
@@ -277,6 +345,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		
 	};
 
+
 }
 
 void Schaeffel::freezePupil() {
@@ -290,6 +359,10 @@ void Schaeffel::freezePupil() {
 		m_pGaze->addFrozenPupil(ave_x_right_fr, ave_y_right_fr);
 	}
 	else
+		if (m_pGaze->record) {
+			m_pGaze->Save();
+			m_pGaze->record = false;
+		}
 		m_pGaze->stop();
 
 }
@@ -358,8 +431,8 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 		//
 
 		// mark pixels yellow that are darker than 0.52 *ave
-
-		/*for(i = 0; i < max; i++)
+/*
+		for(i = 0; i < max; i++)
 		pBitmap->drawLine(RGB(255, 255, 0), x[i]-1, Height-y[i]-1, x[i]+1, Height-y[i]+1);*/
 
 		// pixels supposed to be in the pupil
@@ -367,11 +440,11 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 		if (opts & PupilPixels)
 			for (i = 0; i < xyp; i++)
 				//Ellipse( memDC, x_shift+xp[i]-5, Height-yp[i]-5, x_shift+xp[i]+5, Height-yp[i]+5);
-				pBitmap->drawFrameEllipse(RGB(255, 255, 0), CRect(
-					xp[i] - 5,
-					Height - yp[i] - 5,
-					xp[i] + 5,
-					Height - yp[i] + 5)
+				pBitmap->drawFrameEllipse(RGB(255, 0, 255), CRect(
+					xp[i]-1 ,
+					Height - yp[i]-1,
+					xp[i]+1,
+					Height - yp[i]+1)
 				);
 
 		// draw pupil outline
@@ -381,6 +454,12 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 			Height - (int)yBuf - (int)pBuf / 2,
 			(int)xBuf + (int)pBuf / 2,
 			Height - (int)yBuf + (int)pBuf / 2));
+
+		//pBitmap->drawFrameEllipse(RGB(0,255,0), CRect(
+		//	(int)ave_x_right - (int)pupil_right / 2,
+		//	Height - (int)ave_y_right - (int)pupil_right / 2,
+		//	(int)ave_x_right + (int)pupil_right / 2,
+		//	Height - (int)ave_y_right + (int)pupil_right / 2));
 
 		// draw pupil center
 
@@ -429,13 +508,25 @@ void Schaeffel::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 	}
 
+	
+	if (m_pGaze->record == true) {
+		if (display < 20) {
+			szText = "REC";
+			pBitmap->drawText(RGB(255, 255, 255), dim.cx - 40, 37, LPCTSTR(szText));
+			pBitmap->drawSolidEllipse(RGB(255, 0, 0), CRect(dim.cx - 55, 40, dim.cx - 44, 51));
+			display++;
+		}
+		if (frames % 40 == 0)
+				display = 0;
+	}
+
 }
 
 void Schaeffel::reduceJitter() {
 
 
 	// pupil cache
-	while (pupil_rightBuf.size() != buf_size) {
+	while (pupil_rightBuf.size() < buf_size) {
 		pupil_rightBuf.push_back(pupil_right);
 	}
 
@@ -445,7 +536,7 @@ void Schaeffel::reduceJitter() {
 	pBuf = getMedian(pupil_rightBuf);
 
 	// ave_x cache
-	while (ave_x_rightBuf.size() != buf_size) {
+	while (ave_x_rightBuf.size() < buf_size) {
 		ave_x_rightBuf.push_back(ave_x_right);
 	}
 
@@ -455,7 +546,7 @@ void Schaeffel::reduceJitter() {
 	xBuf = getMedian(ave_x_rightBuf);
 
 	// ave_y cache
-	while (ave_y_rightBuf.size() != buf_size) {
+	while (ave_y_rightBuf.size() < buf_size) {
 		ave_y_rightBuf.push_back(ave_y_right);
 	}
 

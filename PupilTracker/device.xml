@@ -1,16 +1,16 @@
 <device_state libver="3.4" filemajor="1" fileminor="0">
     <device name="DMK 23UV024" base_name="DMK 23UV024" unique_name="DMK 23UV024 22710305">
-        <videoformat>RGB24 (640x480)</videoformat>
+        <videoformat>Y800 (640x480)</videoformat>
         <fps>100.</fps>
         <vcdpropertyitems>
             <item guid="{284C0E06-010B-45BF-8291-09D90A459B28}" name="Brightness">
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="0" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="3" />
                 </element>
             </item>
             <item guid="{284C0E07-010B-45BF-8291-09D90A459B28}" name="Contrast">
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="0" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="11" />
                 </element>
             </item>
             <item guid="{284C0E0A-010B-45BF-8291-09D90A459B28}" name="Sharpness">
@@ -28,7 +28,7 @@
                     <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E04}" value="0" />
                 </element>
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E08}" value="3.270000000000000017763568394" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E08}" value="3.00999999999999978683717927197" />
                 </element>
             </item>
             <item guid="{90D5702E-E43B-4366-AAEB-7A7A10B448B4}" name="Exposure">
@@ -36,13 +36,10 @@
                     <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E04}" value="0" />
                 </element>
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E08}" value="1.491400040686130523681640625e-02" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E08}" value="1.35329999029636383056640625e-02" />
                 </element>
                 <element guid="{65190390-1AD8-4E91-9021-66D64090CC85}" name="Auto">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E04}" value="0" />
-                </element>
-                <element guid="{6519038F-1AD8-4E91-9021-66D64090CC85}" name="Auto Max Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E08}" value="9.99999977648258209228515625e-03" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E04}" value="1" />
                 </element>
                 <element guid="{6519038C-1AD8-4E91-9021-66D64090CC85}" name="Auto Reference">
                     <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="128" />

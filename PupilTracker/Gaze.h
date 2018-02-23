@@ -25,7 +25,6 @@ private:
 
 	LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam);
 
-
 public:
 	Gaze();
 	~Gaze();
