@@ -19,8 +19,8 @@ Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 	buf_size = 40;
 	bufchange = false;
 	frames = 0;
-	magnif = (double)32.2;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
-									// old magnif was 26.8
+	magnif = (double)34.2;	    // magnification pixel per mm for helmet gaze tracker Oct 26, 2005
+								// old magnif was 26.8
 
 }
 
