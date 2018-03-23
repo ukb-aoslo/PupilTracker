@@ -628,6 +628,7 @@ void CPupilTrackerMainFrame::OnRecord()
 	}
 	else
 		m_pListener->m_pGaze->record = true;
+		m_pListener->m_pGaze->recIndex = m_pGaze->getGazePxSize();
 
 }
 

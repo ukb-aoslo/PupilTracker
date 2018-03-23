@@ -356,7 +356,7 @@ void Gaze::Save()
 
 			fprintf(pFile, "\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], center offset horizontal [pxx], center offset vertical [pxy] \n");
 
-			for (size_t i = 0; i < GazePX.size(); i++) {
+			for (size_t i = recIndex; i < GazePX.size(); i++) {
 				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\t%2.1f\t%2.1f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], Pupil[i].x, Pupil[i].y, GazePX[i].x, GazePX[i].y);
 			}
 

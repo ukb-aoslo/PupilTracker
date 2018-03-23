@@ -184,6 +184,7 @@
     <ClInclude Include="PupilTrackerMainFrame.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="Schaeffel.h" />
+    <ClInclude Include="SockListener.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
@@ -196,12 +197,15 @@
     <ClCompile Include="PupilTracker.cpp" />
     <ClCompile Include="PupilTrackerMainFrame.cpp" />
     <ClCompile Include="Schaeffel.cpp" />
+    <ClCompile Include="SockClient.cpp" />
+    <ClCompile Include="SockListener.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="WinSock2Async.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PupilTracker.rc" />

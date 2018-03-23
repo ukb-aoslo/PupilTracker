@@ -32,6 +32,11 @@
 #include <queue>
 #include <iostream>
 #include <mutex>
+#include <WinSock2.h>
+#include "WinSock2Async.h"
+
+#define BUFFER_SIZE 1024
+
 
 // user defines
 #define PI (atan(1) * 4)

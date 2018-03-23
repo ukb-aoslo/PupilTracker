@@ -26,17 +26,22 @@ private:
 	LRESULT Gaze::OnUpdateControl(WPARAM wParam, LPARAM lParam);
 
 public:
+
 	Gaze();
 	~Gaze();
+	
+	bool record;
+	int recIndex;
+
 	void addPupilCenter(double x, double y);
 	void addPupilDia(double);
 	void addGazePX(double x, double y);
 	void addFrozenPupil(double x, double y);
 	void addTimeStamp(SYSTEMTIME t);
+	int getGazePxSize() {return GazePX.size();};
 	void stop();
 	void Save();
 	void Paint(CDC* dc);
-	bool record;
 
 protected:
 	DECLARE_MESSAGE_MAP()
