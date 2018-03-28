@@ -1,5 +1,6 @@
 // Gaze.cpp : implementation file
 #include "stdafx.h"
+#include "PupilTracker.h"
 #include "Gaze.h"
 #include "Schaeffel.h"
 
@@ -13,6 +14,7 @@ Gaze::Gaze()
 {
 	record = false;
 	conv = 9.3f;
+	current = offset = locked = { 0,0 };
 }
 
 Gaze::~Gaze()
@@ -93,7 +95,7 @@ void Gaze::Paint(CDC* dc)
 
 	// gaze x/y plot
 	SetTextColor(*dc, RGB(255, 255, 255));
-	szText.Format(TEXT("Pupil Offset [px]"));
+	szText.Format(TEXT("Pupil Offset [mm]"));
 	dc->TextOutW(rect.Width() / 2 - 50, 10, szText);
 
 	CFont* pOldFont = dc->GetCurrentFont();
@@ -118,9 +120,9 @@ void Gaze::Paint(CDC* dc)
 	dc->SelectObject(&newFont);
 
 	szText.Format(TEXT("x:"));
-	dc->TextOutW(rect.Width() / 2 - 55, rect.Height() / 10, szText);
+	dc->TextOutW(rect.Width() / 2 - 80, rect.Height() / 11, szText);
 	szText.Format(TEXT("y:"));
-	dc->TextOutW(rect.Width() / 2 + 35, rect.Height() / 10, szText);
+	dc->TextOutW(rect.Width() / 2 + 30, rect.Height() / 11, szText);
 
 	dc->SelectObject(pOldFont);
 
@@ -132,13 +134,13 @@ void Gaze::Paint(CDC* dc)
 	LineTo(*dc, rect.Width() / 2, rect.Height() - 97);
 
 	// labels gaze axes with numbers
-	szText.Format(TEXT("15 px"));
+	szText.Format(TEXT("0.43"));
 	dc->TextOutW(rect.Width() / 2 - 15, 80, szText);
 	dc->TextOutW(rect.Width() - 55, rect.Height() / 2 - 8, szText);
 
-	szText.Format(TEXT("-15 px"));
+	szText.Format(TEXT("-0.43"));
 	dc->TextOutW(rect.Width() / 2 - 19, rect.Height() - 97, szText);
-	dc->TextOutW(14, rect.Height() / 2 - 8, szText);
+	dc->TextOutW(22, rect.Height() / 2 - 8, szText);
 
 
 	DeleteObject(hPen);											// delete white pen
@@ -159,14 +161,14 @@ void Gaze::Paint(CDC* dc)
 
 	DeleteObject(hPen);											// delete gray pen
 
-	szText.Format(TEXT("Current Position"));
+	szText.Format(TEXT("Current Position [px]"));
 	dc->TextOutW(35, rect.Height() - 40, szText);
 	szText.Format(TEXT("x:"));
 	dc->TextOutW(35, rect.Height() - 20, szText);
 	szText.Format(TEXT("y:"));
 	dc->TextOutW(90, rect.Height() - 20, szText);
 
-	szText.Format(TEXT("Locked Positon"));
+	szText.Format(TEXT("Locked Positon [px]"));
 	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 40, szText);
 	szText.Format(TEXT("x:"));
 	dc->TextOutW(rect.Width() / 2 + 60, rect.Height() - 20, szText);
@@ -221,10 +223,10 @@ void Gaze::Paint(CDC* dc)
 		dc->SelectObject(&newFont);
 
 		// offset
-		szText.Format(TEXT("%.1f"), -1 * offset.x);
-		dc->TextOutW(rect.Width() / 2 - 35, rect.Height() / 10, szText);
-		szText.Format(TEXT("%.1f"), -1 * offset.y);
-		dc->TextOutW(rect.Width() / 2 + 55, rect.Height() / 10, szText);
+		szText.Format(TEXT("%.2f"), -1 * offset.x);
+		dc->TextOutW(rect.Width() / 2 - 60, rect.Height() / 11, szText);
+		szText.Format(TEXT("%.2f"), -1 * offset.y);
+		dc->TextOutW(rect.Width() / 2 + 50, rect.Height() / 11, szText);
 		dc->SelectObject(pOldFont);
 
 		// current position
@@ -233,7 +235,6 @@ void Gaze::Paint(CDC* dc)
 		dc->TextOutW(50, rect.Height() - 20, szText);
 		szText.Format(TEXT("%.1f"), current.y);
 		dc->TextOutW(105, rect.Height() - 20, szText);
-
 
 		// locked position
 		SetTextColor(*dc, RGB(255, 0, 255));
@@ -294,6 +295,12 @@ void Gaze::OnPaint() {
 
 }
 
+void Gaze::setMagnif(double m) {
+
+	magnif = m;
+
+}
+
 void Gaze::addPupilCenter(double x, double y)
 {
 	coords c{ x,y };
@@ -310,6 +317,10 @@ void Gaze::addGazePX(double x, double y)
 {
 	Gaze::coords c{ x,y };
 	GazePX.push_back(c);
+
+	c.x *= magnif;
+	c.y *= magnif;
+	GazeMM.push_back(c);
 	//std::cerr << "gaze in pixel size: " << GazePX.size() << "\n";
 }
 
@@ -328,6 +339,10 @@ void Gaze::stop() {
 
 void Gaze::Save()
 {
+	CString name, version;
+	CPupilTrackerApp* pApp = (CPupilTrackerApp*)AfxGetApp();
+	pApp->GetProductAndVersion(name, version);
+
 	CString szFileName;
 	FILE *pFile;
 	CFileDialog cFileDlg(
@@ -348,16 +363,18 @@ void Gaze::Save()
 		{
 			// this saves the data to the file
 
-			fprintf(pFile, "***************************************************************************************\n");
-			fprintf(pFile, "********** Offset Tracker Data												 **********\n");
-			fprintf(pFile, "***************************************************************************************\n\n");
+			fprintf(pFile, "**************************************************************************************\n");
+			fprintf(pFile, "********** %ls %ls Offset Tracker Data							**********\n", name.GetString(), version.GetString());
+			fprintf(pFile, "**************************************************************************************\n\n");
 
 			fprintf(pFile, "\nNOTE: offset data is in (sub)pixels\n");
+			fprintf(pFile, "\nMagnifiction [mm/px]: %2.15f", magnif);
+			fprintf(pFile, "\nLocked position [px]: x:%2.1f y:%2.1f", locked.x, locked.y);
 
-			fprintf(pFile, "\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], center offset horizontal [pxx], center offset vertical [pxy] \n");
+			fprintf(pFile, "\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], center offset horizontal [mm], center offset vertical [mm] \n\n");
 
 			for (size_t i = recIndex; i < GazePX.size(); i++) {
-				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\t%2.1f\t%2.1f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], Pupil[i].x, Pupil[i].y, GazePX[i].x, GazePX[i].y);
+				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\t%2.5f\t%2.5f\n", TimeStamps[i].wHour, TimeStamps[i].wMinute, TimeStamps[i].wSecond, TimeStamps[i].wMilliseconds, i, PupilDia[PupilDia.size() - GazePX.size() + i], Pupil[i].x, Pupil[i].y, GazeMM[i].x, GazeMM[i].y);
 			}
 
 			fclose(pFile);
@@ -394,8 +411,8 @@ void Gaze::OnTimer(UINT_PTR nIDEvent)
 	if (nIDEvent && ready)
 	{
 		if (g_mutex.try_lock()) {
-			offset.x = GazePX.back().x;
-			offset.y = GazePX.back().y;
+			offset.x = GazeMM.back().x;
+			offset.y = GazeMM.back().y;
 			current.x = Pupil.back().x;
 			current.y = Pupil.back().y;
 			locked.x = FrozenPupil.back().x;

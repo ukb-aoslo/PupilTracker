@@ -38,7 +38,8 @@ public:
 
 	int display;						// small frames counter
 
-	double magnif;						// magnification of the video image (pixel/mm)
+	double mm_per_pixel;				// mm / pixel
+	double magnif;						// magnification of the video image (pixel / mm)
 	BYTE box_size;
 
 	BYTE spot_size;						// minimal size of spot to be accepted

@@ -12,8 +12,11 @@ private:
 		double y;
 	};
 
+	double magnif;
+
 	std::vector<coords>Pupil;
 	std::vector<coords>GazePX;
+	std::vector<coords>GazeMM;
 	std::vector<coords>FrozenPupil;
 	std::vector<SYSTEMTIME>TimeStamps;
 	std::vector<double>PupilDia;
@@ -38,10 +41,14 @@ public:
 	void addGazePX(double x, double y);
 	void addFrozenPupil(double x, double y);
 	void addTimeStamp(SYSTEMTIME t);
-	int getGazePxSize() {return GazePX.size();};
+	void setMagnif(double m);
 	void stop();
 	void Save();
 	void Paint(CDC* dc);
+
+	int getGazePxSize() {
+		return GazePX.size();
+	};
 
 protected:
 	DECLARE_MESSAGE_MAP()
