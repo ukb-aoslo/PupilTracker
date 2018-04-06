@@ -38,7 +38,7 @@ public:
 
 	void addPupilCenter(double x, double y);
 	void addPupilDia(double);
-	void addGazePX(double x, double y);
+	void addGaze(double x, double y);
 	void addFrozenPupil(double x, double y);
 	void addTimeStamp(SYSTEMTIME t);
 	void setMagnif(double m);

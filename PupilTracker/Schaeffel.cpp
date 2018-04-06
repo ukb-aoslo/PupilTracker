@@ -335,17 +335,15 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	m_pGraph->addPupilDia(pupil_right / magnif);
 
 	if (frozen) {
-		
+
 		FILETIME ft;
 		SYSTEMTIME st;
 		GetSystemTimeAsFileTime(&ft);
 		FileTimeToSystemTime(&ft, &st);
 		GetLocalTime(&st);
 		m_pGaze->addTimeStamp(st);
-		m_pGaze->addGazePX(ave_x_right - ave_x_right_fr, (ave_y_right - ave_y_right_fr));
-		
-	};
-
+		m_pGaze->addGaze(ave_x_right - ave_x_right_fr, ave_y_right - ave_y_right_fr);
+	}
 
 }
 

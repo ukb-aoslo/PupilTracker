@@ -207,8 +207,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,1,0
- PRODUCTVERSION 1,3,1,0
+ FILEVERSION 1,3,1,1
+ PRODUCTVERSION 1,3,1,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -225,12 +225,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.1.0"
+            VALUE "FileVersion", "1.3.1.1"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.1.0"
+            VALUE "ProductVersion", "1.3.1.1"
         END
     END
     BLOCK "VarFileInfo"

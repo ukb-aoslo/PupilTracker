@@ -313,15 +313,13 @@ void Gaze::addPupilDia(double x)
 	//std::cerr << "pupil diameter size: " << PupilDia.size() << "\n";
 }
 
-void Gaze::addGazePX(double x, double y)
+void Gaze::addGaze(double x, double y)
 {
 	Gaze::coords c{ x,y };
 	GazePX.push_back(c);
-
 	c.x *= magnif;
 	c.y *= magnif;
 	GazeMM.push_back(c);
-	//std::cerr << "gaze in pixel size: " << GazePX.size() << "\n";
 }
 
 void Gaze::addFrozenPupil(double x, double y)
@@ -332,6 +330,7 @@ void Gaze::addFrozenPupil(double x, double y)
 
 void Gaze::stop() {
 	GazePX.clear();
+	GazeMM.clear();
 	TimeStamps.clear();
 	Pupil.clear();
 	PupilDia.clear();
