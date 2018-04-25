@@ -19,9 +19,11 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_COMMAND (ID_CAMERA_SETTINGS, OnBnClickedButtonimagesettings)
 	ON_COMMAND (ID_STOP, OnStop)
 	ON_COMMAND (ID_PLAY, OnPlay)
-	ON_COMMAND(ID_VIEW_PARAMETERS, &CPupilTrackerMainFrame::OnViewParameters)
-	ON_COMMAND(ID_RECORD, &CPupilTrackerMainFrame::OnRecord)
-	ON_UPDATE_COMMAND_UI(ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
+	ON_COMMAND (ID_VIEW_PARAMETERS, &CPupilTrackerMainFrame::OnViewParameters)
+	ON_COMMAND (ID_RECORD, &CPupilTrackerMainFrame::OnRecord)
+	ON_UPDATE_COMMAND_UI (ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
+	ON_COMMAND (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnMakeSnapshot)
+	ON_UPDATE_COMMAND_UI (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnUpdateMakeSnapshot)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -65,14 +67,9 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 		NULL
 		);
 
-	m_pParams = NULL;
 	m_pParams = new Parameters(this);
 	m_pParams->Create(IDD_DIALOG1);
 	
-	m_Menu.LoadMenuW(IDR_MAINFRAME);
-	SetMenu(&m_Menu);
-	m_Menu.Detach();
-
 	m_hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	SetIcon(m_hIcon, FALSE);
 
@@ -85,7 +82,7 @@ CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 	delete m_pGraph;
 	delete m_wndView;
 	delete m_pParams;
-	
+
 }
 
 void CPupilTrackerMainFrame::initCam() {
@@ -499,18 +496,34 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // Fehler bei Erstellung
 	}
 
-	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
+	DWORD dwCtrlStyle = TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CBRS_SIZE_DYNAMIC | CBRS_FLYBY;
+	DWORD dwStyle = AFX_DEFAULT_TOOLBAR_STYLE;
+
+	const CRect r1(1, 1, 1, 1);
+
+	if (!m_wndToolBar.CreateEx(this, dwCtrlStyle, dwStyle, r1) ||
 		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
 	{
 		TRACE0("Failed to create toolbar\n");
-		return -1;      // fail to create
+		return -1;      // failed to create
 	}
 
-	// ZU ERLEDIGEN: Löschen Sie diese drei Zeilen, wenn Sie nicht wollen, dass die Symbolleiste
-	//  andockbar ist.
 	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
-	DockControlBar(&m_wndToolBar);
+	DockPane(&m_wndToolBar);
+
+	//CRect rect;
+	//rect.top = 1;
+	//rect.right = 200;
+	//rect.top = 1;
+	//rect.bottom = rect.top + 250 /*drop height*/;
+
+	//if (!m_comboBox.Create(CBS_DROPDOWNLIST | CBS_SORT | WS_VISIBLE |
+	//	WS_TABSTOP | WS_VSCROLL, rect, &m_wndToolBar, ID_FINDCOMBO))
+	//{
+	//	TRACE(_T("Failed to create combo-box\n"));
+	//	return FALSE;
+	//}
 
 	// Attach View to active tracking Method
 	m_wndView = new CChildView(this);
@@ -642,3 +655,21 @@ void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
 	else 
 		pCmdUI->SetCheck(0);
 }
+
+
+void CPupilTrackerMainFrame::OnMakeSnapshot()
+{
+	if (m_cGrabber.isLive())
+	{
+		m_pListener->snap = true;
+	}
+
+}
+
+
+void CPupilTrackerMainFrame::OnUpdateMakeSnapshot(CCmdUI *pCmdUI)
+{
+	// TODO: Add your command update UI handler code here
+
+}
+

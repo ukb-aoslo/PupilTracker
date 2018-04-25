@@ -77,3 +77,4 @@ void CChildView::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 
 	m_pWndGaze->MoveWindow(CRect(vidRect.Width(), lpwndpos->y + 2, vidRect.Width() + gazeRect.Width(), vidRect.Height()), TRUE);
 }
+

@@ -27,6 +27,7 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 	cur_opts = s->opts;
 	buf_size = &s->buf_size;
 	cur_buf_size = s->buf_size;
+
 }
 
 Parameters::~Parameters()

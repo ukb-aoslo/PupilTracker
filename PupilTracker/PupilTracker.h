@@ -15,7 +15,7 @@
 // See PupilTracker.cpp for the implementation of this class.
 //
 
-class CPupilTrackerApp : public CWinApp
+class CPupilTrackerApp : public CWinAppEx
 {
 
 public:

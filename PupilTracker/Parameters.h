@@ -35,6 +35,8 @@ private:
 	BYTE cur_buf_size;
 	BYTE cur_box_size;
 
+	CString filename, prefix;
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 

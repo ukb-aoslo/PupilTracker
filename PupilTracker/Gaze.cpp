@@ -49,7 +49,7 @@ void Gaze::Paint(CDC* dc)
 	//paint it black
 	dc->SetBkColor(RGB(0, 0, 0));
 	dc->SetBkMode(OPAQUE);
-	HPEN hPen, hPenOld;
+	HPEN hPen, hPenOld, hPenWht;
 
 	/************************** title of the screen display *******************************************/
 
@@ -70,6 +70,11 @@ void Gaze::Paint(CDC* dc)
 	SelectObject(*dc, GetStockObject(NULL_BRUSH));
 	hPen = CreatePen(PS_SOLID, 1, RGB(0, 60, 0));					// dark green pen
 	hPenOld = (HPEN)SelectObject(*dc, hPen);
+	hPenWht = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));			// grey pen
+	SelectObject(*dc, hPenWht);
+
+	MoveToEx(*dc, 0, 0, NULL);
+	LineTo(*dc, 0, rect.bottom);
 
 	// plot trail history in the back
 	if (ready && g_mutex.try_lock()) {

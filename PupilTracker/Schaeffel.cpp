@@ -5,7 +5,6 @@ extern std::mutex g_mutex;
 
 Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 {
-
 	pBuf = 0;
 	xBuf = 0;
 	yBuf = 0;
@@ -19,6 +18,7 @@ Schaeffel::Schaeffel(Gaze* gz, Graph* gr)
 	buf_size = 40;
 	bufchange = false;
 	frames = 0;
+	snap = false;
 	mm_per_pixel = 0.028541831637387;
 	magnif = (double)1/mm_per_pixel;	    // magnification in pixel per mm
 	gz->setMagnif(mm_per_pixel);
@@ -30,8 +30,20 @@ Schaeffel::~Schaeffel()
 {
 }
 
+void Schaeffel::makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber) {
+
+	char filename[MAX_PATH];
+	sprintf(filename, "image%02i.bmp", FrameNumber);
+	saveToFileBMP(*pBuffer, filename);
+	snap = false;
+
+}
+
 void Schaeffel::frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber)
 {
+	
+	if (snap) makeSnapshot(pBuffer, FrameNumber);
+
 	pBuffer->lock();
 
 		if (bufchange && g_mutex.try_lock()) {				// buffer change?
@@ -343,6 +355,7 @@ void Schaeffel::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 		GetLocalTime(&st);
 		m_pGaze->addTimeStamp(st);
 		m_pGaze->addGaze(ave_x_right - ave_x_right_fr, ave_y_right - ave_y_right_fr);
+
 	}
 
 }

@@ -60,7 +60,7 @@ void Graph::Paint(CDC* dc)
 	// plots pupil over time in green
 
 	CStringW szText;
-	HPEN hPenWht, hPenMag, hPenGrn;
+	HPEN hPenWht, hPenMag, hPenGrn, hPenGrey;
 	RECT rect;
 	GetClientRect(&rect);
 
@@ -68,11 +68,16 @@ void Graph::Paint(CDC* dc)
 	szText.Format(TEXT("Pupil Diameter [mm]:"));
 	dc->TextOutW(rect.right / 2 - 50, 10, szText);
 
+	hPenGrey = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));			// grey pen
 	hPenWht = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));				// white pen
 	hPenMag = CreatePen(PS_SOLID, 1, RGB(255, 0, 255));					// magenta pen
 	hPenGrn = CreatePen(PS_SOLID, 1, RGB(0, 255, 0));					// green pen
-	SelectObject(*dc, hPenWht);
+	SelectObject(*dc, hPenGrey);
 
+	MoveToEx(*dc, 0, 0 , NULL);
+	LineTo(*dc, rect.right, 0);
+	
+	SelectObject(*dc, hPenWht);
 	for (int i = 0; i < 6; i++)
 	{
 		MoveToEx(*dc, 20, 181 - 28 * i, NULL);

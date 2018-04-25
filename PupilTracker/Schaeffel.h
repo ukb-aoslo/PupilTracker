@@ -66,6 +66,11 @@ public:
 	double ave_x_right_fr, ave_y_right_fr;
 	double pupil_right_fr;
 
+	// for snapshots
+	bool snap;
+	CString outputfile;
+	void makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
+
 public:
 
 	void freezePupil();

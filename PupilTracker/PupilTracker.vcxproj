@@ -177,6 +177,7 @@
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="Gaze.h" />
     <ClInclude Include="Graph.h" />
+    <ClInclude Include="HistoryCombo.h" />
     <ClInclude Include="listener.h" />
     <ClInclude Include="Method.h" />
     <ClInclude Include="Parameters.h" />
@@ -191,6 +192,7 @@
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="Gaze.cpp" />
     <ClCompile Include="Graph.cpp" />
+    <ClCompile Include="HistoryCombo.cpp" />
     <ClCompile Include="listener.cpp" />
     <ClCompile Include="Method.cpp" />
     <ClCompile Include="Parameters.cpp" />
@@ -214,9 +216,9 @@
     <None Include="res\PupilTracker.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="res\Augen.ico" />
     <Image Include="res\PupilTracker.ico" />
     <Image Include="res\Toolbar.bmp" />
+    <Image Include="res\toolbar1.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

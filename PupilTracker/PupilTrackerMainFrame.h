@@ -6,8 +6,9 @@
 #include "ChildView.h"
 #include "Method.h"
 #include "Parameters.h"
+#include "HistoryCombo.h"
 
-class CPupilTrackerMainFrame : public CFrameWnd, public DShowLib::GrabberListener
+class CPupilTrackerMainFrame : public CFrameWndEx, public DShowLib::GrabberListener
 {
 
 // Construction
@@ -40,16 +41,14 @@ protected:
 	afx_msg void OnClose();
 	DECLARE_MESSAGE_MAP()
 
-
-
 	void OnPlay();
 	void OnStop();
 
 	// For Window construction
-	CChildView*	m_wndView;
-	CMenu		m_Menu;
-	CStatusBar  m_wndStatusBar;
-	CToolBar    m_wndToolBar;
+	CChildView*					m_wndView;
+	CStatusBar					m_wndStatusBar;
+	CMFCToolBar					m_wndToolBar;
+	CHistoryCombo				m_comboBox;
 		
 public:
 
@@ -64,5 +63,7 @@ public:
 	afx_msg void OnViewParameters();
 	afx_msg void OnRecord();
 	afx_msg void OnUpdateRecord(CCmdUI *pCmdUI);
+	afx_msg void OnMakeSnapshot();
+	afx_msg void OnUpdateMakeSnapshot(CCmdUI *pCmdUI);
 
 };

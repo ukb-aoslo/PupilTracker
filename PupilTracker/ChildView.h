@@ -15,7 +15,6 @@ public:
 
 	CChildView(CPupilTrackerMainFrame* parent);
 	virtual ~CChildView();
-	void connectWnd(Method*);
 
 protected:
 
@@ -30,5 +29,4 @@ public:
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 
 	afx_msg void OnWindowPosChanging(WINDOWPOS* lpwndpos);
-
 };
