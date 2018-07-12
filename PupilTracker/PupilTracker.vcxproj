@@ -103,7 +103,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(WindowsSdkDir_81)Lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug;C:\Program Files (x86)\Visual Leak Detector\lib\Win32</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>version.lib</AdditionalDependencies>
+      <AdditionalDependencies>version.lib;ntdll.lib</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0407</Culture>
@@ -145,7 +145,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(IC34PATH)\classlib\win32\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>false</GenerateDebugInformation>
-      <AdditionalDependencies>version.lib</AdditionalDependencies>
+      <AdditionalDependencies>version.lib;ntdll.lib</AdditionalDependencies>
     </Link>
     <ResourceCompile>
       <Culture>0x0407</Culture>
@@ -175,39 +175,54 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="ChildView.h" />
-    <ClInclude Include="Gaze.h" />
-    <ClInclude Include="Graph.h" />
-    <ClInclude Include="HistoryCombo.h" />
+    <ClInclude Include="FindComboBox.h" />
+    <ClInclude Include="FindComboButton.h" />
+    <ClInclude Include="OffsetTracker.h" />
+    <ClInclude Include="PupilDiaTracker.h" />
     <ClInclude Include="listener.h" />
-    <ClInclude Include="Method.h" />
+    <ClInclude Include="netcomm\SockClient.h" />
+    <ClInclude Include="netcomm\SockListener.h" />
+    <ClInclude Include="netcomm\WinSock2Async.h" />
     <ClInclude Include="Parameters.h" />
+    <ClInclude Include="Pupil.h" />
     <ClInclude Include="PupilTracker.h" />
     <ClInclude Include="PupilTrackerMainFrame.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Schaeffel.h" />
-    <ClInclude Include="SockListener.h" />
+    <ClInclude Include="Tracker.h" />
+    <ClInclude Include="Settings.h" />
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChildView.cpp" />
-    <ClCompile Include="Gaze.cpp" />
-    <ClCompile Include="Graph.cpp" />
-    <ClCompile Include="HistoryCombo.cpp" />
+    <ClCompile Include="FindComboBox.cpp" />
+    <ClCompile Include="FindComboButton.cpp" />
+    <ClCompile Include="OffsetTracker.cpp" />
+    <ClCompile Include="PupilDiaTracker.cpp" />
     <ClCompile Include="listener.cpp" />
-    <ClCompile Include="Method.cpp" />
+    <ClCompile Include="netcomm\SockClient.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="netcomm\SockListener.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="netcomm\WinSock2Async.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Parameters.cpp" />
+    <ClCompile Include="Pupil.cpp" />
     <ClCompile Include="PupilTracker.cpp" />
     <ClCompile Include="PupilTrackerMainFrame.cpp" />
-    <ClCompile Include="Schaeffel.cpp" />
-    <ClCompile Include="SockClient.cpp" />
-    <ClCompile Include="SockListener.cpp" />
+    <ClCompile Include="Tracker.cpp" />
+    <ClCompile Include="Settings.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="WinSock2Async.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PupilTracker.rc" />

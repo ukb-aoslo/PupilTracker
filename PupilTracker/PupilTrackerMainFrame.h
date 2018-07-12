@@ -1,30 +1,28 @@
 #pragma once
-#include "afxwin.h"
-#include "Gaze.h"
-#include "Graph.h"
-#include "Schaeffel.h"
 #include "ChildView.h"
-#include "Method.h"
 #include "Parameters.h"
-#include "HistoryCombo.h"
+#include "FindComboButton.h"
 
-class CPupilTrackerMainFrame : public CFrameWndEx, public DShowLib::GrabberListener
+class CPupilTrackerMainFrame : public CFrameWndEx
 {
 
-// Construction
 public:
-	CPupilTrackerMainFrame();	// standard constructor
+
+	CPupilTrackerMainFrame();	
 	~CPupilTrackerMainFrame();
 
-	DShowLib::Grabber					m_cGrabber;		// The instance of the Grabber class.
-	smart_ptr<FrameHandlerSink>			m_pSink;
-	smart_ptr<MemBufferCollection>		m_pMemBuf;
-	Schaeffel*							m_pListener;
-	Gaze*								m_pGaze;
-	Graph*								m_pGraph;
-	smart_com<IFrameFilter>				m_pDeBayer;
-	Parameters*							m_pParams;
-	bool								m_cGazeOn, m_cGraphOn;
+	DShowLib::Grabber					Grabber;
+	smart_ptr<FrameHandlerSink>			Sink;
+	smart_ptr<MemBufferCollection>		MemBuf;
+
+	Tracker								pupilTracking;
+	
+	smart_com<IFrameFilter>				DeBayer;
+	Parameters							params;
+	CString								prefix;
+
+	bool								offsetTrackingEnabled,
+										pupilDiaTrackingEnabled;
 
 	void updateWindowTitle();
 	void drawOverlay(DShowLib::tPathPosition pos);
@@ -32,6 +30,7 @@ public:
 	void reAdjustView();
 	void setFilter();
 	void initCam();
+	void Save();
 	
 protected:
 	
@@ -48,12 +47,10 @@ protected:
 	CChildView*					m_wndView;
 	CStatusBar					m_wndStatusBar;
 	CMFCToolBar					m_wndToolBar;
-	CHistoryCombo				m_comboBox;
-		
+
 public:
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-	void setParams();
 
 	afx_msg void OnBnClickedButtondevice();
 	afx_msg void OnBnClickedButtonimagesettings();
@@ -66,4 +63,10 @@ public:
 	afx_msg void OnMakeSnapshot();
 	afx_msg void OnUpdateMakeSnapshot(CCmdUI *pCmdUI);
 
+protected:
+	afx_msg LRESULT OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam);
+
+public:
+	afx_msg void OnEditFindCombo();
+	afx_msg void OnEditFind();
 };

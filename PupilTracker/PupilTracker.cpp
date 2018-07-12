@@ -10,9 +10,6 @@
 
 // CPupilTrackerApp
 
-// for global thread synchronization (necessary because of listener callback-functions)
-std::mutex g_mutex;
-
 BEGIN_MESSAGE_MAP(CPupilTrackerApp, CWinApp)
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
 END_MESSAGE_MAP()
@@ -40,6 +37,7 @@ BOOL CPupilTrackerApp::InitInstance()
 //#endif
 //
 
+
 	// Init IC Imaging Control 
 
 	if( !DShowLib::InitLibrary() )
@@ -60,6 +58,7 @@ BOOL CPupilTrackerApp::InitInstance()
 
 	AfxEnableControlContainer();
 
+
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
 	// of your final executable, you should remove from the following
@@ -71,7 +70,19 @@ BOOL CPupilTrackerApp::InitInstance()
 
 	
 	CPupilTrackerMainFrame* pFrame = new CPupilTrackerMainFrame();
+
+	DWORD dwStyle = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN);
+
+	pFrame->Create(NULL,
+		NULL,
+		dwStyle,
+		CRect(),
+		NULL,
+		NULL
+	);
+
 	m_pMainWnd = pFrame;
+	
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();
 

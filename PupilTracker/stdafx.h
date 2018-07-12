@@ -31,15 +31,14 @@
 
 #include <queue>
 #include <iostream>
-#include <mutex>
 #include <WinSock2.h>
-#include "WinSock2Async.h"
+#include "netcomm\WinSock2Async.h"
 
 #define BUFFER_SIZE 1024
 
-
 // user defines
 #define PI (atan(1) * 4)
+#define MM_PER_PIXEL 0.031520431199969
 
 //#ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC  

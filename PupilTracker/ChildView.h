@@ -1,5 +1,4 @@
 #pragma once
-#include "Method.h"
 
 // ChildView
 class CPupilTrackerMainFrame;
@@ -9,9 +8,10 @@ class CChildView : public CWnd
 	DECLARE_DYNAMIC(CChildView)
 
 public:
-	CStatic						m_wndVideo;
-	Gaze*						m_pWndGaze;
-	Graph*						m_pWndGraph;
+
+	CStatic						wndVideo;
+	CStatic						wndOffset;
+	CStatic						wndPupilDia;
 
 	CChildView(CPupilTrackerMainFrame* parent);
 	virtual ~CChildView();
@@ -19,6 +19,7 @@ public:
 protected:
 
 private:
+
 	CPupilTrackerMainFrame*		m_pParent;
 	CRect						clientArea;
 
@@ -27,6 +28,7 @@ private:
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
-
 	afx_msg void OnWindowPosChanging(WINDOWPOS* lpwndpos);
+	afx_msg void OnTimer(UINT_PTR nIDEvent);
+
 };

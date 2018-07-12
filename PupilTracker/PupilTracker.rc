@@ -24,37 +24,50 @@ LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
 // Dialog
 //
 
-IDD_DIALOG1 DIALOGEX 600, 300, 213, 198
-STYLE DS_ABSALIGN | DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
+IDD_DIALOG1 DIALOGEX 600, 300, 253, 285
+STYLE DS_ABSALIGN | DS_SYSMODAL | DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_POPUP | WS_CAPTION
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Parameters"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_VERT | WS_TABSTOP,14,17,29,60
-    LTEXT           "Threshold",IDC_STATIC,46,31,32,8
-    PUSHBUTTON      "OK",IDC_OK,101,176,50,14
-    PUSHBUTTON      "Cancel",IDC_CANCEL,156,176,50,14
-    GROUPBOX        "Detection Algorithm",IDC_STATIC,7,7,199,76
-    EDITTEXT        IDE_THRESHVAL,46,42,20,12,ES_AUTOHSCROLL
-    LTEXT           "px intensity",IDC_STATIC,46,56,38,8
-    LTEXT           "Margin",IDC_STATIC,104,33,22,8
-    LTEXT           "Min. Spot Size",IDC_STATIC,104,51,46,8
-    GROUPBOX        "Area",IDC_STATIC,93,17,106,56
-    EDITTEXT        IDC_EDIT1,154,30,25,14,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT2,154,48,25,14,ES_AUTOHSCROLL
-    LTEXT           "px",IDC_STATIC,184,33,9,8
-    LTEXT           "px",IDC_STATIC,184,51,9,8
-    GROUPBOX        "Video Overlay",IDC_STATIC,7,87,199,85
-    CONTROL         "",IDC_SLIDER2,"msctls_trackbar32",TBS_BOTH | WS_TABSTOP,101,130,90,23
-    LTEXT           "Buffer",IDC_STATIC,106,119,21,8
-    CONTROL         "Margin",IDC_CHECK1,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,102,37,10
-    CONTROL         "Framecounter",IDC_CHECK2,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,117,61,10
-    CONTROL         "Pupil Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,132,51,10
-    CONTROL         "Avg. Brightness",IDC_CHECK4,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,15,147,67,10
-    EDITTEXT        IDE_BUFVAL,130,117,22,14,ES_AUTOHSCROLL
-    LTEXT           "frames",IDC_STATIC,157,119,23,8
-    GROUPBOX        "Jitter Reduction",IDC_STATIC,94,98,105,66
-    PUSHBUTTON      "Default",IDC_DEFAULTPARAMS,7,177,50,14
+    EDITTEXT        IDE_THRESHVAL,47,63,20,12,ES_AUTOHSCROLL
+    EDITTEXT        IDE_THRESHVAL2,177,62,20,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT1,77,114,25,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT2,77,132,25,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT3,195,113,25,14,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT4,195,131,25,14,ES_AUTOHSCROLL
+    EDITTEXT        IDE_BUFVAL,130,205,22,14,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "OK",IDC_OK,142,264,50,14
+    PUSHBUTTON      "Cancel",IDC_CANCEL,196,264,50,14
+    CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_VERT,15,38,29,60
+    LTEXT           "Threshold",IDC_STATIC,47,52,32,8
+    GROUPBOX        "Detection Algorithm",IDC_STATIC,7,7,239,162
+    LTEXT           "[px val]",IDC_STATIC,47,77,26,8
+    LTEXT           "Margin",IDC_STATIC,27,117,22,8
+    LTEXT           "Min. Spot Size",IDC_STATIC,27,135,46,8
+    GROUPBOX        "Area",IDC_STATIC,15,101,106,56
+    LTEXT           "px",IDC_STATIC,107,117,9,8
+    LTEXT           "px",IDC_STATIC,107,135,9,8
+    GROUPBOX        "Video Overlay",IDC_STATIC,7,175,239,85
+    CONTROL         "",IDC_SLIDER2,"msctls_trackbar32",TBS_BOTH,101,218,134,23
+    LTEXT           "Buffer",IDC_STATIC,106,207,21,8
+    CONTROL         "Margin",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,15,190,37,10
+    CONTROL         "Framecounter",IDC_CHECK2,"Button",BS_AUTOCHECKBOX,15,205,61,10
+    CONTROL         "Pupil Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX,15,220,51,10
+    CONTROL         "Avg. Brightness",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,15,235,67,10
+    LTEXT           "frames",IDC_STATIC,157,207,23,8
+    GROUPBOX        "Jitter Reduction",IDC_STATIC,94,186,145,66
+    PUSHBUTTON      "Default",IDC_DEFAULTPARAMS,7,264,50,14,NOT WS_TABSTOP
+    LTEXT           "Pupil",IDC_STATIC,15,23,16,8
+    CONTROL         "",IDC_SLIDER3,"msctls_trackbar32",TBS_VERT,215,38,18,60
+    LTEXT           "Threshold",IDC_STATIC,165,51,32,8
+    LTEXT           "[px val]",IDC_STATIC,171,77,26,8
+    LTEXT           "Margin",IDC_STATIC,145,117,22,8
+    LTEXT           "Min. Spot Size",IDC_STATIC,145,134,46,8
+    GROUPBOX        "Area",IDC_STATIC,133,101,106,56
+    LTEXT           "px",IDC_STATIC,225,117,9,8
+    LTEXT           "px",IDC_STATIC,225,134,9,8
+    LTEXT           "Purkinje",IDC_STATIC,204,22,29,8
 END
 
 
@@ -69,9 +82,9 @@ BEGIN
     IDD_DIALOG1, DIALOG
     BEGIN
         LEFTMARGIN, 7
-        RIGHTMARGIN, 206
+        RIGHTMARGIN, 246
         TOPMARGIN, 7
-        BOTTOMMARGIN, 191
+        BOTTOMMARGIN, 278
     END
 END
 #endif    // APSTUDIO_INVOKED
@@ -96,6 +109,17 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDR_MAINFRAME           ICON                    "res\\PupilTracker.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU1 MENU
+BEGIN
+    MENUITEM "EditFind",                    ID_EDIT_FIND, CHECKED, INACTIVE
+END
 
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -170,7 +194,7 @@ BEGIN
     BUTTON      ID_MAKE_SNAPSHOT
     SEPARATOR
     BUTTON      ID_PICK_FOLDER
-    BUTTON      ID_FINDCOMBO
+    BUTTON      ID_EDIT_FIND
     BUTTON      ID_BUTTON32789
     BUTTON      ID_BUTTON32790
     SEPARATOR
@@ -184,8 +208,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,2,0
- PRODUCTVERSION 1,3,2,0
+ FILEVERSION 1,3,3,0
+ PRODUCTVERSION 1,3,3,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -202,12 +226,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.2.0"
+            VALUE "FileVersion", "1.3.3.0"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.2.0"
+            VALUE "ProductVersion", "1.3.3.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -241,6 +265,21 @@ END
 STRINGTABLE
 BEGIN
     ID_VIEW_STATUS_BAR      "Toggle status bar"
+END
+
+STRINGTABLE
+BEGIN
+    ID_FINDCOMBO            "Prompt filename\nToolTip"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_FIND_COMBO      "Find the Prefix\nFind"
+END
+
+STRINGTABLE
+BEGIN
+    ID_EDIT_FIND            "Find the Prefix\nFind"
 END
 
 #endif    // English (United States) resources

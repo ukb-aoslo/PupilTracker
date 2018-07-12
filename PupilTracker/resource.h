@@ -2,10 +2,12 @@
 // Microsoft Visual C++ generated include file.
 // Used by PupilTracker.rc
 //
+#define ID_EDIT_FIND_COMBO              1
 #define IDD_ABOUTBOX                    100
 #define IDR_MAINFRAME                   128
 #define IDD_DIALOG1                     134
 #define IDR_ACCELERATOR1                142
+#define IDR_MENU1                       153
 #define IDC_SLIDER1                     1004
 #define IDC_OK                          1005
 #define IDC_CANCEL                      1006
@@ -19,6 +21,10 @@
 #define IDC_CHECK4                      1014
 #define IDE_BUFVAL                      1015
 #define IDC_DEFAULTPARAMS               1016
+#define IDC_SLIDER3                     1017
+#define IDE_THRESHVAL2                  1018
+#define IDC_EDIT3                       1019
+#define IDC_EDIT4                       1020
 #define ID_VIEW_PARAMETERS              32771
 #define ID_CAMERA_DEVICES               32772
 #define ID_PLAY                         32773
@@ -37,7 +43,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        153
+#define _APS_NEXT_RESOURCE_VALUE        154
 #define _APS_NEXT_COMMAND_VALUE         32795
 #define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           104

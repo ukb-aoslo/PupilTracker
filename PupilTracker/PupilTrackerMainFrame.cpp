@@ -4,12 +4,11 @@
 #include "PupilTracker.h"
 #include "PupilTrackerMainFrame.h"
 
-extern std::mutex g_mutex;
 
 // Save some typing...
 using namespace DShowLib;
 
-BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
+BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 	ON_WM_DESTROY()
@@ -24,6 +23,9 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_UPDATE_COMMAND_UI (ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
 	ON_COMMAND (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnMakeSnapshot)
 	ON_UPDATE_COMMAND_UI (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnUpdateMakeSnapshot)
+	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, &CPupilTrackerMainFrame::OnAfxWmResettoolbar)
+	ON_COMMAND(ID_EDIT_FIND_COMBO, &CPupilTrackerMainFrame::OnEditFindCombo)
+	ON_COMMAND(ID_EDIT_FIND, &CPupilTrackerMainFrame::OnEditFind)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -36,71 +38,37 @@ static UINT indicators[] =
 
 CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	// Set active tracking method
-	
-	m_cGazeOn = true;
-	m_cGraphOn = true;
 
-	// Add the C object to the the Grabber object
-	m_pGaze = new Gaze();
-	m_pGraph = new Graph();
-	m_pListener = new Schaeffel(m_pGaze, m_pGraph);
-	
-	// Add listener(s) to grabber
-	m_cGrabber.addListener(m_pListener, DShowLib::GrabberListener::eOVERLAYCALLBACK | DShowLib::GrabberListener::eFRAMEREADY);
-	
-	// Set filter
-	//setFilter();
+	offsetTrackingEnabled = true;
+	pupilDiaTrackingEnabled = true;
 
-	// Set the sink
-	setSink();
 
-	// Set the tracking parameters
-	setParams();
-
-	DWORD dwStyle = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN);
-
-	Create(NULL,
-		NULL,
-		dwStyle,
-		CRect(),
-		NULL,
-		NULL
-		);
-
-	m_pParams = new Parameters(this);
-	m_pParams->Create(IDD_DIALOG1);
-	
-	m_hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
-	SetIcon(m_hIcon, FALSE);
 
 }
 
 CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 {
-	delete m_pListener;
-	delete m_pGaze;
-	delete m_pGraph;
+
 	delete m_wndView;
-	delete m_pParams;
 
 }
 
 void CPupilTrackerMainFrame::initCam() {
 
-	Grabber::tVidCapDevListPtr pVidCapDevList = m_cGrabber.getAvailableVideoCaptureDevices();
+	Grabber::tVidCapDevListPtr pVidCapDevList = Grabber.getAvailableVideoCaptureDevices();
 	if (pVidCapDevList == 0 || pVidCapDevList->empty())
 	{
 		AfxMessageBox(L"No signal found! Please plugin camera.", MB_OK); // No device available.
 	}
 
-	m_cGrabber.openDev(pVidCapDevList->at(0));
+	Grabber.openDev(pVidCapDevList->at(0));
 
 	// Now retrieve the video formats.
 
-	Grabber::tVidFmtListPtr pVidFmtList = m_cGrabber.getAvailableVideoFormats();
+	Grabber::tVidFmtListPtr pVidFmtList = Grabber.getAvailableVideoFormats();
 	if (pVidFmtList == 0) // No video formats available?
 	{
-		std::string str = "Error : " + m_cGrabber.getLastError().toString();
+		std::string str = "Error : " + Grabber.getLastError().toString();
 		AfxMessageBox((CString)str.c_str(), MB_OK);
 
 	}
@@ -113,7 +81,7 @@ void CPupilTrackerMainFrame::initCam() {
 			required = format;
 	}
 
-	if (!m_cGrabber.setVideoFormat(required))
+	if (!Grabber.setVideoFormat(required))
 		AfxMessageBox(L"Couldn't switch to the required video format!", MB_OK);
 
 }
@@ -129,13 +97,13 @@ void CPupilTrackerMainFrame::setFilter() {
 	{
 		
 		// Filters can only be set when live mode is stopped.
-		bool bIsLive = m_cGrabber.isLive();
+		bool bIsLive = Grabber.isLive();
 		if (bIsLive)
-			m_cGrabber.stopLive();
+			Grabber.stopLive();
 
 		// Create the new filter instances.
-		m_pDeBayer = FilterLoader::createFilter("DeNoise");
-		m_cGrabber.setDeviceFrameFilters(m_pDeBayer.get());
+		DeBayer = FilterLoader::createFilter("DeNoise");
+		Grabber.setDeviceFrameFilters(DeBayer.get());
 
 	}
 
@@ -145,29 +113,29 @@ void CPupilTrackerMainFrame::setFilter() {
 void CPupilTrackerMainFrame::setSink() {
 
 	// Create the frame handler sink
-	m_pSink = FrameHandlerSink::create(eRGB8, 5);
+	Sink = FrameHandlerSink::create(eRGB8, 5);
 
 	// disable snap mode (formerly tFrameGrabberMode::eSNAP).
-	m_pSink->setSnapMode(false);
+	Sink->setSnapMode(false);
 
 	// Apply the sink to the grabber.
-	m_cGrabber.setSinkType(m_pSink);
+	Grabber.setSinkType(Sink);
 }
 
 
 	// Resize the video window to 640*480 pixels.
 	//m_cStaticVideoWindow.SetWindowPos(NULL,0,0,640,480,SWP_NOMOVE|SWP_NOZORDER);
 
-	//m_cListener.SetDrawWindow(m_cGrabber.getAcqSizeMaxX(), m_cGrabber.getAcqSizeMaxY());
+	//m_cListener.SetDrawWindow(Grabber.getAcqSizeMaxX(), Grabber.getAcqSizeMaxY());
 
 	// Assign this window to the Grabber object for live video display.
-	//m_cGrabber.setHWND(m_cStaticVideoWindow.m_hWnd);
+	//Grabber.setHWND(m_cStaticVideoWindow.m_hWnd);
 
 	//// Adjust the live video to the size of the window.
 	//CRect rect;
 	//m_cStaticVideoWindow.GetClientRect( &rect);
-	//m_cGrabber.setDefaultWindowPosition(false);
-	//m_cGrabber.setWindowSize(rect.Width(), rect.Height());
+	//Grabber.setDefaultWindowPosition(false);
+	//Grabber.setWindowSize(rect.Width(), rect.Height());
 
 
 void CPupilTrackerMainFrame::OnPaint() 
@@ -205,19 +173,19 @@ void CPupilTrackerMainFrame::OnPaint()
 void CPupilTrackerMainFrame::OnBnClickedButtondevice()
 {
 	// If live video is running, stop it.
-	if(m_cGrabber.isDevValid() && m_cGrabber.isLive())
+	if(Grabber.isDevValid() && Grabber.isLive())
 	{
-		m_cGrabber.stopLive();
+		Grabber.stopLive();
 	}
 
-	m_cGrabber.showDevicePage(this->m_hWnd);
+	Grabber.showDevicePage(this->m_hWnd);
 
 
 	// If we have selected a valid device, save it to the file "device.xml", so
 	// the application can load it automatically when it is started the next time.
-	if( m_cGrabber.isDevValid())
+	if( Grabber.isDevValid())
 	{
-		m_cGrabber.saveDeviceStateToFile("device.xml");
+		Grabber.saveDeviceStateToFile("device.xml");
 	}
 
 	// Now display the device's name in the caption bar of the application.
@@ -233,10 +201,10 @@ void CPupilTrackerMainFrame::OnBnClickedButtondevice()
 
 void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 {
-	if( m_cGrabber.isDevValid())
+	if( Grabber.isDevValid())
 	{
-		m_cGrabber.showVCDPropertyPage(this->m_hWnd);
-		m_cGrabber.saveDeviceStateToFile("device.xml");
+		Grabber.showVCDPropertyPage(this->m_hWnd);
+		Grabber.saveDeviceStateToFile("device.xml");
 	}
 	m_wndView->RedrawWindow();
 	
@@ -248,8 +216,8 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 
 //void CPupilTrackerMainFrame::SetButtonStates(void)
 //{
-//	bool bDevValid =  m_cGrabber.isDevValid();
-//	bool bIsLive   = m_cGrabber.isLive();
+//	bool bDevValid =  Grabber.isDevValid();
+//	bool bIsLive   = Grabber.isLive();
 //
 //	m_cButtonSettings.EnableWindow(bDevValid);
 //	m_cButtonLive.EnableWindow(bDevValid);
@@ -279,16 +247,16 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 //void CPupilTrackerMainFrame::OnBnClickedButtonlivevideo()
 //{
 //
-//	if( m_cGrabber.isDevValid())
+//	if( Grabber.isDevValid())
 //	{
 //		
-//		if (m_cGrabber.isLive())
+//		if (Grabber.isLive())
 //		{
-//			m_cGrabber.stopLive();
+//			Grabber.stopLive();
 //		}
 //		else
 //		{
-//			m_cGrabber.startLive();
+//			Grabber.startLive();
 //		}
 //		SetButtonStates();
 //	}
@@ -302,14 +270,14 @@ void CPupilTrackerMainFrame::OnClose()
 	// If live video is running, stop it.
 
 
-	if (m_cGrabber.isDevValid() && m_cGrabber.isLive())
+	if (Grabber.isDevValid() && Grabber.isLive())
 	{
-		m_cGrabber.stopLive();
+		Grabber.stopLive();
 	}
 
-	if (m_cGrabber.isDevOpen())
+	if (Grabber.isDevOpen())
 	{
-		m_cGrabber.closeDev();
+		Grabber.closeDev();
 	}
 
 
@@ -328,10 +296,10 @@ void CPupilTrackerMainFrame::updateWindowTitle()
 
 	CString title = name + " v" + version + " using ";
 
-	if (m_cGrabber.isDevValid())
+	if (Grabber.isDevValid())
 	{
 		title += "The Imaging Source ";
-		title += m_cGrabber.getDev().toString().c_str();
+		title += Grabber.getDev().toString().c_str();
 	}
 
 	SetWindowText(title);
@@ -339,7 +307,7 @@ void CPupilTrackerMainFrame::updateWindowTitle()
 
 void CPupilTrackerMainFrame::OnPlay()
 {
-	if (m_cGrabber.isLive())
+	if (Grabber.isLive())
 	{
 		// This error should never happen.
 		AfxMessageBox(TEXT("Grabber already in live-mode!"));
@@ -349,24 +317,25 @@ void CPupilTrackerMainFrame::OnPlay()
 	// Stop displaying the captured image in the view window's OnPaint event, 
 	// as we will have live video in that window.
 	
-	if (!m_cGrabber.startLive())
+	if (!Grabber.startLive())
 	{
-		AfxMessageBox(CString(m_cGrabber.getLastError().toString().c_str()));
+		AfxMessageBox(CString(Grabber.getLastError().toString().c_str()));
 	}
 
 
 	// Redraw the displayed overlays.
 	// This may be necessary because the overlay bitmap is erased 
 	// when the color format of the overlay bitmap changes.
-	if (m_cGrabber.getOverlayBitmapPathPosition() & ePP_DEVICE)
+
+	if (Grabber.getOverlayBitmapPathPosition() & ePP_DEVICE)
 	{
 		drawOverlay(ePP_DEVICE);
 	}
-	if (m_cGrabber.getOverlayBitmapPathPosition() & ePP_SINK)
+	if (Grabber.getOverlayBitmapPathPosition() & ePP_SINK)
 	{
 		drawOverlay(ePP_SINK);
 	}
-	if (m_cGrabber.getOverlayBitmapPathPosition() & ePP_DISPLAY)
+	if (Grabber.getOverlayBitmapPathPosition() & ePP_DISPLAY)
 	{
 		drawOverlay(ePP_DISPLAY);
 	}
@@ -377,14 +346,14 @@ void CPupilTrackerMainFrame::OnStop()
 {
 
 
-	if (m_cGrabber.isLive())
+	if (Grabber.isLive())
 	{
 
-		if (!m_cGrabber.stopLive())
+		if (!Grabber.stopLive())
 		{
-			if (m_cGrabber.getLastError().isError())
+			if (Grabber.getLastError().isError())
 			{
-				AfxMessageBox(m_cGrabber.getLastError().toStringW().c_str());
+				AfxMessageBox(Grabber.getLastError().toStringW().c_str());
 			}
 
 		}
@@ -408,7 +377,7 @@ void CPupilTrackerMainFrame::OnDestroy()
 
 void CPupilTrackerMainFrame::drawOverlay(DShowLib::tPathPosition pos)
 {
-	smart_ptr<OverlayBitmap> ob = m_cGrabber.getOverlay(pos);
+	smart_ptr<OverlayBitmap> ob = Grabber.getOverlay(pos);
 
 	ob->setEnable(true);
 
@@ -437,11 +406,9 @@ void CPupilTrackerMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
 	CFrameWnd::OnShowWindow(bShow, nStatus);
 	// TODO: Add your message handler code here
 	
-	m_cGrabber.setHWND(m_wndView->GetSafeHwnd());
-	m_cGrabber.startLive();
+	Grabber.setHWND(m_wndView->GetSafeHwnd());
+	Grabber.startLive();
 	reAdjustView();
-
-	m_wndView->m_pWndGaze->SetTimer(1, 333, NULL);
 
 }
 
@@ -449,18 +416,18 @@ void CPupilTrackerMainFrame::reAdjustView(){
 
 	CRect m_tbRect, m_vidRect, m_gazeRect, m_graphRect, m_stRect;
 
-	m_cGrabber.getWindowPosition(m_vidRect.left, m_vidRect.top, m_vidRect.right, m_vidRect.bottom);
+	Grabber.getWindowPosition(m_vidRect.left, m_vidRect.top, m_vidRect.right, m_vidRect.bottom);
 	if (m_wndToolBar.IsVisible()) 
 		m_wndToolBar.GetClientRect(&m_tbRect);
 	if (m_wndStatusBar.IsVisible())
 		m_wndStatusBar.GetClientRect(&m_stRect);
 
-	if (m_cGazeOn) {
+	if (offsetTrackingEnabled) {
 		m_gazeRect.right = 400;
 		m_gazeRect.bottom = m_vidRect.Height();
 	}
 
-	if (m_cGraphOn) {
+	if (pupilDiaTrackingEnabled) {
 		m_graphRect.right = m_vidRect.Width() + m_gazeRect.Width();
 		m_graphRect.bottom = m_vidRect.Height() / 2;
 	}
@@ -471,8 +438,8 @@ void CPupilTrackerMainFrame::reAdjustView(){
 	AdjustWindowRect(&cRect, this->GetStyle(), TRUE);
 	MoveWindow(wRect.left, wRect.top, cRect.right - cRect.left, cRect.bottom - cRect.top, true);
 
-	m_wndView->m_pWndGaze->MoveWindow(m_vidRect.Width() + 2, m_tbRect.Height()+4, m_gazeRect.right, m_gazeRect.Height(), true);
-	m_wndView->m_pWndGraph->MoveWindow(0, m_vidRect.Height() + m_tbRect.Height() + 4, m_graphRect.Width(), m_graphRect.Height(), true);
+	m_wndView->wndOffset.MoveWindow(m_vidRect.Width() + 2, m_tbRect.Height()+4, m_gazeRect.right, m_gazeRect.Height(), true);
+	m_wndView->wndPupilDia.MoveWindow(0, m_vidRect.Height() + m_tbRect.Height() + 4, m_graphRect.Width(), m_graphRect.Height(), true);
 }
 
 int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
@@ -480,12 +447,27 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	if (CFrameWnd::OnCreate(lpCreateStruct) == -1)
 		return -1;
+
+	pupilTracking.SetParent(this);
+
+	// Add listener(s) to grabber
+	Grabber.addListener(&pupilTracking, CListener::eOVERLAYCALLBACK | CListener::eFRAMEREADY);
+
+
+	// Set filter
+	//setFilter();
+
+	// Set the sink
+	setSink();
+	
+	m_hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+	SetIcon(m_hIcon, FALSE);
+
 	
 	// Try to load the previously used video capture device.
-	if (!m_cGrabber.loadDeviceStateFromFile("device.xml"))
-		m_cGrabber.showDevicePage(this->m_hWnd);
+	if (!Grabber.loadDeviceStateFromFile("device.xml"))
+		Grabber.showDevicePage(this->m_hWnd);
 
-	// must be done here, not in constructor like it should
 	initCam();
 
 	if (!m_wndStatusBar.Create(this) ||
@@ -496,66 +478,80 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		return -1;      // Fehler bei Erstellung
 	}
 
-	DWORD dwCtrlStyle = TBSTYLE_FLAT | TBSTYLE_TOOLTIPS | CBRS_SIZE_DYNAMIC | CBRS_FLYBY;
+	DWORD dwCtrlStyle = WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY;
 	DWORD dwStyle = AFX_DEFAULT_TOOLBAR_STYLE;
 
 	const CRect r1(1, 1, 1, 1);
 
-	if (!m_wndToolBar.CreateEx(this, dwCtrlStyle, dwStyle, r1) ||
+	if (!m_wndToolBar.Create(this, dwCtrlStyle, dwStyle) ||
 		!m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
 	{
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // failed to create
 	}
 
-	m_wndToolBar.EnableDocking(CBRS_ALIGN_ANY);
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndToolBar);
 
-	//CRect rect;
-	//rect.top = 1;
-	//rect.right = 200;
-	//rect.top = 1;
-	//rect.bottom = rect.top + 250 /*drop height*/;
-
-	//if (!m_comboBox.Create(CBS_DROPDOWNLIST | CBS_SORT | WS_VISIBLE |
-	//	WS_TABSTOP | WS_VSCROLL, rect, &m_wndToolBar, ID_FINDCOMBO))
-	//{
-	//	TRACE(_T("Failed to create combo-box\n"));
-	//	return FALSE;
-	//}
-
 	// Attach View to active tracking Method
+
 	m_wndView = new CChildView(this);
 
 	// create a view to occupy the client area of the frame
-	if (!m_wndView->Create(NULL, NULL, WS_VISIBLE | WS_CHILD, CRect(), this, AFX_IDW_PANE_FIRST, NULL))
+	if (!m_wndView->Create(NULL, NULL, AFX_WS_DEFAULT_VIEW,
+		CRect(0, 0, 0, 0), this, AFX_IDW_PANE_FIRST, NULL))
 	{
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
 
 	// Set overlay to color
-	if (!m_cGrabber.setOverlayBitmapPathPosition(ePP_DISPLAY))
+	if (!Grabber.setOverlayBitmapPathPosition(ePP_DISPLAY))
+
 	{
-		LPCTSTR error = m_cGrabber.getLastError().getStringW().c_str();
+		LPCTSTR error = Grabber.getLastError().getStringW().c_str();
 		MessageBox(error, L"Error", MB_ICONERROR);
 	}
 
-	//m_cGrabber.getOverlay(ePP_DEVICE)->setColorMode(OverlayBitmap::eBESTFIT);
-	//m_cGrabber.getOverlay(ePP_SINK)->setColorMode(OverlayBitmap::eGRAYSCALE);
-	m_cGrabber.getOverlay(ePP_DISPLAY)->setColorMode(OverlayBitmap::eCOLOR);
+	//Grabber.getOverlay(ePP_DEVICE)->setColorMode(OverlayBitmap::eBESTFIT);
+	//Grabber.getOverlay(ePP_SINK)->setColorMode(OverlayBitmap::eGRAYSCALE);
+	Grabber.getOverlay(ePP_DISPLAY)->setColorMode(OverlayBitmap::eCOLOR);
 	drawOverlay(ePP_DISPLAY);
 
-	if (m_cGrabber.getLastError().isError())
+	if (Grabber.getLastError().isError())
 	{
-		AfxMessageBox(m_cGrabber.getLastError().toStringW().c_str());
+		AfxMessageBox(Grabber.getLastError().toStringW().c_str());
 	}
 
 	updateWindowTitle();
 	
 	return 0;
 }
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam)
+{
+
+	UINT uiToolBarId = (UINT)wParam;
+
+	switch (uiToolBarId)
+	{
+	case IDR_MAINFRAME:
+	{
+		
+		CFindComboButton combo(ID_EDIT_FIND_COMBO, GetCmdMgr()->GetCmdImage(ID_EDIT_FIND), CBS_DROPDOWN);
+		m_wndToolBar.ReplaceButton(ID_EDIT_FIND, combo);
+
+	}
+
+	break;
+
+	}
+
+	return 0;
+
+}
+
 
 BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 {
@@ -567,65 +563,32 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 		case VK_SPACE:
 		
 			
-			if (m_cGrabber.isDevValid() && m_cGrabber.isLive()) {
-				m_pListener->freezePupil();
-				m_pGraph->freeze();
+			if (Grabber.isDevValid() && Grabber.isLive()) {
+				pupilTracking.freezePupil();
+			}
+			else
+
+				if (pupilTracking.record) {
+					Save();
+					pupilTracking.record = false;
+				
 			}
 
 			break;
 		}
 		
-		return TRUE;
+		return __super::PreTranslateMessage(pMsg);
 	}
 
 	return __super::PreTranslateMessage(pMsg);
-	
+
 }
 
 void CPupilTrackerMainFrame::OnViewParameters()
 {
 	// TODO: Add your command handler code here
-	m_pParams->ShowWindow(SW_SHOW);
+	params.DoModal();
 	
-}
-
-
-void CPupilTrackerMainFrame::setParams()
-{
-	
-	UINT n;
-	LPBYTE ppData;
-	
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_thresh", &ppData, &n)) {
-		m_pListener->threshold = (BYTE)ppData[0];
-	}
-
-	delete ppData;
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_opts", &ppData, &n)) {
-		m_pListener->opts = (BYTE)ppData[0];
-	}
-
-	delete ppData;
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_bufsize", &ppData, &n)) {
-		m_pListener->buf_size = (BYTE)ppData[0];
-	}
-	
-	delete ppData;
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_spotsize", &ppData, &n)) {
-		m_pListener->spot_size = (BYTE)ppData[0];
-	}
-
-	delete ppData;
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_boxsize", &ppData, &n)) {
-		m_pListener->box_size = (BYTE)ppData[0];
-	}
-
-	delete ppData;
-
 }
 
 
@@ -633,24 +596,26 @@ void CPupilTrackerMainFrame::OnRecord()
 {
 	// TODO: Add your command handler code here
 	
-	if (m_pListener->m_pGaze->record == true) {
-		m_pListener->m_pGaze->record = false;
+	if (pupilTracking.record == true) {
+
+		pupilTracking.record = false;
 		OnStop();
-		m_pListener->m_pGaze->Save();
+		Save();
 		OnPlay();
+
 	}
+
 	else
-		m_pListener->m_pGaze->record = true;
-		m_pListener->m_pGaze->recIndex = m_pGaze->getGazePxSize();
+
+		pupilTracking.record = true;
+		pupilTracking.recIndex = pupilTracking.pupil.offsetPX.size();
 
 }
-
-
 
 void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
-	if (m_pGaze->record)
+	if (pupilTracking.record)
 		pCmdUI->SetCheck(1);
 	else 
 		pCmdUI->SetCheck(0);
@@ -659,9 +624,10 @@ void CPupilTrackerMainFrame::OnUpdateRecord(CCmdUI *pCmdUI)
 
 void CPupilTrackerMainFrame::OnMakeSnapshot()
 {
-	if (m_cGrabber.isLive())
+	if (Grabber.isLive())
+
 	{
-		m_pListener->snap = true;
+		pupilTracking.setSnap(true);
 	}
 
 }
@@ -673,3 +639,88 @@ void CPupilTrackerMainFrame::OnUpdateMakeSnapshot(CCmdUI *pCmdUI)
 
 }
 
+
+void CPupilTrackerMainFrame::OnEditFindCombo()
+{
+	// TODO: Add your command handler code here
+	CObList listButtons;
+	m_wndToolBar.GetCommandButtons(ID_EDIT_FIND_COMBO, listButtons);
+
+}
+
+
+void CPupilTrackerMainFrame::OnEditFind()
+{
+	// TODO: Add your command handler code here
+
+	/*if(m_wndToolBar.IsLastCommandFromButton()) {
+
+	}
+	*/
+}
+
+void CPupilTrackerMainFrame::Save()
+{
+	CString name, version;
+	CPupilTrackerApp* pApp = (CPupilTrackerApp*)AfxGetApp();
+	pApp->GetProductAndVersion(name, version);
+
+	CString szFileName;
+	FILE *pFile;
+	CFileDialog cFileDlg(
+		FALSE,
+		(LPCTSTR)NULL,
+		(LPCTSTR)NULL,
+		OFN_ENABLESIZING | OFN_EXPLORER | OFN_LONGNAMES | OFN_OVERWRITEPROMPT | OFN_CREATEPROMPT,
+		_T("All Files (*.*)|*.*|"),
+		NULL);
+	cFileDlg.m_ofn.lpstrInitialDir = _T(".\\");
+
+	if (cFileDlg.DoModal() == IDOK)
+	{
+		szFileName = cFileDlg.GetPathName();
+		_wfopen_s(&pFile, szFileName, L"w");
+
+		if (pFile)
+		{
+			// this saves the data to the file
+
+			fprintf(pFile, "**************************************************************************************\n");
+			fprintf(pFile, "********** %ls %ls Offset Tracker Data							**********\n", name.GetString(), version.GetString());
+			fprintf(pFile, "**************************************************************************************\n\n");
+
+			fprintf(pFile, "\nNOTE: offset data is in (sub)pixels\n");
+			fprintf(pFile, "\nMagnifiction [mm/px]: %2.15f", double(1/MM_PER_PIXEL));
+			fprintf(pFile, "\nLocked position [px]: x:%2.1f y:%2.1f", pupilTracking.pupil.frozen_center.x, pupilTracking.pupil.frozen_center.y);
+
+			fprintf(pFile, "\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], purkinje center [pxx], purkinje center [pxy], center offset horizontal [mm], center offset vertical [mm] \n\n");
+
+			for (size_t i = pupilTracking.recIndex; i < pupilTracking.pupil.center.size(); i++) {
+				fprintf(pFile, "%02d:%02d:%02d:%04d\t%d\t%2.2f\t%2.1f\t%2.1f\t%2.1f\t%2.1f\t%2.5f\t%2.5f\n",
+					pupilTracking.timestamps[i].wHour,
+					pupilTracking.timestamps[i].wMinute, 
+					pupilTracking.timestamps[i].wSecond,
+					pupilTracking.timestamps[i].wMilliseconds,
+					i,
+					pupilTracking.pupil.diameter[i],
+					pupilTracking.pupil.center[i].x,
+					pupilTracking.pupil.center[i].y,
+					pupilTracking.purkinje.center[i].x,
+					pupilTracking.purkinje.center[i].y,
+					pupilTracking.pupil.offsetMM[i].x,
+					pupilTracking.pupil.offsetMM[i].y);
+			}
+
+			fclose(pFile);
+
+			MessageBox(szFileName, _T("Data saved!"), MB_ICONINFORMATION | MB_OK | MB_DEFBUTTON1);
+
+		}
+
+		else
+		{
+			MessageBox(_T("Failed to open file!"), _T("Error"), MB_ICONHAND | MB_OK | MB_DEFBUTTON1);
+		}
+
+	}
+}

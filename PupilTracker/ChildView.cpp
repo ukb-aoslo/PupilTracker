@@ -11,8 +11,6 @@ IMPLEMENT_DYNAMIC(CChildView, CWnd)
 
 CChildView::CChildView(CPupilTrackerMainFrame* parent): m_pParent(parent)
 {
-	m_pWndGaze = m_pParent->m_pGaze;
-	m_pWndGraph = m_pParent->m_pGraph;
 }
 
 CChildView::~CChildView()
@@ -21,6 +19,7 @@ CChildView::~CChildView()
 
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_WINDOWPOSCHANGING()
+	ON_WM_TIMER()
 END_MESSAGE_MAP()
 
 // ChildView message handlers
@@ -29,35 +28,37 @@ END_MESSAGE_MAP()
 BOOL CChildView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext)
 {
 	// TODO: Add your specialized code here and/or call the base class
-			
-	if (!m_wndVideo.Create(_T("Video"), dwStyle, rect , pParentWnd, 1234)) {
+
+
+	if (!wndVideo.Create(_T("Video"), dwStyle, rect , pParentWnd, NULL)) {
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
 	
-	if(!m_pWndGaze->Create(_T("Gaze"), dwStyle, rect, pParentWnd, 1234)){
+	if(!wndOffset.Create(_T("Gaze"), dwStyle, rect, pParentWnd, NULL)){
 		TRACE0("Failed to create view window\n");
 	return -1;
 	}
 
-	if (!m_pWndGraph->Create(_T("Graph"), dwStyle, rect, pParentWnd, 1234)) {
+	if (!wndPupilDia.Create(_T("Graph"), dwStyle, rect, pParentWnd, NULL)) {
 		TRACE0("Failed to create view window\n");
 		return -1;
-	}
 
+	}
+		
 	return CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 
 }
 
 BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 {
-	if (!CWnd::PreCreateWindow(cs))
+	if (!__super::PreCreateWindow(cs))
 		return FALSE;
 
 	cs.dwExStyle |= WS_EX_CLIENTEDGE;
 	cs.style &= ~WS_BORDER;
-	cs.lpszClass = AfxRegisterWndClass(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS, 
-		::LoadCursor(NULL, IDC_ARROW), NULL, NULL);
+	cs.lpszClass = AfxRegisterWndClass(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
+		::LoadCursor(NULL, IDC_ARROW), reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1), NULL);
 
 	return TRUE;
 }
@@ -68,13 +69,22 @@ void CChildView::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 	CWnd::OnWindowPosChanging(lpwndpos);
 
 	// TODO: Add your message handler code here
-	/*vidWidth = m_pParent->m_cGrabber.getAcqSizeMaxX();
-	vidHeight = m_pParent->m_cGrabber.getAcqSizeMaxY();*/
-	CRect gazeRect, vidRect;
+	/*vidWidth = m_pParent->Grabber.getAcqSizeMaxX();
+	vidHeight = m_pParent->Grabber.getAcqSizeMaxY();*/
+	CRect offsetRect, vidRect;
 
-	m_pWndGaze->GetClientRect(&gazeRect);
-	m_wndVideo.GetClientRect(&vidRect);
+	wndOffset.GetClientRect(&offsetRect);
+	wndVideo.GetClientRect(&vidRect);
 
-	m_pWndGaze->MoveWindow(CRect(vidRect.Width(), lpwndpos->y + 2, vidRect.Width() + gazeRect.Width(), vidRect.Height()), TRUE);
+	wndOffset.MoveWindow(CRect(vidRect.Width(), lpwndpos->y + 2, vidRect.Width() + offsetRect.Width(), vidRect.Height()), TRUE);
+
+}
+
+
+void CChildView::OnTimer(UINT_PTR nIDEvent)
+{
+	// TODO: Add your message handler code here and/or call default
+	RedrawWindow();
+	CWnd::OnTimer(nIDEvent);
 }
 

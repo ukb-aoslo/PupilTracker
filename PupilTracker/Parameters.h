@@ -1,58 +1,67 @@
 #pragma once
-//#include "afxcmn.h"
-#include "Schaeffel.h"
+#include "Tracker.h"
+#include "Settings.h"
+
 class CPupilTrackerMainFrame;
 
 // Parameters dialog
 
-class Parameters : public CDialogEx
-{
-	DECLARE_DYNAMIC(Parameters)
+enum OverlayOpts {
 
-public:
+	BoxBoundary = 1 << 0,
+	FrameCounter = 1 << 1,
+	PupilPixels = 1 << 2,
+	AverageBrightness = 1 << 3
 
-	Parameters(CWnd* pParent = NULL);   // standard constructor
-	virtual ~Parameters();
+};
+class Tracker;
 
 // Dialog Data
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_DIALOG1 };
 #endif
 
-private:
-	CWnd* m_pParent;
-	CPupilTrackerMainFrame* m_pPupilTracker;
-	Schaeffel* s;
-	BYTE* thresh;
-	BYTE* spot_size;
-	BYTE* box_size;
-	BYTE* buf_size;
+	class Parameters : public CDialogEx
+	{
+		DECLARE_DYNAMIC(Parameters)
 
-	short* opts;
-	short cur_opts;
-	BYTE cur_thresh;
-	BYTE cur_spot_size;
-	BYTE cur_buf_size;
-	BYTE cur_box_size;
+	public:
+
+		Parameters(CWnd* pParent = NULL);   // standard constructor
+		virtual ~Parameters();
+
+		Settings pupil { 75, 30, 10 };
+		Settings purkinje { 250, 4, 100 };
+
+		BYTE buf_size;
+		BYTE opts;
+
+	private:
+
+		CWnd* m_pParent;
+
+		Settings cur_pupil;
+		Settings cur_purkinje;
+
 
 	CString filename, prefix;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual void OnBnClickedOk();
 
 	DECLARE_MESSAGE_MAP()
+
 public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnBnClickedOk();
-	afx_msg void OnBnClickedCancel();
+	
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	afx_msg void OnBnClickedCheck1();
-	afx_msg void OnBnClickedCheck2();
-	afx_msg void OnBnClickedCheck3();
-	afx_msg void OnBnClickedCheck4();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnEnChangeEdit1();
-	afx_msg void OnEnChangeEdit2();
 	afx_msg void OnBnClickedDefaultparams();
-};
+
+	afx_msg void OnCheck1();
+	afx_msg void OnCheck2();
+	afx_msg void OnCheck3();
+	afx_msg void OnCheck4();
+	};
