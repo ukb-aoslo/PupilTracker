@@ -38,7 +38,9 @@
 
 // user defines
 #define PI (atan(1) * 4)
-#define MM_PER_PIXEL 0.031520431199969
+#define MM_PER_PIXEL 0.030232211660616
+
+
 
 //#ifdef _DEBUG
 //#define _CRTDBG_MAP_ALLOC  

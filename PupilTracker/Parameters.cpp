@@ -69,7 +69,6 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 }
 
 Parameters::~Parameters()
-
 {
 }
 
@@ -309,6 +308,6 @@ void Parameters::OnCheck4()
 {
 	// TODO: Add your command handler code here
 	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK4);
-	if (cBox->GetCheck()) opts += AverageBrightness;
-	else opts -= AverageBrightness;
+	if (cBox->GetCheck()) opts += FPS;
+	else opts -= FPS;
 }

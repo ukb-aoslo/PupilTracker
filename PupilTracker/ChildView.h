@@ -1,7 +1,8 @@
 #pragma once
-
+#include "OffsetTracker.h"
+#include "PupilDiaTracker.h"
 // ChildView
-class CPupilTrackerMainFrame;
+
 
 class CChildView : public CWnd
 {
@@ -10,17 +11,14 @@ class CChildView : public CWnd
 public:
 
 	CStatic						wndVideo;
-	CStatic						wndOffset;
-	CStatic						wndPupilDia;
+	OffsetTracker				wndOffset;
+	PupilDiaTracker				wndPupilDia;
 
-	CChildView(CPupilTrackerMainFrame* parent);
+	CChildView();
 	virtual ~CChildView();
-
-protected:
 
 private:
 
-	CPupilTrackerMainFrame*		m_pParent;
 	CRect						clientArea;
 
 	DECLARE_MESSAGE_MAP()
@@ -28,7 +26,14 @@ private:
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
 	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
+	void showBuffer(const DShowLib::Grabber::tMemBufferPtr& pBuffer);
 	afx_msg void OnWindowPosChanging(WINDOWPOS* lpwndpos);
-	afx_msg void OnTimer(UINT_PTR nIDEvent);
+
+protected:
+	
+	DShowLib::Grabber::tMemBufferPtr m_pBuffer;
+
+public:
+	afx_msg void OnPaint();
 
 };

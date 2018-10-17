@@ -16,6 +16,7 @@ CFindComboButton::CFindComboButton()
 CFindComboButton::CFindComboButton(int uid, int image, DWORD style) :
 	CMFCToolBarComboBoxButton(uid, image, style)
 { 
+	//delete findCombo;
 }
 
 CFindComboButton::~CFindComboButton()
@@ -42,8 +43,8 @@ CComboBox* CFindComboButton::CreateCombo(CWnd* pWndParent, const CRect &rect) {
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
 		_T("Consolas")));           // lpszFacename
 	
-	CFindComboBox* c = new CFindComboBox();
-	c->Create(CBS_DROPDOWN, rect, pWndParent, ID_EDIT_FIND_COMBO);
-	return c;
+	findCombo = new CFindComboBox();
+	findCombo->Create(CBS_DROPDOWN, rect, pWndParent, ID_EDIT_FIND_COMBO);
+	return findCombo;
 
 }

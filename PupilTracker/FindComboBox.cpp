@@ -39,10 +39,9 @@ BOOL CFindComboBox::PreTranslateMessage(MSG* pMsg)
 
 		}
 
-		return CComboBox::PreTranslateMessage(pMsg);
-
 	}
-
+	
 	return CComboBox::PreTranslateMessage(pMsg);
+	
 }
 

@@ -32,8 +32,9 @@
 class CPupilTrackerMainFrame;
 
 #define MESSAGEDEVICELOST WM_USER+90
-
-
+#define MESSAGE_OFFSETMM_PROCESSED WM_USER+91
+#define MESSAGE_PUPILDIA_PROCESSED WM_USER+92
+#define MESSAGE_OFFSET_LOCKEDPOS WM_USER+93
 
 using namespace DShowLib;
 
@@ -42,7 +43,8 @@ class CListener : public GrabberListener
 	public:
 
 		CListener();
-		virtual ~CListener();
+		~CListener();
+
 		int getFramesCounted() { return MediaSampleDesc.FrameNumber; };
 
 		Pupil				pupil;				// the pupil itself
@@ -50,14 +52,16 @@ class CListener : public GrabberListener
 
 
 		bool				record;				// are we recording?
-		bool				pupilfind;			// are we finding a pupil (true) or purkinje (false)
+		bool				pupilfind;			// time for a pupil (true) or purkinje (false)
 		bool				freeze;				// is the pupil locked?
+		int					Width, Height;		// video frame size	
 		int					recIndex;			// where did we begin recording?
 		
 		std::vector<SYSTEMTIME>	timestamps;
 
-
 	protected:
+
+		CPupilTrackerMainFrame*	m_pParent;
 
 		Settings*			pupil_settings;
 		Settings*			purkinje_settings;
@@ -65,16 +69,12 @@ class CListener : public GrabberListener
 		BYTE* opts;								// checkbox options for overlay items
 		BYTE* buf_size;							// buffer size for jitter reduction
 
-		CWnd*				m_pParent;
-		CStatic*			m_pVideoOut;
 		SIZE				m_WindowSize;		// Size of the window in which to draw the buffer.
 		tsMediaSampleDesc	MediaSampleDesc;
 		SYSTEMTIME			getTimeStamp();
 		
-		int Width, Height;						// video frame size				
-
 		void DoImageProcessing(smart_ptr<MemBuffer> pBuffer);			// pre-frank
-		void frank(BYTE* pImageData, Settings *setting);					// core pupil calculation
+		void frank(BYTE* pImageData, Settings *setting);				// core pupil calculation
 		virtual void DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer);	// post-frank, for subclasses
 		virtual void overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,	const tsMediaSampleDesc& MediaSampleDesc);
 		void frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
@@ -84,8 +84,9 @@ class CListener : public GrabberListener
 
 		void freezePupil();
 		void setSnap(bool b);
-		void setFreeze(bool b);
 		void SetParent(CWnd* pParent);
+		void init(int cx, int cy);
+
 
 	private:
 

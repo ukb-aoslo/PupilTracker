@@ -10,6 +10,13 @@ struct coords {
 
 };
 
+template<typename T1, typename T2>
+coords<double, double> operator - (T1 a, const T2& b) {
+	a.x -= b.x;
+	a.y -= b.y;
+	return a;
+}
+
 class Pupil {
 
 public:
@@ -17,8 +24,7 @@ public:
 	Pupil();
 	~Pupil();
 
-	//std::vector<coords<int, int>>		pixels;		// pixels supposed to be inside the pupil
-	coords <int, int> *pixels;
+	coords <int, int> *pixels;						// pixels supposed to be inside the pupil
 
 	std::vector<coords<double, double>>	center;		// pupil center
 	std::vector<double>					diameter;	// pupil diameter
@@ -32,7 +38,6 @@ public:
 
 	coords<double, double>	frozen_center;			// locked position
 	double					frozen_diameter;
-
 
 	void reset();
 

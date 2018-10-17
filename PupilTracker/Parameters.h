@@ -11,7 +11,7 @@ enum OverlayOpts {
 	BoxBoundary = 1 << 0,
 	FrameCounter = 1 << 1,
 	PupilPixels = 1 << 2,
-	AverageBrightness = 1 << 3
+	FPS = 1 << 3
 
 };
 class Tracker;
@@ -30,8 +30,8 @@ class Tracker;
 		Parameters(CWnd* pParent = NULL);   // standard constructor
 		virtual ~Parameters();
 
-		Settings pupil { 75, 30, 10 };
-		Settings purkinje { 250, 4, 100 };
+		Settings pupil { 75, 30, 10 };		// just some 
+		Settings purkinje { 250, 4, 100 };	// default values
 
 		BYTE buf_size;
 		BYTE opts;

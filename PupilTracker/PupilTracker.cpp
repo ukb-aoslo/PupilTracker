@@ -10,8 +10,8 @@
 
 // CPupilTrackerApp
 
-BEGIN_MESSAGE_MAP(CPupilTrackerApp, CWinApp)
-	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
+BEGIN_MESSAGE_MAP(CPupilTrackerApp, CWinAppEx)
+	ON_COMMAND(ID_HELP, CWinAppEx::OnHelp)
 END_MESSAGE_MAP()
 
 
@@ -20,7 +20,6 @@ END_MESSAGE_MAP()
 CPupilTrackerApp::CPupilTrackerApp()
 {
 }
-
 
 // The one and only CPupilTrackerApp object
 
@@ -36,7 +35,6 @@ BOOL CPupilTrackerApp::InitInstance()
 //	_CrtSetBreakAlloc(452);
 //#endif
 //
-
 
 	// Init IC Imaging Control 
 
@@ -54,10 +52,9 @@ BOOL CPupilTrackerApp::InitInstance()
 	// visual styles.  Otherwise, any window creation will fail.
 	InitCommonControls();
 
-	CWinApp::InitInstance();
+	CWinAppEx::InitInstance();
 
 	AfxEnableControlContainer();
-
 
 	// Standard initialization
 	// If you are not using these features and wish to reduce the size
@@ -67,9 +64,9 @@ BOOL CPupilTrackerApp::InitInstance()
 	// TODO: You should modify this string to be something appropriate
 	// such as the name of your company or organization
 	SetRegistryKey(_T("AG Harmening"));
-
 	
 	CPupilTrackerMainFrame* pFrame = new CPupilTrackerMainFrame();
+	m_pMainWnd = pFrame;
 
 	DWORD dwStyle = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN);
 
@@ -81,19 +78,21 @@ BOOL CPupilTrackerApp::InitInstance()
 		NULL
 	);
 
-	m_pMainWnd = pFrame;
-	
+
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();
 
 	return TRUE;
+
 }
 
 bool CPupilTrackerApp::GetProductAndVersion(CString & strProductName, CString & strProductVersion)
 {
 	// get the filename of the executable containing the version resource
 	TCHAR szFilename[MAX_PATH + 1] = { 0 };
+
 	if (GetModuleFileName(NULL, szFilename, MAX_PATH) == 0)
+
 	{
 		TRACE("GetModuleFileName failed with error %d\n", GetLastError());
 		return false;
@@ -102,12 +101,14 @@ bool CPupilTrackerApp::GetProductAndVersion(CString & strProductName, CString & 
 	// allocate a block of memory for the version info
 	DWORD dummy;
 	DWORD dwSize = GetFileVersionInfoSize(szFilename, &dummy);
+
 	if (dwSize == 0)
 	{
 		TRACE("GetFileVersionInfoSize failed with error %d\n", GetLastError());
 		return false;
 
 	}
+
 	std::vector<BYTE> data(dwSize);
 
 	// load the version info
@@ -135,4 +136,5 @@ bool CPupilTrackerApp::GetProductAndVersion(CString & strProductName, CString & 
 	strProductVersion.SetString((LPCWSTR)pvProductVersion, iProductVersionLen);
 
 	return true;
+
 }

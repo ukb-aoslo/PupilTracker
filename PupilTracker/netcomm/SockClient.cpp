@@ -8,14 +8,13 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CSockClient::CSockClient()
+CSockClient::CSockClient() : shutdown(false)
 {
 
 }
 
 CSockClient::~CSockClient()
 {
-
 }
 
 // ***************************************************************************
@@ -36,7 +35,7 @@ CSockClient::~CSockClient()
 void CSockClient::OnRecieve(int nError)
 {
 	TRACE(_T("CSockClient::OnRecieve( %d )\n"), nError);
-	char chBuff[WINSOCK_READ_BUFF_SIZE + 1];
+	/*char chBuff[WINSOCK_READ_BUFF_SIZE + 1];
 	int nRead;
 	while ((nRead = Recieve(chBuff, WINSOCK_READ_BUFF_SIZE)) > 0)
 	{
@@ -47,8 +46,10 @@ void CSockClient::OnRecieve(int nError)
 			TRACE(L"%c ", chBuff[nPos]);
 			chBuff[nPos] = chBuff[nPos] + 1;
 		}
-		Send(chBuff, nRead);
 	}
+	*/
+		Send((char*)&coords, 16);
+		
 }
 
 // ***************************************************************************
@@ -97,5 +98,6 @@ void CSockClient::OnClose( int nError )
     {
         //TODO : Process the read data.
     }
+	shutdown = true;
 }
 

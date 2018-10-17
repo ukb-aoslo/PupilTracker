@@ -54,7 +54,7 @@ BEGIN
     CONTROL         "Margin",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,15,190,37,10
     CONTROL         "Framecounter",IDC_CHECK2,"Button",BS_AUTOCHECKBOX,15,205,61,10
     CONTROL         "Pupil Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX,15,220,51,10
-    CONTROL         "Avg. Brightness",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,15,235,67,10
+    CONTROL         "Frames/sec",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,15,235,53,10
     LTEXT           "frames",IDC_STATIC,157,207,23,8
     GROUPBOX        "Jitter Reduction",IDC_STATIC,94,186,145,66
     PUSHBUTTON      "Default",IDC_DEFAULTPARAMS,7,264,50,14,NOT WS_TABSTOP
@@ -120,6 +120,16 @@ IDR_MENU1 MENU
 BEGIN
     MENUITEM "EditFind",                    ID_EDIT_FIND, CHECKED, INACTIVE
 END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_BITMAP1             BITMAP                  "res\\offset_tracker.bmp"
+
+IDB_BITMAP2             BITMAP                  "res\\pupil_dia.bmp"
 
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -208,8 +218,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,3,0
- PRODUCTVERSION 1,3,3,0
+ FILEVERSION 1,3,4,0
+ PRODUCTVERSION 1,3,4,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -226,12 +236,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.3.0"
+            VALUE "FileVersion", "1.3.4.0"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.3.0"
+            VALUE "ProductVersion", "1.3.4.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -280,6 +290,11 @@ END
 STRINGTABLE
 BEGIN
     ID_EDIT_FIND            "Find the Prefix\nFind"
+END
+
+STRINGTABLE
+BEGIN
+    ID_INDICATOR_LINK1      "AOMControl"
 END
 
 #endif    // English (United States) resources

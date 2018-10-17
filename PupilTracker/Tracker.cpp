@@ -1,5 +1,7 @@
+#pragma once
 #include "stdafx.h"
 #include "Tracker.h"
+#include "PupilTrackerMainFrame.h"
 
 Tracker::Tracker() {
 
@@ -8,13 +10,16 @@ Tracker::Tracker() {
 
 	bufchange = false;
 
-	magnif = (double)(1 / MM_PER_PIXEL);	    // magnification in pixel per mm
+	magnif = MM_PER_PIXEL;	    // magnification in pixel per mm
 
 }
 
 Tracker::~Tracker() {
 
+
+
 }
+
 
 void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
@@ -22,7 +27,6 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.reset();
 		bufchange = false;
 	}
-
 
 	// reduce pupil jitter if desired
 	if (*buf_size > 2) reduceJitter();
@@ -33,6 +37,48 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.current_center.y = pupil.current_center.y;
 	}
 
+	// Send purkinje data to AOMControl via netcomm
+	if (m_pParent->m_pSock_AOMCONTROL != NULL) {
+		m_pParent->m_pSock_AOMCONTROL->coords[0] = purkinje.current_center.x;
+		m_pParent->m_pSock_AOMCONTROL->coords[1] = purkinje.current_center.y;
+	}
+
+		postOffset();
+		postDiameter();
+
+}
+
+void Tracker::postOffset() {
+
+	// Send pupil offset to OffsetTracker Window for painting
+	if (freeze) {
+
+		offsetMM.x = (pupil.current_center.x - pupil.frozen_center.x) * magnif;
+		offsetMM.y = (pupil.current_center.y - pupil.frozen_center.y) * magnif;
+
+		m_pParent->PostMessage(MESSAGE_OFFSETMM_PROCESSED, (WPARAM)&offsetMM, 0);
+
+		// save that offset too
+		pupil.offsetMM.push_back(offsetMM);
+		
+	}
+
+	else {
+
+			m_pParent->PostMessage(MESSAGE_OFFSETMM_PROCESSED, 0, 0);
+			// save that offset too
+			pupil.offsetMM.push_back(coords<double, double> {0, 0});
+	
+	}
+
+
+}
+
+void Tracker::postDiameter() {
+
+	if (m_pParent != NULL)
+		m_pParent->PostMessage(MESSAGE_PUPILDIA_PROCESSED, pupil.current_diameter, 0);
+
 }
 
 
@@ -40,9 +86,14 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap, const tsMediaSampleDesc& MediaSampleDesc)
 {
 
+	DShowLib::Error e;
+	e = caller.getLastError();
+	if (e.isError())
+		TRACE("Error: %s\n", e.getString().c_str());
+
 	// clear screen
 	pBitmap->fill(RGB(0, 0, 0));
-
+	
 	// frames counted
 	frames++;
 
@@ -62,6 +113,13 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 			pBitmap->drawText(RGB(255, 255, 0), 12, 12, LPCTSTR(szText));
 		}
 
+		if (*opts & FPS)
+		{
+			szText.Format(TEXT("FPS: %.2f"), caller.getCurrentActualFPS());
+			pBitmap->drawText(RGB(255, 255, 0), 570, 12, LPCTSTR(szText));
+		}
+
+
 		// draw yellow box in life video to show the range in which the pupil should be
 
 		if (*opts & BoxBoundary) {
@@ -79,13 +137,13 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 		// pixels supposed to be in the pupil
 
 		if (*opts & PupilPixels)
-				for (size_t i = 0; i < 2000; i++)
+				for (size_t i = 0; i < 1000; i++)
 					if (pupil.pixels[i].x < Width && pupil.pixels[i].y < Height)
-					pBitmap->drawFrameEllipse(RGB(255, 0, 255), CRect(
+					pBitmap->drawLine(RGB(255, 0, 255), 
 						pupil.pixels[i].x - 1,
 						Height - pupil.pixels[i].y - 1,
 						pupil.pixels[i].x + 1,
-						Height - pupil.pixels[i].y + 1)
+						Height - pupil.pixels[i].y + 1
 				);
 				
 		// draw pupil outline

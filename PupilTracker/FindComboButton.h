@@ -7,6 +7,7 @@ class CFindComboButton : public CMFCToolBarComboBoxButton
 	DECLARE_SERIAL(CFindComboButton)
 
 public:
+	CFindComboBox* findCombo;
 
 	CFindComboButton();
 	virtual ~CFindComboButton();

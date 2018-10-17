@@ -4,23 +4,26 @@
 #include "PupilDiaTracker.h"
 #include "Pupil.h"
 #include "Parameters.h"
-
+#include "netcomm\SockClient.h"
 
 
 class Tracker : public CListener
 {
 
 public:
+
 	Tracker();
-	virtual ~Tracker();
+	~Tracker();
 
-	Pupil median_pupil;						// reduce jitter in overlay
+	Pupil			median_pupil;			// reduce jitter in overlay
 
-	bool bufchange;							// respect live parameter change
-	double magnif;							// magnification of the video image (pixel / mm)
+	bool			bufchange;				// respect live parameter change
+	double			magnif;					// magnification of the video image (pixel / mm)
 	
-	int display;							// counter helper variable for blinking rec status
-	long int frames;						// counting of processed frames
+	int				display;				// counter helper variable for blinking rec status
+	long int		frames;					// counting of processed frames
+	
+	coords<double, double> offsetMM;
 
 protected:
 
@@ -28,8 +31,9 @@ protected:
 	Pupil getMedian(Pupil p);
 
 private:
-
 	void DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer);
 	void overlayCallback(Grabber& param, smart_ptr<OverlayBitmap> pBitmap, const tsMediaSampleDesc&);
+	void postOffset();
+	void postDiameter();
 
 };

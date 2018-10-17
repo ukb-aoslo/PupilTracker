@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "PupilDiaTracker.h"
-
+#include "resource.h"
 // Graph
 
 
@@ -12,8 +12,7 @@ PupilDiaTracker::PupilDiaTracker()
 	hPenBge = CreatePen(PS_SOLID, 1, RGB(255, 168, 115));			// beige pen
 	hPenClay = CreatePen(PS_SOLID, 1, RGB(204, 96, 97));			// clay pen
 
-	bkgrndCol = RGB(0, 0, 0);
-	brushBack.CreateSolidBrush(bkgrndCol);
+	brushBack.CreateSolidBrush(RGB(0, 0, 0));
 	
 	VERIFY(headFont.CreateFont(
 		24,							// nHeight
@@ -47,6 +46,10 @@ PupilDiaTracker::PupilDiaTracker()
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
 		_T("Consolas")));           // lpszFacename
 
+									// protected bitmaps to restore the memory DC's
+	m_pbitmapOldGrid = NULL;
+	m_pbitmapOldPlot = NULL;
+
 }
 
 PupilDiaTracker::~PupilDiaTracker()
@@ -54,10 +57,10 @@ PupilDiaTracker::~PupilDiaTracker()
 
 	// just to be picky restore the bitmaps for the two memory dc's
 	// (these dc's are being destroyed so there shouldn't be any leaks)
-	if (m_pbitmapOldGrid != NULL)
-		m_dcGrid.SelectObject(m_pbitmapOldGrid);
-	if (m_pbitmapOldPlot != NULL)
-		m_dcPlot.SelectObject(m_pbitmapOldPlot);
+	//if (m_pbitmapOldGrid != NULL)
+	//	m_dcGrid.SelectObject(m_pbitmapOldGrid);
+	//if (m_pbitmapOldPlot != NULL)
+	//	m_dcPlot.SelectObject(m_pbitmapOldPlot);
 
 }
 
@@ -73,48 +76,50 @@ void PupilDiaTracker::InvalidateCtrl() {
 	if (m_dcGrid.GetSafeHdc() == NULL)
 	{
 		m_dcGrid.CreateCompatibleDC(dc);
-		m_bitmapGrid.CreateCompatibleBitmap(dc, m_nClientWidth, m_nClientHeight);
+		m_bitmapGrid.LoadBitmapW(IDB_BITMAP2);
+		dc->SelectObject(m_bitmapGrid);
+		m_dcGrid.BitBlt(0, 0, m_nClientWidth, m_nClientHeight, dc, 0, 0, SRCCOPY);
 		m_pbitmapOldGrid = m_dcGrid.SelectObject(&m_bitmapGrid);
 	}
 
-	dc->SetBkColor(RGB(0, 0, 0));
-	dc->SetBkMode(OPAQUE);
+	//dc->SetBkColor(RGB(0, 0, 0));
+	//dc->SetBkMode(OPAQUE);
 
 	CStringW szText;
 
-	m_dcGrid.FillRect(m_rectClient, &brushBack);
+	//m_dcGrid.FillRect(m_rectClient, &brushBack);
 
-	dc->SelectObject(&headFont);
-	SetTextColor(*dc, RGB(254, 152, 0));
-	szText.Format(TEXT("PUPIL DIAMETER"));
-	dc->TextOutW(m_rectClient.right / 2 - 80, 10, szText);
+	//dc->SelectObject(&headFont);
+	//SetTextColor(*dc, RGB(254, 152, 0));
+	//szText.Format(TEXT("PUPIL DIAMETER"));
+	//dc->TextOutW(m_rectClient.right / 2 - 80, 10, szText);
 
-	SelectObject(*dc, hPenClay);
+	//SelectObject(*dc, hPenClay);
 
-	MoveToEx(*dc, 0, 0, NULL);
-	LineTo(*dc, m_rectClient.right, 0);
+	//MoveToEx(*dc, 0, 0, NULL);
+	//LineTo(*dc, m_rectClient.right, 0);
 
-	SelectObject(*dc, hPenWht);
-	for (int i = 0; i < 6; i++)
-	{
-		MoveToEx(*dc, 20, 181 - 28 * i, NULL);
-		LineTo(*dc, 25, 181 - 28 * i);
-		szText.Format(TEXT("%d"), i + 4);
-		dc->TextOutW(10, 172 - 28 * i, szText);
-	}
+	//SelectObject(*dc, hPenWht);
+	//for (int i = 0; i < 6; i++)
+	//{
+	//	MoveToEx(*dc, 20, 181 - 28 * i, NULL);
+	//	LineTo(*dc, 25, 181 - 28 * i);
+	//	szText.Format(TEXT("%d"), i + 4);
+	//	dc->TextOutW(10, 172 - 28 * i, szText);
+	//}
 
-	for (int i = 0; i < 16; i++)
-	{
-		MoveToEx(*dc, 25 + 62 * i, m_rectClient.bottom - 48, NULL);
-		LineTo(*dc, 25 + 62 * i, m_rectClient.bottom - 48 - 5);
-		szText.Format(TEXT("%d"), i * 2);
-		dc->TextOutW(22 + 62 * i, m_rectClient.bottom - 45, szText);
-	}
+	//for (int i = 0; i < 16; i++)
+	//{
+	//	MoveToEx(*dc, 25 + 62 * i, m_rectClient.bottom - 48, NULL);
+	//	LineTo(*dc, 25 + 62 * i, m_rectClient.bottom - 48 - 5);
+	//	szText.Format(TEXT("%d"), i * 2);
+	//	dc->TextOutW(22 + 62 * i, m_rectClient.bottom - 45, szText);
+	//}
 
-	MoveToEx(*dc, 25, m_rectClient.bottom - 48, NULL);
-	LineTo(*dc, 1024, m_rectClient.bottom - 48);
+	//MoveToEx(*dc, 25, m_rectClient.bottom - 48, NULL);
+	//LineTo(*dc, 1024, m_rectClient.bottom - 48);
 
-	dc->SelectObject(&consBig);
+	//dc->SelectObject(&consBig);
 
 	/*
 	if (!PupilDia.empty()) {
@@ -168,6 +173,9 @@ void PupilDiaTracker::InvalidateCtrl() {
 	}
 
 	*/
+
+	delete dc;
+
 }
 
 void PupilDiaTracker::OnPaint()
@@ -208,14 +216,139 @@ void PupilDiaTracker::OnPaint()
 }
 
 
+double PupilDiaTracker::AppendPoint(double dia) {
+	
+	double dPrevious;
+
+	dPrevious = m_dCurrentPosition;
+	m_dCurrentPosition = dia;
+	DrawPoint();
+
+	Invalidate();
+
+	return dPrevious;
+
+}
+
+
+void PupilDiaTracker::DrawPoint() {
+
+}
+
+
+void PupilDiaTracker::DrawPoints() {
+	int currX, prevX, currY, prevY, iPoint;
+
+	CPen *oldPen;
+	CRect rectCleanUp;
+	if (m_dcPlot.GetSafeHdc() != NULL)
+	{
+		// shift the plot by BitBlt'ing it to itself 
+		// note: the m_dcPlot covers the entire client
+		//       but we only shift bitmap that is the size 
+		//       of the plot rectangle
+		// grab the right side of the plot (exluding m_nShiftPixels on the left)
+		// move this grabbed bitmap to the left by m_nShiftPixels
+
+		m_dcPlot.BitBlt(m_rectPlot.left, m_rectPlot.top + 1,
+			m_nPlotWidth, m_nPlotHeight, &m_dcPlot,
+			m_rectPlot.left + m_nShiftPixels, m_rectPlot.top + 1,
+			SRCCOPY);
+
+		// establish a rectangle over the right side of plot
+		// which now needs to be cleaned up proir to adding the new point
+		rectCleanUp = m_rectPlot;
+		rectCleanUp.left = rectCleanUp.right - m_nShiftPixels;
+
+		// fill the cleanup area with the background
+		m_dcPlot.FillRect(rectCleanUp, &m_brushBack);
+
+		// draw the next line segement
+
+		// grab the plotting pen
+		for (iPoint = 0; iPoint < 10; iPoint++)
+		{
+			if (m_Point[iPoint].bUsed)
+			{
+				oldPen = m_dcPlot.SelectObject(&(m_Point[iPoint].penPlot));
+
+				// move to the previous point
+				prevX = m_rectPlot.right - m_nPlotShiftPixels;
+				prevY = m_rectPlot.bottom -
+					(long)((m_Point[iPoint].dPreviousPosition.y - m_Point[iPoint].dLowerLimit) * m_Point[iPoint].dVerticalFactor);
+				m_dcPlot.MoveTo(prevX, prevY);
+
+				// draw to the current point
+				currX = m_rectPlot.right - m_nHalfShiftPixels;
+				currY = m_rectPlot.bottom -
+					(long)((m_Point[iPoint].dCurrentPosition.y - m_Point[iPoint].dLowerLimit) * m_Point[iPoint].dVerticalFactor);
+				m_dcPlot.LineTo(currX, currY);
+
+				// restore the pen 
+				m_dcPlot.SelectObject(oldPen);
+
+				// if the data leaks over the upper or lower plot boundaries
+				// fill the upper and lower leakage with the background
+				// this will facilitate clipping on an as needed basis
+				// as opposed to always calling IntersectClipRect
+				if ((prevY <= m_rectPlot.top) || (currY <= m_rectPlot.top))
+					m_dcPlot.FillRect(CRect(prevX, m_rectClient.top, currX + 1, m_rectPlot.top + 1), &m_brushBack);
+				if ((prevY >= m_rectPlot.bottom) || (currY >= m_rectPlot.bottom))
+					m_dcPlot.FillRect(CRect(prevX, m_rectPlot.bottom + 1, currX + 1, m_rectClient.bottom + 1), &m_brushBack);
+
+				// store the current point for connection to the next point
+				m_Point[iPoint].dPreviousPosition = m_Point[iPoint].dCurrentPosition;
+			}
+		}
+	}
+
+}
+
+
 void PupilDiaTracker::OnSize(UINT nType, int cx, int cy)
 {
-	CStatic::OnSize(nType, cx, cy);
 
-	// TODO: Add your message handler code here
+	CWnd::OnSize(nType, cx, cy);
+
+	// NOTE: OnSize automatically gets called during the setup of the control
+
+	GetClientRect(m_rectClient);
 
 	// set some member variables to avoid multiple function calls
 	m_nClientHeight = m_rectClient.Height();
 	m_nClientWidth = m_rectClient.Width();
+
+	// the "left" coordinate and "width" will be modified in 
+	// InvalidateCtrl to be based on the width of the y axis scaling
+	m_rectPlot.left = 20;
+	m_rectPlot.top = 10;
+	m_rectPlot.right = m_rectClient.right - 10;
+	m_rectPlot.bottom = m_rectClient.bottom - 25;
+
+	// set some member variables to avoid multiple function calls
+	m_nPlotHeight = m_rectPlot.Height();
+	m_nPlotWidth = m_rectPlot.Width();
+
+	// set the scaling factor for now, this can be adjusted 
+	// in the SetRange functions
+	m_dVerticalFactor = (double)m_nPlotHeight / m_dRange;
+	for (int i = 0; i < 10; i++)
+	{
+		if (m_Point[i].bUsed && m_Point[i].dRange > 0.0)
+		{
+			m_Point[i].dVerticalFactor = (double)m_nPlotHeight / m_Point[i].dRange;
+		}
+	}
+
+	if (m_pbitmapOldGrid != NULL)
+		m_dcGrid.SelectObject(m_pbitmapOldGrid);
+	if (m_pbitmapOldPlot != NULL)
+		m_dcPlot.SelectObject(m_pbitmapOldPlot);
+
+	m_dcGrid.DeleteDC();
+	m_dcPlot.DeleteDC();
+	m_bitmapPlot.DeleteObject();
+	m_bitmapGrid.DeleteObject();
+	InvalidateCtrl();
 
 }

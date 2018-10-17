@@ -7,6 +7,7 @@
 #include "Listener.h"
 #include "PupilTrackerMainFrame.h"
 
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
@@ -14,8 +15,6 @@
 
 CListener::CListener()
 {
-	m_pVideoOut = NULL;
-	m_pParent = NULL;
 
 	x = NULL;
 	y = NULL;
@@ -27,6 +26,8 @@ CListener::CListener()
 	freeze = false;
 	record = false;
 	
+	m_pParent = NULL;
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -34,23 +35,26 @@ CListener::CListener()
 CListener::~CListener() 
 {
 
-	delete x;
-	delete y;
-	delete pupil.pixels;
-	delete purkinje.pixels;
+	if (pupil.pixels != NULL)
+		free(pupil.pixels);
+	if (purkinje.pixels != NULL)
+		free(purkinje.pixels);
+	if (x != NULL)
+		free(x);
+	if (y != NULL)
+		free(y);
+
 }
 
 void CListener::SetParent(CWnd *pParent)
 {
 
-	m_pParent = pParent;
+	m_pParent = (CPupilTrackerMainFrame*)pParent;
 
-	CPupilTrackerMainFrame* p = (CPupilTrackerMainFrame*)m_pParent;
-
-	pupil_settings = &p->params.pupil;
-	purkinje_settings = &p->params.purkinje;
-	opts = &p->params.opts;
-	buf_size = &p->params.buf_size;
+	pupil_settings = &m_pParent->params.pupil;
+	purkinje_settings = &m_pParent->params.purkinje;
+	opts = &m_pParent->params.opts;
+	buf_size = &m_pParent->params.buf_size;
 
 }
 
@@ -59,10 +63,12 @@ void CListener::SetParent(CWnd *pParent)
 // Notify parent, device is lost.
 //////////////////////////////////////////////////////////////////////////
 
-void CListener::deviceLost( Grabber& param) 
+void CListener::deviceLost( Grabber& param ) 
 {
+
 	if( m_pParent != NULL)
-		m_pParent->PostMessage(MESSAGEDEVICELOST,0,0);
+		m_pParent->PostMessage(MESSAGEDEVICELOST, 0, 0);
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -71,16 +77,22 @@ void CListener::deviceLost( Grabber& param)
 
 void CListener::frameReady( Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber)
 {
+
 	pBuffer->lock();
 	
 	// is it time to make a snapshot?
-	if (snap) makeSnapshot(pBuffer, FrameNumber);
+	if (snap) 
+		makeSnapshot(pBuffer, FrameNumber);
 	
-	// go find that pupil
+	// go find that pupil / purkinje
+	pupilfind?ZeroMemory(pupil.pixels, (Width * Height) / 5):ZeroMemory(purkinje.pixels, (Width * Height) / 5);
+
 	DoImageProcessing(pBuffer);
 
 	pBuffer->unlock();
+
 }
+
 
 //////////////////////////////////////////////////////////////////////////
 /*! The overlayCallback() method draws the number of the current frame. The
@@ -94,8 +106,8 @@ void CListener::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 
 void CListener::frank(BYTE* pImageData, Settings *setting) {
-	
-	
+
+
 	double pupil_right = 0;
 	int max;		// for pupil center coarse and fine
 
@@ -261,14 +273,6 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 
 		else {
 
-			pupil.current_center.x = 0;
-			pupil.current_center.y = 0;
-			pupil.current_diameter = 0;
-
-		}
-
-		if (!pupilfind) {
-
 			purkinje.current_center.x = ave_x_right / ((double)n_right);
 			purkinje.current_center.y = ave_y_right / ((double)n_right);
 
@@ -276,6 +280,15 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 			purkinje.current_diameter = 2 * (sqrt(double(n_right) / PI));
 
 		}
+	}
+
+	else if (pupilfind) {
+
+		pupil.current_center.x = 0;
+		pupil.current_center.y = 0;
+		pupil.current_diameter = 0;
+
+	}
 
 		else {
 
@@ -283,12 +296,31 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 			purkinje.current_center.y = 0;
 			purkinje.current_diameter = 0;
 
-		}
-
-
 	}
 
+
+
+}
+
+void CListener::init(int cx, int cy) {
 	
+	Width = cx;
+	Height = cy;
+
+	if (pupil.pixels != NULL)
+		free(pupil.pixels);
+	if (purkinje.pixels != NULL)
+		free(purkinje.pixels);
+	if (x != NULL)
+		free (x);
+	if (y != NULL)
+		free (y);
+
+	x = (int *)malloc(Width * Height);
+	y = (int *)malloc(Width * Height);
+	pupil.pixels = (coords<int, int>*) malloc((Width * Height) / 5);
+	purkinje.pixels = (coords<int, int>*) malloc((Width * Height) / 5);
+
 }
 
 void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
@@ -305,10 +337,10 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 
 	BYTE* pImageData = pBuffer->getPtr();
 
-	//if (pInf->biPlanes != 1) {
-	//	AfxMessageBox(_T("Wrong color format!\nNeed 8-bit mono!"), MB_ICONERROR);
-	//	PostQuitMessage(0);
-	//}
+	if (pInf->biPlanes != 1) {
+		AfxMessageBox(_T("Wrong color format!\nNeed 8-bit mono!"), MB_ICONERROR);
+		PostQuitMessage(0);
+	}
 
 	// make negative image for black pupil tracker
 	//for (int i = 0; i < iImageSize; i++)
@@ -317,19 +349,11 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	//	if (pImageData[i] > 133) pImageData[i] = 255;
 	//}
 
-	Width = pInf->biWidth; Height = pInf->biHeight; // current video format
-	
-	if (x == NULL || y == NULL || pupil.pixels == NULL || purkinje.pixels == NULL) {
-		x = (int *)malloc(Width * Height);
-		y = (int *)malloc(Width * Height);
-
-		pupil.pixels = (coords<int, int>*) malloc(Width * Height / 5);
-		purkinje.pixels = (coords<int, int>*) malloc(Width * Height / 5);
-	}
 
 	// calculate pupil center and diameter
 	pupilfind = true;
 	frank(pImageData, pupil_settings);
+
 	// subclass processing goes here
 	DoFurtherProcessing(pBuffer);
 	
@@ -338,7 +362,7 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	
 	// store pupil calculation results
 	pupil.center.push_back(pupil.current_center);
-	pupil.diameter.push_back(pupil.current_diameter);
+	pupil.diameter.push_back(pupil.current_diameter * MM_PER_PIXEL);
 
 	// now use frank to obtain purkinje as well
 	pupilfind = false;
@@ -346,10 +370,9 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 
 	// store calculation results
 	purkinje.center.push_back(purkinje.current_center);
-	purkinje.diameter.push_back(purkinje.current_diameter);
+	purkinje.diameter.push_back(purkinje.current_diameter * MM_PER_PIXEL);
 
-	ZeroMemory(pupil.pixels, (Width*Height) / 5);
-	ZeroMemory(purkinje.pixels, (Width*Height) / 5);
+
 
 }
 
@@ -376,31 +399,31 @@ void CListener::makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber) {
 void CListener::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
 	// whatever calculations may be necessary in certain subclasses
-
+	Sleep(10);
 }
 
 void CListener::freezePupil() {
 
 	// toggle between normal and frozen state
-	// hint: to find out if we've just franked a pupil or a purkinje, modulo-n-check
+	
 	freeze ? freeze = false : freeze = true;
-	if (freeze)
-		while (pupil.center.size() % 1) {
+	
+	if (freeze){
+
 			pupil.frozen_center.x = pupil.current_center.x;
 			pupil.frozen_center.y = pupil.current_center.y;
 			pupil.frozen_diameter = pupil.current_diameter;
-		}
+
+
+			if (m_pParent != NULL)
+				m_pParent->PostMessage(MESSAGE_OFFSET_LOCKEDPOS, 0, reinterpret_cast<WPARAM>(&pupil.frozen_center));
+
+	}
 
 }
 
 void CListener::setSnap(bool b) {
 
 	snap = b;
-
-}
-
-void CListener::setFreeze(bool b) {
-	
-	freeze = b;
 
 }

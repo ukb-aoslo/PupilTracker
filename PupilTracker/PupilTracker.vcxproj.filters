@@ -56,6 +56,9 @@
     <Image Include="res\PupilTracker.ico" />
     <Image Include="res\Toolbar.bmp" />
     <Image Include="res\toolbar1.bmp" />
+    <Image Include="res\bitmap2.bmp" />
+    <Image Include="res\offset_tracker.bmp" />
+    <Image Include="res\pupil_dia.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="res\PupilTracker.rc2" />

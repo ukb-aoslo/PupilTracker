@@ -339,6 +339,7 @@ bool CWinSock2Async::ShutdownConnection()
 	//Socket already dead
 	m_Sd = INVALID_SOCKET;
 	return false;
+
 }
 
 

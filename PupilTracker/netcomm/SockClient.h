@@ -15,6 +15,8 @@ class CSockClient : public CWinSock2Async
 public:
 	CSockClient();
 	virtual ~CSockClient();
+	bool shutdown;
+	double coords[2];
 
 private:
 	void OnRecieve( int nError );
