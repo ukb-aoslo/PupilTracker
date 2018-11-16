@@ -16,7 +16,7 @@
 //		Link with	Ws2_32.lib
 // ***************************************************************************
 
-#include "../stdafx.h"
+#include "stdafx.h"
 #include "WinSock2Async.h"							//Socket for Requesting data
 
 

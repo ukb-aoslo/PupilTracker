@@ -10,19 +10,19 @@
     <ClCompile Include="PupilTracker.cpp" />
     <ClCompile Include="PupilTrackerMainFrame.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="netcomm\SockClient.cpp">
-      <Filter>netcomm</Filter>
-    </ClCompile>
-    <ClCompile Include="netcomm\SockListener.cpp">
-      <Filter>netcomm</Filter>
-    </ClCompile>
-    <ClCompile Include="netcomm\WinSock2Async.cpp">
-      <Filter>netcomm</Filter>
-    </ClCompile>
     <ClCompile Include="OffsetTracker.cpp" />
     <ClCompile Include="PupilDiaTracker.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Tracker.cpp" />
+    <ClCompile Include="..\netcomm\SockClient.cpp">
+      <Filter>netcomm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netcomm\SockListener.cpp">
+      <Filter>netcomm</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netcomm\WinSock2Async.cpp">
+      <Filter>netcomm</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChildView.h" />
@@ -35,37 +35,53 @@
     <ClInclude Include="PupilTrackerMainFrame.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="netcomm\SockClient.h">
-      <Filter>netcomm</Filter>
-    </ClInclude>
-    <ClInclude Include="netcomm\SockListener.h">
-      <Filter>netcomm</Filter>
-    </ClInclude>
-    <ClInclude Include="netcomm\WinSock2Async.h">
-      <Filter>netcomm</Filter>
-    </ClInclude>
     <ClInclude Include="OffsetTracker.h" />
     <ClInclude Include="PupilDiaTracker.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Tracker.h" />
+    <ClInclude Include="..\netcomm\SockClient.h">
+      <Filter>netcomm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\netcomm\SockListener.h">
+      <Filter>netcomm</Filter>
+    </ClInclude>
+    <ClInclude Include="..\netcomm\WinSock2Async.h">
+      <Filter>netcomm</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="PupilTracker.rc" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\PupilTracker.ico" />
-    <Image Include="res\Toolbar.bmp" />
-    <Image Include="res\toolbar1.bmp" />
-    <Image Include="res\bitmap2.bmp" />
-    <Image Include="res\offset_tracker.bmp" />
-    <Image Include="res\pupil_dia.bmp" />
+    <Image Include="res\bitmap2.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
+    <Image Include="res\nocamera.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
+    <Image Include="res\offset_tracker.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
+    <Image Include="res\pupil_dia.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
+    <Image Include="res\toolbar1.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
+    <Image Include="res\Toolbar.bmp">
+      <Filter>Bitmaps</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="res\PupilTracker.rc2" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="netcomm">
-      <UniqueIdentifier>{e02e405e-0f4f-4642-8f34-af09d21ef9d2}</UniqueIdentifier>
+      <UniqueIdentifier>{8093064c-7d0c-4b38-894d-57e60022faa8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Bitmaps">
+      <UniqueIdentifier>{ee2c1316-4166-48e5-8beb-22058a56ec93}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

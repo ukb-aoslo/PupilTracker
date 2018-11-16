@@ -2,7 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by PupilTracker.rc
 //
-#define ID_EDIT_FIND_COMBO              1
+#define IDS_STRING1                     1
 #define IDD_ABOUTBOX                    100
 #define IDR_MAINFRAME                   128
 #define IDD_DIALOG1                     134
@@ -11,6 +11,7 @@
 #define ID_INDICATOR_LINK1              154
 #define IDB_BITMAP1                     155
 #define IDB_BITMAP2                     157
+#define IDB_BITMAP3                     158
 #define IDC_SLIDER1                     1004
 #define IDC_OK                          1005
 #define IDC_CANCEL                      1006
@@ -28,6 +29,7 @@
 #define IDE_THRESHVAL2                  1018
 #define IDC_EDIT3                       1019
 #define IDC_EDIT4                       1020
+#define ID_EDIT_FIND_COMBO              32000
 #define ID_VIEW_PARAMETERS              32771
 #define ID_CAMERA_DEVICES               32772
 #define ID_PLAY                         32773
@@ -39,15 +41,21 @@
 #define ID_PICK_FOLDER                  32787
 #define ID_BUTTON32789                  32789
 #define ID_BUTTON32790                  32790
+#define ID_BUTTON_LAYERS                32790
 #define ID_LOCK                         32791
 #define ID_FINDCOMBO                    32794
+#define ID_BUTTON32796                  32796
+#define ID_BUTTON32797                  32797
+#define ID_BUTTON32798                  32798
+#define ID_APP_INFINITE                 32799
+#define ID_BUTTON32800                  32800
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        158
-#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_RESOURCE_VALUE        160
+#define _APS_NEXT_COMMAND_VALUE         32801
 #define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

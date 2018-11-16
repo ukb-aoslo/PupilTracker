@@ -116,7 +116,7 @@ IDR_MAINFRAME           ICON                    "res\\PupilTracker.ico"
 // Menu
 //
 
-IDR_MENU1 MENU
+ID_EDIT_FIND MENU
 BEGIN
     MENUITEM "EditFind",                    ID_EDIT_FIND, CHECKED, INACTIVE
 END
@@ -130,6 +130,8 @@ END
 IDB_BITMAP1             BITMAP                  "res\\offset_tracker.bmp"
 
 IDB_BITMAP2             BITMAP                  "res\\pupil_dia.bmp"
+
+IDB_BITMAP3             BITMAP                  "res\\nocamera.bmp"
 
 #endif    // German (Germany) resources
 /////////////////////////////////////////////////////////////////////////////
@@ -147,7 +149,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 // Bitmap
 //
 
-IDR_MAINFRAME           BITMAP                  "C:\\Users\\Michen\\Documents\\repos\\PupilTracker\\PupilTracker\\res\\Toolbar.bmp"
+IDR_MAINFRAME           BITMAP                  "res\\Toolbar.bmp"
 
 
 #ifdef APSTUDIO_INVOKED
@@ -201,14 +203,17 @@ BEGIN
     BUTTON      ID_STOP
     BUTTON      ID_RECORD
     BUTTON      ID_LOCK
+    BUTTON      ID_APP_INFINITE
+    BUTTON      ID_BUTTON_LAYERS
     BUTTON      ID_MAKE_SNAPSHOT
     SEPARATOR
     BUTTON      ID_PICK_FOLDER
     BUTTON      ID_EDIT_FIND
     BUTTON      ID_BUTTON32789
-    BUTTON      ID_BUTTON32790
-    SEPARATOR
-    BUTTON      ID_APP_ABOUT
+    BUTTON      ID_BUTTON32796
+    BUTTON      ID_BUTTON32797
+    BUTTON      ID_BUTTON32798
+    BUTTON      ID_BUTTON32800
 END
 
 
@@ -279,22 +284,19 @@ END
 
 STRINGTABLE
 BEGIN
+    ID_BUTTON_LAYERS        "Toggle drawing of overlay"
     ID_FINDCOMBO            "Prompt filename\nToolTip"
-END
-
-STRINGTABLE
-BEGIN
-    ID_EDIT_FIND_COMBO      "Find the Prefix\nFind"
-END
-
-STRINGTABLE
-BEGIN
-    ID_EDIT_FIND            "Find the Prefix\nFind"
+    ID_APP_INFINITE         "Show infinite trail in Offset Tracking"
 END
 
 STRINGTABLE
 BEGIN
     ID_INDICATOR_LINK1      "AOMControl"
+END
+
+STRINGTABLE
+BEGIN
+    IDS_STRING1             "ID_EDIT_FIND_COMBO"
 END
 
 #endif    // English (United States) resources

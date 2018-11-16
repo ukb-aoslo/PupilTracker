@@ -1,6 +1,7 @@
 // ChildView.cpp : implementation file
 //
 #include "stdafx.h"
+#include "resource.h"
 #include "PupilTracker.h"
 #include "ChildView.h"
 #include "PupilTrackerMainFrame.h"
@@ -12,6 +13,8 @@ IMPLEMENT_DYNAMIC(CChildView, CWnd)
 CChildView::CChildView()
 {
 	m_pBuffer = NULL;
+
+
 }
 
 CChildView::~CChildView()
@@ -22,6 +25,7 @@ CChildView::~CChildView()
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_WINDOWPOSCHANGING()
 	ON_WM_PAINT()
+	ON_WM_ERASEBKGND()
 END_MESSAGE_MAP()
 
 // ChildView message handlers
@@ -33,20 +37,22 @@ BOOL CChildView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwS
 
 	dwStyle = WS_CHILD | WS_VISIBLE;
 
-	if (!wndVideo.Create(_T("STATIC"), dwStyle, rect , pParentWnd, NULL)) {
+	if (!wndVideo.Create(_T(""),dwStyle, rect, pParentWnd, NULL)) {
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
 
-	if(!wndOffset.Create(_T("STATIC"), _T("Offset"), dwStyle, rect, pParentWnd, NULL)) {
+	if(!wndOffset.Create(_T("STATIC"), _T("Offset"),dwStyle, rect, pParentWnd, NULL)) {
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
 
-	if (!wndPupilDia.Create(_T("STATIC"), _T("Diameter"), dwStyle, rect, pParentWnd, NULL)) {
+	if (!wndPupilDia.Create(_T("STATIC"), _T("Diameter"),dwStyle, rect, pParentWnd, NULL)) {
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
+
+
 		
 	return CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 
@@ -63,16 +69,17 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 		::LoadCursor(NULL, IDC_ARROW), reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1), NULL);
 
 	return TRUE;
+
 }
 
 void CChildView::showBuffer(const DShowLib::Grabber::tMemBufferPtr& pBuffer)
 {
+
 	m_pBuffer = pBuffer;
 	wndVideo.ShowWindow(FALSE);
 	Invalidate();
+
 }
-
-
 
 void CChildView::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 {
@@ -86,11 +93,10 @@ void CChildView::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 	wndOffset.GetClientRect(&offsetRect);
 	wndVideo.GetClientRect(&vidRect);
 
+	
 	//wndOffset.MoveWindow(CRect(vidRect.Width(), lpwndpos->y + 2, vidRect.Width() + offsetRect.Width(), vidRect.Height()), TRUE);
 
 }
-
-
 
 void CChildView::OnPaint()
 {
@@ -98,10 +104,11 @@ void CChildView::OnPaint()
 					   // TODO: Add your message handler code here
 					   // Do not call CWnd::OnPaint() for painting messages
 
-	if (m_pBuffer != 0)
-	{
-		smart_ptr<BITMAPINFOHEADER> pInf = m_pBuffer->getBitmapInfoHeader();
 
+	if (m_pBuffer != 0)	{
+
+		smart_ptr<BITMAPINFOHEADER> pInf = m_pBuffer->getBitmapInfoHeader();
+		
 		void* pBuf = m_pBuffer->getPtr();
 
 		int nLines = SetDIBitsToDevice(
@@ -123,6 +130,44 @@ void CChildView::OnPaint()
 		{
 			AfxMessageBox(L"GDI_ERROR");
 		}
+
 	}
 
+
+}
+
+void CChildView::drawOffline() {
+
+	wndVideo.ShowWindow(FALSE);
+
+	CPaintDC hdc(this);
+	CDC dc;
+	BITMAP bm;
+	dc.CreateCompatibleDC(&hdc);
+
+	CRect vidRect;
+
+	noCamera.LoadBitmapW(IDB_BITMAP3);
+	wndVideo.GetClientRect(&vidRect);
+	dc.SelectObject(&noCamera);
+
+	noCamera.GetObject(sizeof(bm), &bm);
+
+	BitBlt(hdc, vidRect.Width()/2 - bm.bmWidth/2,
+		vidRect.Height()/2 - bm.bmHeight/2,
+		bm.bmWidth,
+		bm.bmHeight,
+		dc,
+		0,
+		0,
+		SRCPAINT);
+
+	noCamera.Detach();
+
+}
+
+BOOL CChildView::OnEraseBkgnd(CDC* pDC)
+{
+	// TODO: Add your message handler code here and/or call default
+	return true;
 }

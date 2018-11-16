@@ -31,7 +31,8 @@ public:
 	coords<double, double>*				offsetMM;
 
 	bool								offsetTrackingEnabled,
-										pupilDiaTrackingEnabled;
+										pupilDiaTrackingEnabled,
+										overlayEnabled;
 
 	void updateWindowTitle();
 	void drawOverlay(DShowLib::tPathPosition pos);
@@ -87,4 +88,6 @@ public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 	afx_msg void OnPickFolder();
+	afx_msg void OnButtonToggleLayers();
+	afx_msg void OnButtonEraseTrail();
 };

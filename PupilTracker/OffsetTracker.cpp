@@ -13,9 +13,8 @@ OffsetTracker::OffsetTracker()
 	hPenGrey = CreatePen(PS_SOLID, 1, RGB(156, 152, 196));			// earth pen
 	hPenWht = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));			// white pen
 
-	
 	magnif = (double) MM_PER_PIXEL;
-	conv = 150 * 0.5; // pixels 
+	conv = 1 / MM_PER_PIXEL * 0.25 * 150;	// mapping pixels on plot with .25mm limits
 
 	bkgrndCol = RGB(0, 0, 0);
 	m_brushBack.CreateSolidBrush(bkgrndCol);
@@ -245,14 +244,16 @@ void OffsetTracker::AddPoint(coords<double, double> dNewPoint)
 	// store current position
 	dCurrentPosition = dNewPoint;
 
-	if (trail.size() < 40) {
-		trail.push_front(dNewPoint);
-	}
 
-	else {
-		m_dCurrentPosition = trail.back();
-		trail.pop_back();
-	}
+		if (trail.size() < 40) {
+			trail.push_front(dNewPoint);
+		}
+
+		else {
+			m_dCurrentPosition = trail.back();
+			trail.pop_back();
+		}
+
 
 }
 
@@ -265,14 +266,15 @@ void OffsetTracker::setLockedPos(coords<double, double>lockedPos) {
 void OffsetTracker::DrawPoint() {
 
 	if (m_dcPlot.GetSafeHdc() != NULL) {
-
+		
 		// make sure the plot bitmap is cleared
-		m_dcPlot.FillRect(m_rectClient, &m_brushBack);
+		//if (!infinity)
+		//	m_dcPlot.FillRect(m_rectClient, &m_brushBack);
 
 		// draw offset into x/y plot
-		int y = 0;
+		int y = 40;
 
-		for (auto it = trail.crbegin(); it != trail.crend(); it++) {
+		for (auto it = trail.begin(); it != trail.end(); it++) {
 
 			SelectObject(m_dcPlot, hPenPal[y]);
 			SelectObject(m_dcPlot, GetStockObject(HOLLOW_BRUSH));
@@ -281,8 +283,8 @@ void OffsetTracker::DrawPoint() {
 				m_nClientHeight / 2 + (int)(it->y * conv) - 4,
 				m_nClientWidth / 2 - (int)(it->x * conv) + 4,
 				m_nClientHeight / 2 + (int)(it->y * conv) + 4);
-			y++;
-
+			y--;
+		
 		}
 
 	}
@@ -321,7 +323,7 @@ void OffsetTracker::DrawValues() {
 		szText.Format(TEXT("%.1f"), dLockedPosition.x);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 75, m_rectClient.Height() - 20, szText);
 		szText.Format(TEXT("%.1f"), dLockedPosition.y);
-
+		
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 130, m_rectClient.Height() - 20, szText);
 
 	}
@@ -363,5 +365,15 @@ void OffsetTracker::OnSize(UINT nType, int cx, int cy)
 	m_bitmapPlot.DeleteObject();
 	m_bitmapGrid.DeleteObject();
 	InvalidateCtrl();
+
+}
+
+void OffsetTracker::eraseTrail() {
+
+	if (m_dcPlot.GetSafeHdc() != NULL) {
+
+		// make sure the plot bitmap is cleared
+		m_dcPlot.FillRect(m_rectClient, &m_brushBack);
+	}
 
 }

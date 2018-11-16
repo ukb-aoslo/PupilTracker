@@ -5,25 +5,15 @@
 #include "PupilTracker.h"
 #include "FindComboButton.h"
 
-IMPLEMENT_SERIAL(CFindComboButton, CMFCToolBarComboBoxButton, 0)
-
 // CFindComboButton
 
-CFindComboButton::CFindComboButton()
-{
-}
-
-CFindComboButton::CFindComboButton(int uid, int image, DWORD style) :
-	CMFCToolBarComboBoxButton(uid, image, style)
-{ 
-	//delete findCombo;
-}
+IMPLEMENT_SERIAL(CFindComboButton, CMFCToolBarComboBoxButton, 0)
 
 CFindComboButton::~CFindComboButton()
 {
 }
 
-CComboBox* CFindComboButton::CreateCombo(CWnd* pWndParent, const CRect &rect) {
+CFindComboBox* CFindComboButton::CreateCombo(CWnd* pWndParent, const CRect &rect) {
 	
 	CFont pFont;
 
@@ -43,8 +33,8 @@ CComboBox* CFindComboButton::CreateCombo(CWnd* pWndParent, const CRect &rect) {
 		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
 		_T("Consolas")));           // lpszFacename
 	
-	findCombo = new CFindComboBox();
-	findCombo->Create(CBS_DROPDOWN, rect, pWndParent, ID_EDIT_FIND_COMBO);
-	return findCombo;
+	findComboBox = new CFindComboBox();
+	findComboBox->Create(CBS_DROPDOWN, rect, pWndParent, ID_EDIT_FIND_COMBO);
+	return findComboBox;
 
 }

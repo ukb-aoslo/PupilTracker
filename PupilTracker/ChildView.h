@@ -13,6 +13,7 @@ public:
 	CStatic						wndVideo;
 	OffsetTracker				wndOffset;
 	PupilDiaTracker				wndPupilDia;
+	CBitmap						noCamera;
 
 	CChildView();
 	virtual ~CChildView();
@@ -34,6 +35,9 @@ protected:
 	DShowLib::Grabber::tMemBufferPtr m_pBuffer;
 
 public:
-	afx_msg void OnPaint();
 
+	afx_msg void OnPaint();
+	void drawOffline();
+
+	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
 };

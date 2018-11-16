@@ -53,8 +53,8 @@ void Tracker::postOffset() {
 	// Send pupil offset to OffsetTracker Window for painting
 	if (freeze) {
 
-		offsetMM.x = (pupil.current_center.x - pupil.frozen_center.x) * magnif;
-		offsetMM.y = (pupil.current_center.y - pupil.frozen_center.y) * magnif;
+		offsetMM.x = (pupil.frozen_center.x - pupil.current_center.x) * magnif;
+		offsetMM.y = (pupil.frozen_center.y - pupil.current_center.y) * magnif;
 
 		m_pParent->PostMessage(MESSAGE_OFFSETMM_PROCESSED, (WPARAM)&offsetMM, 0);
 

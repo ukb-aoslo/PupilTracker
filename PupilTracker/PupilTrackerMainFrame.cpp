@@ -32,6 +32,8 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_MESSAGE(MESSAGE_OFFSET_LOCKEDPOS, &CPupilTrackerMainFrame::OnMessageOffsetLockedPos)
 	ON_WM_SETFOCUS()
 	ON_COMMAND(ID_PICK_FOLDER, &CPupilTrackerMainFrame::OnPickFolder)
+	ON_COMMAND(ID_BUTTON_LAYERS, &CPupilTrackerMainFrame::OnButtonToggleLayers)
+	ON_COMMAND(ID_APP_INFINITE, &CPupilTrackerMainFrame::OnButtonEraseTrail)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -47,6 +49,7 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	m_pSock_AOMCONTROL = NULL;
 	offsetTrackingEnabled = true;
 	pupilDiaTrackingEnabled = true;
+	overlayEnabled = true;
 	outputDir = _T(".\\");
 
 }
@@ -169,6 +172,8 @@ void CPupilTrackerMainFrame::OnBnClickedButtondevice()
 		Grabber.stopLive();
 	}
 
+	m_wndView.drawOffline();
+	
 	Grabber.showDevicePage(this->m_hWnd);
 
 
@@ -516,7 +521,7 @@ afx_msg LRESULT CPupilTrackerMainFrame::OnAfxWmResettoolbar(WPARAM wParam, LPARA
 	case IDR_MAINFRAME:
 	{
 
-		CFindComboButton combo(ID_EDIT_FIND_COMBO, GetCmdMgr()->GetCmdImage(ID_EDIT_FIND), CBS_DROPDOWN);
+		CFindComboButton combo(ID_EDIT_FIND_COMBO, GetCmdMgr()->GetCmdImage(ID_EDIT_FIND), CBS_DROPDOWNLIST, 100);
 		m_wndToolBar.ReplaceButton(ID_EDIT_FIND, combo);
 
 	}
@@ -534,10 +539,17 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: Add your specialized code here and/or call the base class
 
+	CWnd* wnd = GetFocus();
+
+
 	if (pMsg->message == WM_KEYDOWN) {
 
 		switch (pMsg->wParam) {
+
 		case VK_SPACE:
+
+			if (wnd->GetDlgCtrlID() == ID_EDIT_FIND_COMBO)
+				break;
 
 			if (pupilTracking.record && pupilTracking.freeze) {
 				pupilTracking.record = false;
@@ -552,14 +564,17 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 				pupilTracking.freezePupil();
 			}
 
-			break;
+			return true;
+
+
+
+		default:
+			return false;
 
 		}
 
-		return true;
-
 	}
-	
+
 	return CFrameWndEx::PreTranslateMessage(pMsg);
 
 }
@@ -626,7 +641,7 @@ void CPupilTrackerMainFrame::OnEditFindCombo()
 	// TODO: Add your command handler code here
 	CObList listButtons;
 	m_wndToolBar.GetCommandButtons(ID_EDIT_FIND_COMBO, listButtons);
-
+	
 }
 
 
@@ -634,9 +649,9 @@ void CPupilTrackerMainFrame::OnEditFind()
 {
 	// TODO: Add your command handler code here
 
-//	if(m_wndToolBar.IsLastCommandFromButton()) 
+	if(m_wndToolBar.IsLastCommandFromButton(m_wndToolBar.GetButton(ID_EDIT_FIND)))
 	{
-
+		Sleep(10);
 	}
 
 }
@@ -937,7 +952,7 @@ LRESULT CPupilTrackerMainFrame::OnDeviceLost(WPARAM wParam, LPARAM lParam)
 
 void CPupilTrackerMainFrame::OnSetFocus(CWnd* pOldWnd)
 {
-	m_wndView.SetFocus();
+	//m_wndView.SetFocus();
 	// TODO: Add your message handler code here
 }
 
@@ -975,5 +990,35 @@ void CPupilTrackerMainFrame::OnPickFolder()
 		outputDir = path;
 
 	}
+
+}
+
+
+void CPupilTrackerMainFrame::OnButtonToggleLayers()
+{
+	// TODO: Add your command handler code here
+
+
+	if (overlayEnabled) {
+		Grabber.stopLive();
+		Grabber.setOverlayBitmapPathPosition(ePP_NONE);
+		Grabber.startLive();
+	}
+
+	else {
+		Grabber.stopLive();
+		Grabber.setOverlayBitmapPathPosition(ePP_DISPLAY);
+		Grabber.startLive();
+	}
+
+	overlayEnabled ? overlayEnabled = false : overlayEnabled = true;
+
+}
+
+
+void CPupilTrackerMainFrame::OnButtonEraseTrail()
+{
+	// TODO: Add your command handler code here
+	m_wndView.wndOffset.eraseTrail();
 
 }

@@ -1,6 +1,4 @@
 #pragma once
-
-
 // CFindComboBox
 
 class CFindComboBox : public CComboBox
@@ -10,12 +8,9 @@ class CFindComboBox : public CComboBox
 public:
 	CFindComboBox();
 	virtual ~CFindComboBox();
+	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 protected:
 	DECLARE_MESSAGE_MAP()
-public:
-	virtual BOOL PreTranslateMessage(MSG* pMsg);
 
 };
-
-

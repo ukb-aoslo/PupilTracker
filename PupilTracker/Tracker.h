@@ -4,7 +4,7 @@
 #include "PupilDiaTracker.h"
 #include "Pupil.h"
 #include "Parameters.h"
-#include "netcomm\SockClient.h"
+#include "SockClient.h"
 
 
 class Tracker : public CListener

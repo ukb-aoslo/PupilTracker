@@ -7,11 +7,19 @@ class CFindComboButton : public CMFCToolBarComboBoxButton
 	DECLARE_SERIAL(CFindComboButton)
 
 public:
-	CFindComboBox* findCombo;
 
-	CFindComboButton();
+	CFindComboButton() : CMFCToolBarComboBoxButton() {};
+
+	CFindComboButton(UINT uiID,
+		int iImage,
+		DWORD dwStyle,
+		int iWidth) : CMFCToolBarComboBoxButton(uiID, iImage, dwStyle, iWidth){};
 	virtual ~CFindComboButton();
-	CFindComboButton(int uid, int image, DWORD style);
-	CComboBox* CreateCombo(CWnd* pWndParent, const CRect &rect);
+
+	CFindComboBox* findComboBox;
+	virtual CFindComboBox* CFindComboButton::CreateCombo(CWnd* pWndParent, const CRect &rect);
+
+
+	BOOL PreTranslateMessage(MSG * pMsg);
 
 };

@@ -30,10 +30,13 @@ BOOL CFindComboBox::PreTranslateMessage(MSG* pMsg)
 	if (pMsg->message == WM_KEYDOWN)
 	{
 		switch (pMsg->wParam) {
+
 		case VK_ESCAPE:
 			AfxGetApp()->GetMainWnd()->SetFocus();
 			break;
 		case VK_RETURN:
+			//CFindComboButton* button = (CFindComboButton*)GetDlgItem(ID_EDIT_FIND);
+			//CString test = button->GetText();
 			AfxGetApp()->GetMainWnd()->PostMessageW(WM_COMMAND, ID_EDIT_FIND_COMBO);
 			break;
 
@@ -41,7 +44,8 @@ BOOL CFindComboBox::PreTranslateMessage(MSG* pMsg)
 
 	}
 	
-	return CComboBox::PreTranslateMessage(pMsg);
+	/*return CFindComboButton::PreTranslateMessage(pMsg);*/
+	return true;
 	
 }
 

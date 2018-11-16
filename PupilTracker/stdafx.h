@@ -32,7 +32,7 @@
 #include <queue>
 #include <iostream>
 #include <WinSock2.h>
-#include "netcomm\WinSock2Async.h"
+#include "WinSock2Async.h"
 
 #define BUFFER_SIZE 1024
 

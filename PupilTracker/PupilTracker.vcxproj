@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -22,20 +22,20 @@
     <ProjectGuid>{9F2E0910-A484-4AA4-B3B6-18F06DE20F39}</ProjectGuid>
     <Keyword>MFCProj</Keyword>
     <RootNamespace>PupilTracker</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -43,14 +43,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>Dynamic</UseOfMfc>
@@ -91,7 +91,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(IC34PATH)/classlib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -101,31 +101,33 @@
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
-      <AdditionalLibraryDirectories>$(WindowsSdkDir_81)Lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug;C:\Program Files (x86)\Visual Leak Detector\lib\Win32</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>version.lib;ntdll.lib</AdditionalDependencies>
+      <AdditionalDependencies>version.lib;ntdll.lib;vld.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)vld\lib\Win32;$(WindowsSDKDir_81)lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug</AdditionalLibraryDirectories>
     </Link>
     <ResourceCompile>
       <Culture>0x0407</Culture>
       <AdditionalIncludeDirectories>$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
-    <PostBuildEvent>
-      <Command>copy "$(IC34Path)classlib\win32\debug\tis_udshl11d.dll" $(TargetDir)</Command>
-    </PostBuildEvent>
+    <PostBuildEvent />
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>$(IC34PATH)/classlib/include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(IC34PATH)/classlib/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;version.lib%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(WindowsSDKDir_81)lib\winv6.3\um\x86;$(IC34PATH)classlib\win32\debug</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)vld\lib\Win64;$(WindowsSDKDir_81)lib\winv6.3\um\x64;$(IC34PATH)classlib\x64\release</AdditionalLibraryDirectories>
     </Link>
+    <PostBuildEvent>
+      <Command>copy $(SolutionDir)PupilTracker\vld\bin\Win64\vld_x64.dll $(TargetDir)</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -170,19 +172,19 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;version.lib%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(IC34PATH)/classlib/x64/release</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\netcomm\SockClient.h" />
+    <ClInclude Include="..\netcomm\SockListener.h" />
+    <ClInclude Include="..\netcomm\WinSock2Async.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="FindComboBox.h" />
     <ClInclude Include="FindComboButton.h" />
     <ClInclude Include="OffsetTracker.h" />
     <ClInclude Include="PupilDiaTracker.h" />
     <ClInclude Include="listener.h" />
-    <ClInclude Include="netcomm\SockClient.h" />
-    <ClInclude Include="netcomm\SockListener.h" />
-    <ClInclude Include="netcomm\WinSock2Async.h" />
     <ClInclude Include="Parameters.h" />
     <ClInclude Include="Pupil.h" />
     <ClInclude Include="PupilTracker.h" />
@@ -193,24 +195,15 @@
     <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\netcomm\SockClient.cpp" />
+    <ClCompile Include="..\netcomm\SockListener.cpp" />
+    <ClCompile Include="..\netcomm\WinSock2Async.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="FindComboBox.cpp" />
     <ClCompile Include="FindComboButton.cpp" />
     <ClCompile Include="OffsetTracker.cpp" />
     <ClCompile Include="PupilDiaTracker.cpp" />
     <ClCompile Include="listener.cpp" />
-    <ClCompile Include="netcomm\SockClient.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="netcomm\SockListener.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="netcomm\WinSock2Async.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="Parameters.cpp" />
     <ClCompile Include="Pupil.cpp" />
     <ClCompile Include="PupilTracker.cpp" />
@@ -232,6 +225,7 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="res\bitmap2.bmp" />
+    <Image Include="res\nocamera.bmp" />
     <Image Include="res\offset_tracker.bmp" />
     <Image Include="res\PupilTracker.ico" />
     <Image Include="res\pupil_dia.bmp" />

@@ -20,11 +20,12 @@ public:
 	void DrawValues();
 	void setLockedPos(coords<double, double>lockedPos);
 	void InvalidateCtrl();
+	void eraseTrail();
 
 private:
 
-	double		magnif;
-	float		conv;
+	double		magnif;		// magnification factor
+	float		conv;		// mapping factor
 
 	COLORREF	bkgrndCol;
 	HPEN		hPenGreen, hPenGrey, hPenWht, hPenClay;
