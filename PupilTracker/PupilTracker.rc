@@ -203,13 +203,13 @@ BEGIN
     BUTTON      ID_STOP
     BUTTON      ID_RECORD
     BUTTON      ID_LOCK
-    BUTTON      ID_APP_INFINITE
+    BUTTON      ID_BUTTON_ERASER
+    BUTTON      ID_TOGGLE_BEAMOVERLAY
     BUTTON      ID_BUTTON_LAYERS
     BUTTON      ID_MAKE_SNAPSHOT
     SEPARATOR
     BUTTON      ID_PICK_FOLDER
     BUTTON      ID_EDIT_FIND
-    BUTTON      ID_BUTTON32789
     BUTTON      ID_BUTTON32796
     BUTTON      ID_BUTTON32797
     BUTTON      ID_BUTTON32798
@@ -223,8 +223,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,4,0
- PRODUCTVERSION 1,3,4,0
+ FILEVERSION 1,3,5,0
+ PRODUCTVERSION 1,3,5,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -241,12 +241,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.4.0"
+            VALUE "FileVersion", "1.3.5.0"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.4.0"
+            VALUE "ProductVersion", "1.3.5.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -285,13 +285,19 @@ END
 STRINGTABLE
 BEGIN
     ID_BUTTON_LAYERS        "Toggle drawing of overlay"
-    ID_FINDCOMBO            "Prompt filename\nToolTip"
-    ID_APP_INFINITE         "Show infinite trail in Offset Tracking"
+    ID_FINDCOMBO            "Prompt filename"
+    ID_BUTTON_ERASER        "Erase trail in Offset Tracking"
+END
+
+STRINGTABLE
+BEGIN
+    ID_TOGGLE_BEAMOVERLAY   "Toggle drawing of AOSLO beam (Keep CTRL pressed to set / reset)"
 END
 
 STRINGTABLE
 BEGIN
     ID_INDICATOR_LINK1      "AOMControl"
+    ID_INDICATOR_LINK2      "IGUIDE"
 END
 
 STRINGTABLE

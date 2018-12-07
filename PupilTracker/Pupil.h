@@ -9,15 +9,19 @@ struct coords {
 		T1 x;
 		T2 y;
 
+		coords<T1, T2>& operator - (coords<T1, T2> &b) {
+			x -= b.x;
+			y -= b.y;
+			return *this;
+		}
+
+		coords<T1, T2>& operator * (coords<T1, T2> &b) {
+			x *= b.x;
+			y *= b.y;
+			return *this;
+		}
+
 };
-
-template<typename T1, typename T2>
-
-T1 operator - (T1 a, const T2& b) {
-	a.x -= b.x;
-	a.y -= b.y;
-	return a;
-}
 
 class Pupil {
 
@@ -30,8 +34,7 @@ public:
 
 	std::vector<coords<double, double>>	center;		// pupil center
 	std::vector<double>					diameter;	// pupil diameter
-
-
+	
 	std::vector<coords<double, double>>offsetPX;	// pupil offset in pixels
 	std::vector<coords<double, double>>offsetMM;	// pupil offset in mm
 
@@ -42,5 +45,6 @@ public:
 	double					frozen_diameter;
 
 	void reset();
+	void saveOffset(coords<double, double> &offset);
 
 };

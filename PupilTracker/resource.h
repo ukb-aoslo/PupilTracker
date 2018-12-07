@@ -10,6 +10,7 @@
 #define IDR_MENU1                       153
 #define ID_INDICATOR_LINK1              154
 #define IDB_BITMAP1                     155
+#define ID_INDICATOR_LINK2              155
 #define IDB_BITMAP2                     157
 #define IDB_BITMAP3                     158
 #define IDC_SLIDER1                     1004
@@ -47,15 +48,16 @@
 #define ID_BUTTON32796                  32796
 #define ID_BUTTON32797                  32797
 #define ID_BUTTON32798                  32798
-#define ID_APP_INFINITE                 32799
+#define ID_BUTTON_ERASER                32799
 #define ID_BUTTON32800                  32800
+#define ID_TOGGLE_BEAMOVERLAY           32801
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        160
-#define _APS_NEXT_COMMAND_VALUE         32801
+#define _APS_NEXT_COMMAND_VALUE         32802
 #define _APS_NEXT_CONTROL_VALUE         1017
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

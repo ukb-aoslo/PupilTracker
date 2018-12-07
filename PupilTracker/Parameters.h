@@ -30,7 +30,7 @@ class Tracker;
 		Parameters(CWnd* pParent = NULL);   // standard constructor
 		virtual ~Parameters();
 
-		Settings pupil { 75, 30, 10 };		// just some 
+		Settings pupil { 75, 30, 30 };		// just some 
 		Settings purkinje { 250, 4, 100 };	// default values
 
 		BYTE buf_size;

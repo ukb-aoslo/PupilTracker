@@ -8,7 +8,7 @@
 // Save some typing...
 using namespace DShowLib;
 
-BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
+BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
 	ON_WM_SHOWWINDOW()
@@ -23,29 +23,32 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWnd)
 	ON_COMMAND (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnMakeSnapshot)
 	ON_UPDATE_COMMAND_UI (ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
 	ON_UPDATE_COMMAND_UI (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnUpdateMakeSnapshot)
+	ON_UPDATE_COMMAND_UI (ID_INDICATOR_LINK1, &CPupilTrackerMainFrame::OnUpdatePage)
 	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, &CPupilTrackerMainFrame::OnAfxWmResettoolbar)
 	ON_COMMAND(ID_EDIT_FIND_COMBO, &CPupilTrackerMainFrame::OnEditFindCombo)
 	ON_COMMAND(ID_EDIT_FIND, &CPupilTrackerMainFrame::OnEditFind)
 	ON_MESSAGE(MESSAGEDEVICELOST, OnDeviceLost)
-	ON_MESSAGE(MESSAGE_OFFSETMM_PROCESSED, &CPupilTrackerMainFrame::OnMessageOffsetmmProcessed)
+	ON_MESSAGE(MESSAGE_OFFSET_PROCESSED, &CPupilTrackerMainFrame::OnMessageOffsetProcessed)
 	ON_MESSAGE(MESSAGE_PUPILDIA_PROCESSED, &CPupilTrackerMainFrame::OnMessagePupilDiaProcessed)
 	ON_MESSAGE(MESSAGE_OFFSET_LOCKEDPOS, &CPupilTrackerMainFrame::OnMessageOffsetLockedPos)
 	ON_WM_SETFOCUS()
 	ON_COMMAND(ID_PICK_FOLDER, &CPupilTrackerMainFrame::OnPickFolder)
 	ON_COMMAND(ID_BUTTON_LAYERS, &CPupilTrackerMainFrame::OnButtonToggleLayers)
-	ON_COMMAND(ID_APP_INFINITE, &CPupilTrackerMainFrame::OnButtonEraseTrail)
+	ON_COMMAND(ID_BUTTON_ERASER, &CPupilTrackerMainFrame::OnButtonEraseTrail)
+	ON_COMMAND(ID_TOGGLE_BEAMOVERLAY, &CPupilTrackerMainFrame::OnToggleBeamoverlay)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
 {
 	ID_SEPARATOR,           // status line indicator
 	ID_INDICATOR_LINK1,
+	ID_INDICATOR_LINK2
 };
 
 CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	// Set active tracking method
 
-	offsetMM = NULL;
+	offset = NULL;
 	m_pSock_AOMCONTROL = NULL;
 	offsetTrackingEnabled = true;
 	pupilDiaTrackingEnabled = true;
@@ -173,9 +176,8 @@ void CPupilTrackerMainFrame::OnBnClickedButtondevice()
 	}
 
 	m_wndView.drawOffline();
-	
-	Grabber.showDevicePage(this->m_hWnd);
 
+	Grabber.showDevicePage(this->m_hWnd);
 
 	// If we have selected a valid device, save it to the file "device.xml", so
 	// the application can load it automatically when it is started the next time.
@@ -263,10 +265,13 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 
 void CPupilTrackerMainFrame::OnClose()
 {
-	// If live video is running, stop it.
-	OnStop();
+
 	if (m_pSock_AOMCONTROL != NULL)
 		delete m_pSock_AOMCONTROL;
+
+	// If live video is running, stop it.
+	OnStop();
+
 	CFrameWndEx::OnClose();
 
 }
@@ -566,8 +571,6 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 
 			return true;
 
-
-
 		default:
 			return false;
 
@@ -651,7 +654,6 @@ void CPupilTrackerMainFrame::OnEditFind()
 
 	if(m_wndToolBar.IsLastCommandFromButton(m_wndToolBar.GetButton(ID_EDIT_FIND)))
 	{
-		Sleep(10);
 	}
 
 }
@@ -745,7 +747,7 @@ void CPupilTrackerMainFrame::Save() {
 			CStdioFile outputFile(outputDir + fileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
 			outputFile.WriteString(sstream.str().c_str());
 			outputFile.Close();
-			AfxMessageBox(_T("Data saved to:\n") + fileName, MB_OK | MB_ICONINFORMATION);
+			AfxMessageBox(_T("Data saved to:\n") + outputDir + fileName, MB_OK | MB_ICONINFORMATION);
 
 		}
 
@@ -838,8 +840,7 @@ void CPupilTrackerMainFrame::Save() {
 void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
 
-	// TODO: Add your message handler code here and/or call default
-	// try to connect to ICANDI 
+	// try to connect to AOMCONTROL 
 	if (m_pSock_AOMCONTROL == NULL) {
 		m_pSock_AOMCONTROL = new CSockClient();
 		CSockClient::SocketInit();
@@ -856,15 +857,17 @@ void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 
 		}
 
-		if (m_pSock_AOMCONTROL && !m_pSock_AOMCONTROL->IsConnected())
-			m_pSock_AOMCONTROL->Connect(L"127.0.0.1", 8015);
+	}
 
+	if (m_pSock_AOMCONTROL && !m_pSock_AOMCONTROL->IsConnected())
+		m_pSock_AOMCONTROL->Connect(L"127.0.0.1", 8015);
+
+	if (m_pSock_AOMCONTROL->shutdown) {
+		delete m_pSock_AOMCONTROL;
+		m_pSock_AOMCONTROL = NULL;
 	}
 
 
-
-	if (m_pSock_AOMCONTROL->shutdown)
-		delete m_pSock_AOMCONTROL;
 
 	//KillTimer(1);
 	//if (Grabber.loadDeviceStateFromFile("device.xml"))
@@ -888,15 +891,15 @@ void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 }
 
 
-afx_msg LRESULT CPupilTrackerMainFrame::OnMessageOffsetmmProcessed(WPARAM wParam, LPARAM lParam)
+afx_msg LRESULT CPupilTrackerMainFrame::OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam)
 {
 
 	if (wParam != 0) {
 
-		offsetMM = reinterpret_cast<coords<double, double>*>(wParam);
-		m_wndView.wndOffset.AddPoint(*offsetMM);
+		offset = reinterpret_cast<coords<double, double>*>(wParam);
+		m_wndView.wndOffset.AddPoint(*offset);
 		m_wndView.wndOffset.DrawPoint();
-		//m_wndView.wndOffset.DrawValues();
+		m_wndView.wndOffset.DrawValues();
 	}
 
 	//else {
@@ -957,14 +960,14 @@ void CPupilTrackerMainFrame::OnSetFocus(CWnd* pOldWnd)
 }
 
 
-BOOL CPupilTrackerMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
-{
-	// TODO: Add your specialized code here and/or call the base class
-	if (m_wndView.OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
-		return true;
-	return CFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
-}
-
+//BOOL CPupilTrackerMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
+//{
+//	// TODO: Add your specialized code here and/or call the base class
+//	if (m_wndView.OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
+//		return true;
+//	return CFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
+//}
+//
 
 void CPupilTrackerMainFrame::OnPickFolder()
 {
@@ -987,7 +990,7 @@ void CPupilTrackerMainFrame::OnPickFolder()
 			imalloc->Release();
 		}
 
-		outputDir = path;
+		outputDir = path + CString(L"\\");
 
 	}
 
@@ -1022,3 +1025,57 @@ void CPupilTrackerMainFrame::OnButtonEraseTrail()
 	m_wndView.wndOffset.eraseTrail();
 
 }
+
+
+void CPupilTrackerMainFrame::OnToggleBeamoverlay()
+{
+	pupilTracking.beam ? pupilTracking.beam = false : pupilTracking.beam = true;
+
+	BOOL bCtrl = ::GetKeyState(VK_CONTROL) & 0x8000;
+	if (bCtrl) pupilTracking.setBeam();
+	
+}
+
+void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
+{
+
+	switch (pCmdUI->m_nID) {
+
+	case ID_INDICATOR_LINK1:
+
+		if (m_pSock_AOMCONTROL && m_pSock_AOMCONTROL->IsConnected()) {
+		
+			pCmdUI->Enable();
+			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
+			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(0, 200, 0), 1);
+		}
+		else
+		{
+			pCmdUI->Enable();
+			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
+			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(200, 0, 0), 1);
+		}
+
+		break;
+
+	case ID_INDICATOR_LINK2:
+
+		if (m_pSock_ICANDI && m_pSock_ICANDI->IsConnected()) {
+			pCmdUI->Enable();
+			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
+			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(0, 200, 0), 1);
+		}
+		else
+		{
+			pCmdUI->Enable();
+			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
+			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(200, 0, 0), 1);
+		}
+
+		break;
+
+	}
+
+}
+
+

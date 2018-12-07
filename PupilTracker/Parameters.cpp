@@ -98,15 +98,13 @@ void Parameters::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT3, purkinje.box_size);
 	DDX_Text(pDX, IDC_EDIT4, purkinje.spot_size);
 	DDX_Text(pDX, IDE_BUFVAL, buf_size);
-	DDV_MinMaxByte(pDX, pupil.box_size, 10, 255);
+	DDV_MinMaxByte(pDX, pupil.box_size, 30, 255);
 	DDV_MinMaxByte(pDX, pupil.spot_size, 1, 100);
-	DDV_MinMaxByte(pDX, purkinje.box_size, 10, 255);
+	DDV_MinMaxByte(pDX, purkinje.box_size, 30, 255);
 	DDV_MinMaxByte(pDX, purkinje.spot_size, 1, 100);
 	DDV_MinMaxByte(pDX, buf_size, 0, 100);
 
 }
-
-
 
 BOOL Parameters::OnInitDialog()
 {
@@ -247,7 +245,7 @@ void Parameters::OnBnClickedDefaultparams()
 
 	pupil.threshold = 100;
 	pupil.spot_size = 30;
-	pupil.box_size = 10;
+	pupil.box_size = 30;
 
 	purkinje.threshold = 250;
 	purkinje.spot_size = 4;

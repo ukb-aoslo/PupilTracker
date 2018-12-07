@@ -9,14 +9,11 @@ Tracker::Tracker() {
 	frames = 0;
 
 	bufchange = false;
-
-	magnif = MM_PER_PIXEL;	    // magnification in pixel per mm
+	beam = false;
 
 }
 
 Tracker::~Tracker() {
-
-
 
 }
 
@@ -36,9 +33,10 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.current_center.x = pupil.current_center.x;
 		median_pupil.current_center.y = pupil.current_center.y;
 	}
-
+	  
 	// Send purkinje data to AOMControl via netcomm
-	if (m_pParent->m_pSock_AOMCONTROL != NULL) {
+	if (m_pParent->m_pSock_AOMCONTROL)
+		if(!m_pParent->m_pSock_AOMCONTROL->shutdown && m_pParent->m_pSock_AOMCONTROL->IsConnected()) {
 		m_pParent->m_pSock_AOMCONTROL->coords[0] = purkinje.current_center.x;
 		m_pParent->m_pSock_AOMCONTROL->coords[1] = purkinje.current_center.y;
 	}
@@ -53,21 +51,21 @@ void Tracker::postOffset() {
 	// Send pupil offset to OffsetTracker Window for painting
 	if (freeze) {
 
-		offsetMM.x = (pupil.frozen_center.x - pupil.current_center.x) * magnif;
-		offsetMM.y = (pupil.frozen_center.y - pupil.current_center.y) * magnif;
+		offset.x = (pupil.frozen_center.x - pupil.current_center.x);
+		offset.y = (pupil.frozen_center.y - pupil.current_center.y);
 
-		m_pParent->PostMessage(MESSAGE_OFFSETMM_PROCESSED, (WPARAM)&offsetMM, 0);
+		m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&offset, 0);
 
 		// save that offset too
-		pupil.offsetMM.push_back(offsetMM);
+		pupil.saveOffset(offset);
 		
 	}
 
 	else {
 
-			m_pParent->PostMessage(MESSAGE_OFFSETMM_PROCESSED, 0, 0);
+			m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, 0, 0);
 			// save that offset too
-			pupil.offsetMM.push_back(coords<double, double> {0, 0});
+			pupil.saveOffset(coords<double, double> {0, 0});
 	
 	}
 
@@ -100,12 +98,24 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 	// for text display
 	CString szText;
 
+	/*************************************************************************************/
+	/*****   this is now the place where pixels are marked and all data are displayed ****/
+	/*************************************************************************************/
+
 	if (pBitmap->getEnable() == true) // Draw only, if the overlay bitmap is enabled.
 	{
 
-		/*************************************************************************************/
-		/*****   this is now the place where pixels are marked and all data are displayed ****/
-		/*************************************************************************************/
+		// paint supposed AOSLO beam if desired
+
+		if (beam) {
+		
+			for (int i = 0; i < 3; i++)
+				pBitmap->drawFrameEllipse(RGB(220, 20, 180), CRect(
+					((int)AOSLO_beam.current_center.x - (int)AOSLO_beam.current_diameter / 2) - i,
+					((int)AOSLO_beam.current_center.y - (int)AOSLO_beam.current_diameter / 2) - i,
+					((int)AOSLO_beam.current_center.x + (int)AOSLO_beam.current_diameter / 2) + i,
+					((int)AOSLO_beam.current_center.y + (int)AOSLO_beam.current_diameter / 2) + i));
+		}
 
 		if (*opts & FrameCounter)
 		{
@@ -139,55 +149,56 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 		if (*opts & PupilPixels)
 				for (size_t i = 0; i < 1000; i++)
 					if (pupil.pixels[i].x < Width && pupil.pixels[i].y < Height)
-					pBitmap->drawLine(RGB(255, 0, 255), 
-						pupil.pixels[i].x - 1,
-						Height - pupil.pixels[i].y - 1,
-						pupil.pixels[i].x + 1,
-						Height - pupil.pixels[i].y + 1
+					pBitmap->drawSolidEllipse(RGB(255, 0, 255), CRect(
+						pupil.pixels[i].x - 2,
+						Height - pupil.pixels[i].y - 2,
+						pupil.pixels[i].x + 2,
+						Height - pupil.pixels[i].y + 2
+					)
 				);
 				
 		// draw pupil outline
 
 		pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect((int)median_pupil.current_center.x - (int)median_pupil.current_diameter / 2,
-			Height - (int)median_pupil.current_center.y - (int)median_pupil.current_diameter / 2,
+			(int)median_pupil.current_center.y - (int)median_pupil.current_diameter / 2,
 			(int)median_pupil.current_center.x + (int)median_pupil.current_diameter / 2,
-			Height - (int)median_pupil.current_center.y + (int)median_pupil.current_diameter / 2));
+			(int)median_pupil.current_center.y + (int)median_pupil.current_diameter / 2));
 
 		// draw purkinje outline
 
 		pBitmap->drawFrameEllipse(RGB(255, 0, 0), CRect(
 			(int)purkinje.current_center.x - (int)purkinje.current_diameter / 2,
-			Height - (int)purkinje.current_center.y - (int)purkinje.current_diameter / 2,
+			(int)purkinje.current_center.y - (int)purkinje.current_diameter / 2,
 			(int)purkinje.current_center.x + (int)purkinje.current_diameter / 2,
-			Height - (int)purkinje.current_center.y + (int)purkinje.current_diameter / 2));
+			(int)purkinje.current_center.y + (int)purkinje.current_diameter / 2));
 
 		// draw pupil center
 
 		pBitmap->drawLine(RGB(0, 255, 0),
 			(int)median_pupil.current_center.x,
-			Height - (int)median_pupil.current_center.y - 1,
+			(int)median_pupil.current_center.y - 1,
 			(int)median_pupil.current_center.x,
-			Height - (int)median_pupil.current_center.y + 2);
+			(int)median_pupil.current_center.y + 2);
 
 		pBitmap->drawLine(RGB(0, 255, 0),
 			(int)median_pupil.current_center.x - 1,
-			Height - (int)median_pupil.current_center.y,
+			(int)median_pupil.current_center.y,
 			(int)median_pupil.current_center.x + 2,
-			Height - (int)median_pupil.current_center.y);
+			(int)median_pupil.current_center.y);
 
 		// draw purkinje center
 
 		pBitmap->drawLine(RGB(255, 0, 0),
 			(int)purkinje.current_center.x,
-			Height - (int)purkinje.current_center.y - 1,
+			(int)purkinje.current_center.y - 1,
 			(int)purkinje.current_center.x,
-			Height - (int)purkinje.current_center.y + 2);
+			(int)purkinje.current_center.y + 2);
 
 		pBitmap->drawLine(RGB(255, 0, 0),
 			(int)purkinje.current_center.x - 1,
-			Height - (int)purkinje.current_center.y,
+			(int)purkinje.current_center.y,
 			(int)purkinje.current_center.x + 2,
-			Height - (int)purkinje.current_center.y);
+			(int)purkinje.current_center.y);
 
 
 		if (freeze) {
@@ -196,11 +207,23 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 
 			if (pupil.frozen_diameter > 0)
 			{
+				pBitmap->drawFrameEllipse(RGB(10, 10, 10), CRect(
+					(int)pupil.frozen_center.x - (int)pupil.frozen_diameter / 2 - 1,
+					(int)pupil.frozen_center.y - (int)pupil.frozen_diameter / 2 - 1,
+					(int)pupil.frozen_center.x + (int)pupil.frozen_diameter / 2 + 1,
+					(int)pupil.frozen_center.y + (int)pupil.frozen_diameter / 2 + 1));
+
 				pBitmap->drawFrameEllipse(RGB(255, 255, 0), CRect(
 					(int)pupil.frozen_center.x - (int)pupil.frozen_diameter / 2,
-					Height - (int)pupil.frozen_center.y - (int)pupil.frozen_diameter / 2,
+					(int)pupil.frozen_center.y - (int)pupil.frozen_diameter / 2,
 					(int)pupil.frozen_center.x + (int)pupil.frozen_diameter / 2,
-					Height - (int)pupil.frozen_center.y + (int)pupil.frozen_diameter / 2));
+					(int)pupil.frozen_center.y + (int)pupil.frozen_diameter / 2));
+
+				pBitmap->drawFrameEllipse(RGB(10, 10, 10), CRect(
+					(int)pupil.frozen_center.x - (int)pupil.frozen_diameter / 2 + 1,
+					(int)pupil.frozen_center.y - (int)pupil.frozen_diameter / 2 + 1,
+					(int)pupil.frozen_center.x + (int)pupil.frozen_diameter / 2 - 1,
+					(int)pupil.frozen_center.y + (int)pupil.frozen_diameter / 2 - 1));
 			}
 
 			// draw pupil center
@@ -209,23 +232,24 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 			{
 				pBitmap->drawLine(RGB(155, 152, 254),
 					(int)pupil.frozen_center.x,
-					Height - (int)pupil.frozen_center.y - 1,
+					(int)pupil.frozen_center.y - 1,
 					(int)pupil.frozen_center.x,
-					Height - (int)pupil.frozen_center.y + 2);
+					(int)pupil.frozen_center.y + 2);
 
 				pBitmap->drawLine(RGB(155, 152, 254),
 					(int)pupil.frozen_center.x - 1,
-					Height - (int)pupil.frozen_center.y,
+					(int)pupil.frozen_center.y,
 					(int)pupil.frozen_center.x + 2,
-					Height - (int)pupil.frozen_center.y);
+					(int)pupil.frozen_center.y);
 			}
 
 		}
 
+
 	}
 
 	
-	if (record == true) {
+	if (record) {
 		if (display < 20) {
 			szText = "REC";
 			pBitmap->drawText(RGB(254, 152, 0), Width - 40, 37, LPCTSTR(szText));

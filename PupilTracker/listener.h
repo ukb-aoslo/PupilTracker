@@ -32,7 +32,7 @@
 class CPupilTrackerMainFrame;
 
 #define MESSAGEDEVICELOST WM_USER+90
-#define MESSAGE_OFFSETMM_PROCESSED WM_USER+91
+#define MESSAGE_OFFSET_PROCESSED WM_USER+91
 #define MESSAGE_PUPILDIA_PROCESSED WM_USER+92
 #define MESSAGE_OFFSET_LOCKEDPOS WM_USER+93
 
@@ -48,12 +48,13 @@ class CListener : public GrabberListener
 		int getFramesCounted() { return MediaSampleDesc.FrameNumber; };
 
 		Pupil				pupil;				// the pupil itself
-		Pupil				purkinje;			// technically not a pupil, but same idea of tracking
-
+		Pupil				purkinje;			// technically not a pupil, but same tracking method
+		Pupil				AOSLO_beam;			// just the beam that comes out of AOSLO
 
 		bool				record;				// are we recording?
 		bool				pupilfind;			// time for a pupil (true) or purkinje (false)
 		bool				freeze;				// is the pupil locked?
+		bool				beam;				// show supposed AOSLO beam
 		int					Width, Height;		// video frame size	
 		int					recIndex;			// where did we begin recording?
 		
@@ -83,6 +84,7 @@ class CListener : public GrabberListener
 	public:
 
 		void freezePupil();
+		void setBeam();
 		void setSnap(bool b);
 		void SetParent(CWnd* pParent);
 		void init(int cx, int cy);

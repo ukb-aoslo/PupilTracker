@@ -25,7 +25,7 @@ public:
 private:
 
 	double		magnif;		// magnification factor
-	float		conv;		// mapping factor
+	double		conv;		// mapping factor
 
 	COLORREF	bkgrndCol;
 	HPEN		hPenGreen, hPenGrey, hPenWht, hPenClay;

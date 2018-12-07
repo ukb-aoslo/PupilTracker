@@ -14,7 +14,7 @@ OffsetTracker::OffsetTracker()
 	hPenWht = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));			// white pen
 
 	magnif = (double) MM_PER_PIXEL;
-	conv = 1 / MM_PER_PIXEL * 0.25 * 150;	// mapping pixels on plot with .25mm limits
+	conv = 150/0.25;	// mapping pixels on plot with .25mm limits
 
 	bkgrndCol = RGB(0, 0, 0);
 	m_brushBack.CreateSolidBrush(bkgrndCol);
@@ -303,9 +303,9 @@ void OffsetTracker::DrawValues() {
 		m_dcPlot.SelectObject(&consBig);
 
 		// offset
-		szText.Format(TEXT("%.2f"), -1 * offset.x);
+		szText.Format(L"%.2f", -1 * offset.x);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 - 60, m_rectClient.Height() / 11, szText);
-		szText.Format(TEXT("%.2f"), -1 * offset.y);
+		szText.Format(L"%.2f", -1 * offset.y);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 50, m_rectClient.Height() / 11, szText);
 
 		m_dcPlot.SelectObject(&consSmall);
@@ -353,7 +353,6 @@ void OffsetTracker::OnSize(UINT nType, int cx, int cy)
 	m_rectPlot.bottom = m_rectClient.bottom - 25;
 
 	// set some member variables to avoid multiple function calls
-
 
 	if (m_pbitmapOldGrid != NULL)
 		m_dcGrid.SelectObject(m_pbitmapOldGrid);

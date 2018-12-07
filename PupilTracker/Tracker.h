@@ -18,12 +18,11 @@ public:
 	Pupil			median_pupil;			// reduce jitter in overlay
 
 	bool			bufchange;				// respect live parameter change
-	double			magnif;					// magnification of the video image (pixel / mm)
 	
 	int				display;				// counter helper variable for blinking rec status
 	long int		frames;					// counting of processed frames
 	
-	coords<double, double> offsetMM;
+	coords<double, double> offset;
 
 protected:
 

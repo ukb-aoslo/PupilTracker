@@ -8,13 +8,14 @@
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
-CSockClient::CSockClient() : shutdown(false)
+CSockClient::CSockClient():
+	shutdown(false)
 {
-
 }
 
 CSockClient::~CSockClient()
 {
+
 }
 
 // ***************************************************************************
@@ -35,21 +36,20 @@ CSockClient::~CSockClient()
 void CSockClient::OnRecieve(int nError)
 {
 	TRACE(_T("CSockClient::OnRecieve( %d )\n"), nError);
-	/*char chBuff[WINSOCK_READ_BUFF_SIZE + 1];
+	char chBuff[WINSOCK_READ_BUFF_SIZE + 1];
 	int nRead;
 	while ((nRead = Recieve(chBuff, WINSOCK_READ_BUFF_SIZE)) > 0)
 	{
 		//TODO: Use the data here...
-		//Modify the data and echo
-		for (int nPos = 0; nPos < nRead; nPos++)
-		{
-			TRACE(L"%c ", chBuff[nPos]);
-			chBuff[nPos] = chBuff[nPos] + 1;
-		}
+
+		////Modify the data and echo
+		//for (int nPos = 0; nPos < nRead; nPos++)
+		//{
+		//	TRACE(L"%c ", chBuff[nPos]);
+		//	chBuff[nPos] = chBuff[nPos] + 1;
+		//}
+		//Send(chBuff, nRead);
 	}
-	*/
-		Send((char*)&coords, 16);
-		
 }
 
 // ***************************************************************************
@@ -97,7 +97,10 @@ void CSockClient::OnClose( int nError )
     while( Recieve( chBuff, WINSOCK_READ_BUFF_SIZE ) )
     {
         //TODO : Process the read data.
+
     }
+	
 	shutdown = true;
+
 }
 

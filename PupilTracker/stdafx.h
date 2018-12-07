@@ -12,10 +12,6 @@
 
 #define WM_UPDATE_CONTROL    WM_APP + 0x10
 
-#ifdef _DEBUG
-#include "vld.h"			// visual leak detector
-#endif
-
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
 #include <afxdisp.h>        // MFC Automation classes

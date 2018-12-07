@@ -5,12 +5,12 @@
         <vcdpropertyitems>
             <item guid="{284C0E0F-010B-45BF-8291-09D90A459B28}" name="Gain">
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="159" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="87" />
                 </element>
             </item>
             <item guid="{90D5702E-E43B-4366-AAEB-7A7A10B448B4}" name="Exposure">
                 <element guid="{B57D3000-0AC6-4819-A609-272A33140ACA}" name="Value">
-                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="-7" />
+                    <itf guid="{99B44940-BFE1-4083-ADA1-BE703F4B8E03}" value="-6" />
                 </element>
             </item>
         </vcdpropertyitems>

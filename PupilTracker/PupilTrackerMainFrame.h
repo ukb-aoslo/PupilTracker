@@ -28,7 +28,7 @@ public:
 	CString								fileName;
 	CString								timestamp;
 
-	coords<double, double>*				offsetMM;
+	coords<double, double>*				offset;
 
 	bool								offsetTrackingEnabled,
 										pupilDiaTrackingEnabled,
@@ -81,13 +81,15 @@ protected:
 
 private:
 	LRESULT OnDeviceLost(WPARAM Brightness, LPARAM lParam);
-	afx_msg LRESULT OnMessageOffsetmmProcessed(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessageOffsetLockedPos(WPARAM wParam, LPARAM lParam);
 public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
+	//virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 	afx_msg void OnPickFolder();
 	afx_msg void OnButtonToggleLayers();
 	afx_msg void OnButtonEraseTrail();
+	afx_msg void OnToggleBeamoverlay();
+	afx_msg void OnUpdatePage(CCmdUI *pCmdUI);
 };

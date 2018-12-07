@@ -14,6 +14,14 @@ Pupil::~Pupil()
 {
 }
 
+void Pupil::saveOffset(coords<double, double> &offset) {
+
+	coords<double, double> conv{ MM_PER_PIXEL, MM_PER_PIXEL };
+	offsetMM.push_back(offset * conv);
+	offsetPX.push_back(offset);
+
+}
+
 void Pupil::reset() {
 
 	current_diameter = 0;
