@@ -28,6 +28,20 @@ CListener::CListener()
 	
 	m_pParent = NULL;
 
+	UINT n;
+	coords<double, double>* ppData;
+	double* diameter;
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"beam_coords", (LPBYTE*)&ppData, &n)) {
+		AOSLO_beam.current_center = (coords<double, double>)*ppData;
+		delete ppData;
+	}
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"beam_diameter", (LPBYTE*)&diameter, &n)) {
+		AOSLO_beam.current_diameter = ((double)*diameter);
+		delete diameter;
+	}
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -43,6 +57,8 @@ CListener::~CListener()
 		free(x);
 	if (y != NULL)
 		free(y);
+
+
 
 }
 

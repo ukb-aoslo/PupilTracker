@@ -272,6 +272,9 @@ void CPupilTrackerMainFrame::OnClose()
 	// If live video is running, stop it.
 	OnStop();
 
+	AfxGetApp()->WriteProfileBinary(L"Settings", L"beam_coords", (LPBYTE)&pupilTracking.AOSLO_beam.current_center, sizeof(coords<double, double>));
+	AfxGetApp()->WriteProfileBinary(L"Settings", L"beam_diameter", (LPBYTE)&pupilTracking.AOSLO_beam.current_diameter, sizeof(double));
+
 	CFrameWndEx::OnClose();
 
 }
