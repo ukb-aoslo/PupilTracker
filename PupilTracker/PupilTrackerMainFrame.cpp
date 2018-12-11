@@ -36,6 +36,7 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_BUTTON_LAYERS, &CPupilTrackerMainFrame::OnButtonToggleLayers)
 	ON_COMMAND(ID_BUTTON_ERASER, &CPupilTrackerMainFrame::OnButtonEraseTrail)
 	ON_COMMAND(ID_TOGGLE_BEAMOVERLAY, &CPupilTrackerMainFrame::OnToggleBeamoverlay)
+	ON_COMMAND(ID_BUTTON_PURKINJE_ASSIST, &CPupilTrackerMainFrame::OnButtonPurkinjeAssist)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -53,7 +54,6 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	offsetTrackingEnabled = true;
 	pupilDiaTrackingEnabled = true;
 	overlayEnabled = true;
-	outputDir = _T(".\\");
 
 }
 
@@ -603,6 +603,7 @@ void CPupilTrackerMainFrame::OnRecord()
 		OnStop();
 		Save();
 		pupilTracking.pupil.reset();
+		pupilTracking.timestamps.clear();
 		OnPlay();
 
 	}
@@ -739,13 +740,13 @@ void CPupilTrackerMainFrame::Save() {
 
 		try {
 
-			if (outputDir == ".\\")
+			if (outputDir.IsEmpty())
 				OnPickFolder();
 
-			fileName = "output.txt";
+			fileName = L"output.txt";
 		
 			getSysTime(timestamp);
-			fileName = timestamp + "_" + fileName;
+			fileName = L"\\" + timestamp + L"_" + fileName;
 
 			CStdioFile outputFile(outputDir + fileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
 			outputFile.WriteString(sstream.str().c_str());
@@ -993,7 +994,9 @@ void CPupilTrackerMainFrame::OnPickFolder()
 			imalloc->Release();
 		}
 
-		outputDir = path + CString(L"\\");
+		outputDir = path;
+		if (outputDir[outputDir.GetLength()-1] == _T('\\'))
+			outputDir.Delete(outputDir.GetLength()-1);
 
 	}
 
@@ -1082,3 +1085,15 @@ void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
 }
 
 
+
+
+void CPupilTrackerMainFrame::OnButtonPurkinjeAssist()
+{
+	// TODO: Add your command handler code here
+	pupilTracking.purkinje_assist ? pupilTracking.purkinje_assist = false : pupilTracking.purkinje_assist = true;
+	pupilTracking.purkinjePoints[0] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
+	pupilTracking.purkinjePoints[1] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
+	pupilTracking.purkinjePoints[2] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
+	pupilTracking.purkinjePoints[3] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
+
+}

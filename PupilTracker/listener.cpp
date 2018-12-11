@@ -418,8 +418,7 @@ void CListener::makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber) {
 void CListener::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
 	// whatever calculations may be necessary in certain subclasses
-	Sleep (10);
-
+	
 }
 
 void CListener::freezePupil() {

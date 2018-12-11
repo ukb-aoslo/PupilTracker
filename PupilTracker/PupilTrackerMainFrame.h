@@ -92,4 +92,5 @@ public:
 	afx_msg void OnButtonEraseTrail();
 	afx_msg void OnToggleBeamoverlay();
 	afx_msg void OnUpdatePage(CCmdUI *pCmdUI);
+	afx_msg void OnButtonPurkinjeAssist();
 };

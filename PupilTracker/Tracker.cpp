@@ -10,6 +10,8 @@ Tracker::Tracker() {
 
 	bufchange = false;
 	beam = false;
+	purkinje_assist = false;
+	purkinje_dist = 0.2 * 1 / MM_PER_PIXEL;
 
 }
 
@@ -33,42 +35,38 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.current_center.x = pupil.current_center.x;
 		median_pupil.current_center.y = pupil.current_center.y;
 	}
-	  
+
 	// Send purkinje data to AOMControl via netcomm
 	if (m_pParent->m_pSock_AOMCONTROL)
-		if(!m_pParent->m_pSock_AOMCONTROL->shutdown && m_pParent->m_pSock_AOMCONTROL->IsConnected()) {
-		m_pParent->m_pSock_AOMCONTROL->coords[0] = purkinje.current_center.x;
-		m_pParent->m_pSock_AOMCONTROL->coords[1] = purkinje.current_center.y;
+		if (!m_pParent->m_pSock_AOMCONTROL->shutdown && m_pParent->m_pSock_AOMCONTROL->IsConnected()) {
+			m_pParent->m_pSock_AOMCONTROL->coords[0] = purkinje.current_center.x;
+			m_pParent->m_pSock_AOMCONTROL->coords[1] = purkinje.current_center.y;
+		}
+
+	if (freeze) {
+		offset.x = (pupil.frozen_center.x - pupil.current_center.x);
+		offset.y = (pupil.frozen_center.y - pupil.current_center.y);
 	}
 
-		postOffset();
-		postDiameter();
+	else offset = (coords<double, double> {0, 0});
+
+	postOffset();
+
+	// save that offset too
+	pupil.saveOffset(offset);
+
+	postDiameter();
+
+	// save that diameter too
+	//pupil.saveDiameter(diameter);
 
 }
 
 void Tracker::postOffset() {
 
 	// Send pupil offset to OffsetTracker Window for painting
-	if (freeze) {
 
-		offset.x = (pupil.frozen_center.x - pupil.current_center.x);
-		offset.y = (pupil.frozen_center.y - pupil.current_center.y);
-
-		m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&offset, 0);
-
-		// save that offset too
-		pupil.saveOffset(offset);
-		
-	}
-
-	else {
-
-			m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, 0, 0);
-			// save that offset too
-			pupil.saveOffset(coords<double, double> {0, 0});
-	
-	}
-
+	m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&offset, 0);
 
 }
 
@@ -166,11 +164,20 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 
 		// draw purkinje outline
 
-		pBitmap->drawFrameEllipse(RGB(255, 0, 0), CRect(
+		pBitmap->drawSolidEllipse(RGB(255, 0, 0), CRect(
 			(int)purkinje.current_center.x - (int)purkinje.current_diameter / 2,
 			(int)purkinje.current_center.y - (int)purkinje.current_diameter / 2,
 			(int)purkinje.current_center.x + (int)purkinje.current_diameter / 2,
 			(int)purkinje.current_center.y + (int)purkinje.current_diameter / 2));
+
+		// draw purkinje assist
+
+		if (purkinje_assist) {
+
+			SIZE sz{ purkinje.diameter.back(), purkinje.diameter.back() };
+			for (size_t i = 0; i < 4; i++)
+				pBitmap->drawFrameEllipse(RGB(255, 0, 0), CRect(purkinjePoints[i], sz));
+		}
 
 		// draw pupil center
 

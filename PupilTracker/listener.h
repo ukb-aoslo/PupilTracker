@@ -49,14 +49,18 @@ class CListener : public GrabberListener
 
 		Pupil				pupil;				// the pupil itself
 		Pupil				purkinje;			// technically not a pupil, but same tracking method
-		Pupil				AOSLO_beam;			// just the beam that comes out of AOSLO
+		Pupil				AOSLO_beam;			// just the beam that comes out of the AOSLO
+
+		CPoint				purkinjePoints[4];  // assistance for TCO experiments
 
 		bool				record;				// are we recording?
 		bool				pupilfind;			// time for a pupil (true) or purkinje (false)
 		bool				freeze;				// is the pupil locked?
+		bool				purkinje_assist;	// purkinje assistance 
 		bool				beam;				// show supposed AOSLO beam
 		int					Width, Height;		// video frame size	
 		int					recIndex;			// where did we begin recording?
+		double				purkinje_dist;		// half distance of neighboring spots for purkinje validation assist (in mm)
 		
 		std::vector<SYSTEMTIME>	timestamps;
 

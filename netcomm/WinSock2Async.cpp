@@ -774,7 +774,7 @@ void CWinSock2Async::ThreadRunner()
 			WSAGetLastErrorMessage( szWASError );
 			TRACE( _T("*** ERROR : In Event Enum.: %s\n"), szWASError );
 			//TODO : Do something with this error type
-			ShutdownConnection();
+	
 		} 
 		else 
 		{
