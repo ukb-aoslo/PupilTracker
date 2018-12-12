@@ -157,18 +157,19 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 				
 		// draw pupil outline
 
-		pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect((int)median_pupil.current_center.x - (int)median_pupil.current_diameter / 2,
+		pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect(
+			(int)median_pupil.current_center.x - (int)median_pupil.current_diameter / 2,
 			(int)median_pupil.current_center.y - (int)median_pupil.current_diameter / 2,
 			(int)median_pupil.current_center.x + (int)median_pupil.current_diameter / 2,
 			(int)median_pupil.current_center.y + (int)median_pupil.current_diameter / 2));
 
-		// draw purkinje outline
+		// draw purkinje
 
 		pBitmap->drawSolidEllipse(RGB(255, 0, 0), CRect(
 			(int)purkinje.current_center.x - (int)purkinje.current_diameter / 2,
-			(int)purkinje.current_center.y - (int)purkinje.current_diameter / 2,
+			(int)Height - purkinje.current_center.y - (int)purkinje.current_diameter / 2,
 			(int)purkinje.current_center.x + (int)purkinje.current_diameter / 2,
-			(int)purkinje.current_center.y + (int)purkinje.current_diameter / 2));
+			(int)Height - purkinje.current_center.y + (int)purkinje.current_diameter / 2));
 
 		// draw purkinje assist
 
@@ -193,19 +194,19 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 			(int)median_pupil.current_center.x + 2,
 			(int)median_pupil.current_center.y);
 
-		// draw purkinje center
+		//// draw purkinje center
 
-		pBitmap->drawLine(RGB(255, 0, 0),
-			(int)purkinje.current_center.x,
-			(int)purkinje.current_center.y - 1,
-			(int)purkinje.current_center.x,
-			(int)purkinje.current_center.y + 2);
+		//pBitmap->drawLine(RGB(255, 0, 0),
+		//	(int)purkinje.current_center.x,
+		//	(int)Height - purkinje.current_center.y - 1,
+		//	(int)purkinje.current_center.x,
+		//	(int)Height - purkinje.current_center.y + 2);
 
-		pBitmap->drawLine(RGB(255, 0, 0),
-			(int)purkinje.current_center.x - 1,
-			(int)purkinje.current_center.y,
-			(int)purkinje.current_center.x + 2,
-			(int)purkinje.current_center.y);
+		//pBitmap->drawLine(RGB(255, 0, 0),
+		//	(int)purkinje.current_center.x - 1,
+		//	(int)Height - purkinje.current_center.y,
+		//	(int)purkinje.current_center.x + 2,
+		//	(int)Height - purkinje.current_center.y);
 
 
 		if (freeze) {

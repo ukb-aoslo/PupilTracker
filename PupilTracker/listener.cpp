@@ -381,8 +381,10 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	// add timestamp
 	timestamps.push_back(getTimeStamp());
 	
-	// store pupil calculation results 
+	// flip y-coordinate (frank's upside-down)
 	pupil.current_center.y = Height - pupil.current_center.y;
+
+	// store pupil calculation results 
 	pupil.center.push_back(pupil.current_center);
 	pupil.diameter.push_back(pupil.current_diameter);
 
@@ -390,8 +392,10 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	pupilfind = false;
 	frank(pImageData, purkinje_settings);
 
-	// store purkinje calculation results
+	// flip y-coordinate (frank's upside-down)
 	purkinje.current_center.y = Height - purkinje.current_center.y;
+
+	// store purkinje calculation results
 	purkinje.center.push_back(purkinje.current_center);
 	purkinje.diameter.push_back(purkinje.current_diameter);
 	   
@@ -432,7 +436,8 @@ void CListener::freezePupil() {
 	if (freeze){
 
 			pupil.frozen_center.x = pupil.current_center.x;
-			pupil.frozen_center.y = pupil.current_center.y;
+			// flip y b/c frank is upside down
+			pupil.frozen_center.y = Height - pupil.current_center.y;
 			pupil.frozen_diameter = pupil.current_diameter;
 
 			if (m_pParent != NULL)
