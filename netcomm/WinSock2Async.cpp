@@ -731,6 +731,7 @@ bool CWinSock2Async::Accept( CWinSock2Async *pSockNew, sockaddr* lpSockAddr, int
 void CWinSock2Async::OnClose( int nError )
 {
 	TRACE( _T("CWinSock2Async::OnClose(%d)\n"), nError );
+	m_bConnected = false;
 
 	//Check for any remaining data
 	char chBuff[WINSOCK_READ_BUFF_SIZE+1];
@@ -774,7 +775,7 @@ void CWinSock2Async::ThreadRunner()
 			WSAGetLastErrorMessage( szWASError );
 			TRACE( _T("*** ERROR : In Event Enum.: %s\n"), szWASError );
 			//TODO : Do something with this error type
-	
+			ShutdownConnection();
 		} 
 		else 
 		{

@@ -382,6 +382,7 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	timestamps.push_back(getTimeStamp());
 	
 	// store pupil calculation results 
+	pupil.current_center.y = Height - pupil.current_center.y;
 	pupil.center.push_back(pupil.current_center);
 	pupil.diameter.push_back(pupil.current_diameter);
 
@@ -390,6 +391,7 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	frank(pImageData, purkinje_settings);
 
 	// store purkinje calculation results
+	purkinje.current_center.y = Height - purkinje.current_center.y;
 	purkinje.center.push_back(purkinje.current_center);
 	purkinje.diameter.push_back(purkinje.current_diameter);
 	   

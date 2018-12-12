@@ -36,6 +36,8 @@ CSockClient::~CSockClient()
 void CSockClient::OnRecieve(int nError)
 {
 	TRACE(_T("CSockClient::OnRecieve( %d )\n"), nError);
+	
+	
 	char chBuff[WINSOCK_READ_BUFF_SIZE + 1];
 	int nRead;
 	while ((nRead = Recieve(chBuff, WINSOCK_READ_BUFF_SIZE)) > 0)
@@ -49,7 +51,11 @@ void CSockClient::OnRecieve(int nError)
 		//	chBuff[nPos] = chBuff[nPos] + 1;
 		//}
 		//Send(chBuff, nRead);
+
+		Send((char*)&coords, 16);
+
 	}
+	
 }
 
 // ***************************************************************************
