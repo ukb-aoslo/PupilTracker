@@ -11,25 +11,25 @@ public:
 	OffsetTracker();
 	virtual ~OffsetTracker();
 
-	deque<coords<double, double>> trail;
-	coords<double, double> dCurrentPosition;
-	coords<double, double> dLockedPosition;
-
-	void AddPoint(coords<double, double> dNewPoint);
-	void DrawPoint();
+	void AddPositions(coords<double, double> current, coords<double, double> locked);
+	void DrawOffset();
 	void DrawValues();
-	void setLockedPos(coords<double, double>lockedPos);
+	void DrawTitle();
 	void InvalidateCtrl();
 	void eraseTrail();
 
 private:
 
+	deque<coords<double, double>> trail;
+	coords<double, double> m_dCurrentPosition;
+	coords<double, double> m_dLockedPosition;
+	coords<double, double> m_dOffset;
+
 	double		magnif;		// magnification factor
 	double		conv;		// mapping factor
 
-	COLORREF	bkgrndCol;
 	HPEN		hPenGreen, hPenGrey, hPenWht, hPenClay;
-	CFont		consBig, consSmall, headFont;
+
 	CBrush		m_brushBack;
 
 	CPen		hPenPal[40];
@@ -47,14 +47,12 @@ private:
 	CBitmap		*m_pbitmapOldGrid;
 	CBitmap		*m_pbitmapOldPlot;
 
-	coords<double, double> m_dCurrentPosition;
 
-	DECLARE_MESSAGE_MAP()
-
-public:
+protected:
 
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
+	DECLARE_MESSAGE_MAP()
 
 };
 

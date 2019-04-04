@@ -30,8 +30,8 @@ class Tracker;
 		Parameters(CWnd* pParent = NULL);   // standard constructor
 		virtual ~Parameters();
 
-		Settings pupil { 75, 30, 30 };		// just some 
-		Settings purkinje { 250, 4, 100 };	// default values
+		Settings pupil { 75, 10, 30, true };		// just some 
+		Settings purkinje{ 150, 10, 0, true };
 
 		BYTE buf_size;
 		BYTE opts;
@@ -39,10 +39,7 @@ class Tracker;
 	private:
 
 		CWnd* m_pParent;
-
 		Settings cur_pupil;
-		Settings cur_purkinje;
-
 
 	CString filename, prefix;
 
@@ -55,13 +52,11 @@ protected:
 public:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
-	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnBnClickedDefaultparams();
-
 	afx_msg void OnCheck1();
 	afx_msg void OnCheck2();
 	afx_msg void OnCheck3();
 	afx_msg void OnCheck4();
+	afx_msg void OnCheck5();
 	};

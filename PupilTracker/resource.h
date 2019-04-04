@@ -26,11 +26,9 @@
 #define IDC_CHECK4                      1014
 #define IDE_BUFVAL                      1015
 #define IDC_DEFAULTPARAMS               1016
-#define IDC_SLIDER3                     1017
-#define IDE_THRESHVAL2                  1018
-#define IDC_EDIT3                       1019
-#define IDC_EDIT4                       1020
-#define ID_EDIT_FIND_COMBO              32000
+#define IDE_THRESHVAL2                  1017
+#define IDC_SLIDER3                     1018
+#define IDC_CHECK5                      1023
 #define ID_VIEW_PARAMETERS              32771
 #define ID_CAMERA_DEVICES               32772
 #define ID_PLAY                         32773
@@ -38,29 +36,22 @@
 #define ID_CAMERA_SETTINGS              32775
 #define ID_RECORD                       32776
 #define ID_MAKE_SNAPSHOT                32780
-#define ID_PREFIX                       32786
 #define ID_PICK_FOLDER                  32787
-#define ID_BUTTON32789                  32789
-#define ID_BUTTON32790                  32790
 #define ID_BUTTON_LAYERS                32790
 #define ID_LOCK                         32791
 #define ID_FINDCOMBO                    32794
-#define ID_BUTTON32796                  32796
-#define ID_BUTTON32797                  32797
-#define ID_BUTTON32798                  32798
 #define ID_BUTTON_ERASER                32799
-#define ID_BUTTON32800                  32800
 #define ID_TOGGLE_BEAMOVERLAY           32801
-#define ID_BUTTON32802                  32802
 #define ID_BUTTON_PURKINJE_ASSIST       32802
+#define ID_RESET_PUPIL                  32804
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        160
-#define _APS_NEXT_COMMAND_VALUE         32803
-#define _APS_NEXT_CONTROL_VALUE         1017
+#define _APS_NEXT_RESOURCE_VALUE        161
+#define _APS_NEXT_COMMAND_VALUE         32810
+#define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

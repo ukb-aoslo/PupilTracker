@@ -4,7 +4,6 @@
 #include "PupilDiaTracker.h"
 #include "Pupil.h"
 #include "Parameters.h"
-#include "SockClient.h"
 
 
 class Tracker : public CListener
@@ -18,6 +17,8 @@ public:
 	Pupil			median_pupil;			// reduce jitter in overlay
 
 	bool			bufchange;				// respect live parameter change
+
+	int				threshCount;			// used to calculate optimal threshold
 	
 	int				display;				// counter helper variable for blinking rec status
 	long int		frames;					// counting of processed frames

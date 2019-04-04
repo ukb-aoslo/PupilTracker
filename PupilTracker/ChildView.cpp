@@ -6,15 +6,15 @@
 #include "ChildView.h"
 #include "PupilTrackerMainFrame.h"
 
+
 // ChildView
+
 
 IMPLEMENT_DYNAMIC(CChildView, CWnd)
 
 CChildView::CChildView()
 {
 	m_pBuffer = NULL;
-
-
 }
 
 CChildView::~CChildView()
@@ -51,9 +51,7 @@ BOOL CChildView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwS
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
-
-
-		
+	
 	return CWnd::Create(lpszClassName, lpszWindowName, dwStyle, rect, pParentWnd, nID, pContext);
 
 }

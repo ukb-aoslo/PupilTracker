@@ -1,23 +1,18 @@
-// Gaze.cpp : implementation file
 #include "stdafx.h"
 #include "OffsetTracker.h"
 #include "resource.h"
+#include "ChildView.h"
 
-// Gaze
-
+// Paint Jobs for Offset Tracking
 
 OffsetTracker::OffsetTracker()
 {
 
-	hPenGreen = CreatePen(PS_SOLID, 1, RGB(0, 60, 0));				// dark green pen
-	hPenGrey = CreatePen(PS_SOLID, 1, RGB(156, 152, 196));			// earth pen
-	hPenWht = CreatePen(PS_SOLID, 1, RGB(150, 150, 150));			// white pen
-
 	magnif = (double) MM_PER_PIXEL;
-	conv = 150/0.25;	// mapping pixels on plot with .25mm limits
+	conv = 150/0.25 * magnif;	// mapping pixels on plot with .25mm range
 
-	bkgrndCol = RGB(0, 0, 0);
-	m_brushBack.CreateSolidBrush(bkgrndCol);
+	
+	m_brushBack.CreateSolidBrush(black);
 
 	// create trail palette
 	for (int i = 0; i < 39; i++) {
@@ -25,55 +20,7 @@ OffsetTracker::OffsetTracker()
 	}
 
 	// color the head of the trail in some yellow
-	hPenPal[39].CreatePen(PS_SOLID, 1, RGB(255, 255, 100));
-	
-	VERIFY(consBig.CreateFont(
-		22,							// nHeight
-		0,							// nWidth
-		0,							// nEscapement
-		0,							// nOrientation
-		FW_THIN,					// nWeight
-		FALSE,                     // bItalic
-		FALSE,                     // bUnderline
-		0,                         // cStrikeOut
-		ANSI_CHARSET,              // nCharSet
-		OUT_DEFAULT_PRECIS,        // nOutPrecision
-		CLIP_DEFAULT_PRECIS,       // nClipPrecision
-		DEFAULT_QUALITY,           // nQuality
-		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-		_T("Consolas")));           // lpszFacename
-
-	VERIFY(headFont.CreateFont(
-		24,							// nHeight
-		0,							// nWidth
-		0,							// nEscapement
-		0,							// nOrientation
-		FW_THIN,					// nWeight
-		FALSE,                     // bItalic
-		FALSE,                     // bUnderline
-		0,                         // cStrikeOut
-		ANSI_CHARSET,              // nCharSet
-		OUT_DEFAULT_PRECIS,        // nOutPrecision
-		CLIP_DEFAULT_PRECIS,       // nClipPrecision
-		DEFAULT_QUALITY,           // nQuality
-		VARIABLE_PITCH | FF_SWISS,  // nPitchAndFamily
-		_T("Arial Narrow")));             // lpszFacename
-
-	VERIFY(consSmall.CreateFont(
-		16,							// nHeight
-		0,							// nWidth
-		0,							// nEscapement
-		0,							// nOrientation
-		FW_THIN,					// nWeight
-		FALSE,                     // bItalic
-		FALSE,                     // bUnderline
-		0,                         // cStrikeOut
-		ANSI_CHARSET,              // nCharSet
-		OUT_DEFAULT_PRECIS,        // nOutPrecision
-		CLIP_DEFAULT_PRECIS,       // nClipPrecision
-		DEFAULT_QUALITY,           // nQuality
-		DEFAULT_PITCH | FF_SWISS,  // nPitchAndFamily
-		_T("Consolas")));           // lpszFacename
+	hPenPal[39].CreatePen(PS_SOLID, 1, darkyellow);
 
 	// protected bitmaps to restore the memory DC's
 	m_pbitmapOldGrid = NULL;
@@ -86,10 +33,10 @@ OffsetTracker::~OffsetTracker()
 
 	// just to be picky restore the bitmaps for the two memory dc's
 	// (these dc's are being destroyed so there shouldn't be any leaks)
-	//if (m_pbitmapOldGrid != NULL)
-	//	m_dcGrid.SelectObject(m_pbitmapOldGrid);
-	//if (m_pbitmapOldPlot != NULL)
-	//	m_dcPlot.SelectObject(m_pbitmapOldPlot);
+	if (m_pbitmapOldGrid != NULL)
+		m_dcGrid.SelectObject(m_pbitmapOldGrid);
+	if (m_pbitmapOldPlot != NULL)
+		m_dcPlot.SelectObject(m_pbitmapOldPlot);
 
 }
 
@@ -102,97 +49,26 @@ END_MESSAGE_MAP()
 
 void OffsetTracker::InvalidateCtrl() {
 
-	CClientDC* dc = new CClientDC(this);
+	CClientDC dc(this);
 
 	if (m_dcGrid.GetSafeHdc() == NULL)
 	{
-		m_dcGrid.CreateCompatibleDC(dc);
+		m_dcGrid.CreateCompatibleDC(&dc);
 		m_bitmapGrid.LoadBitmapW(IDB_BITMAP1);
-		dc->SelectObject(m_bitmapGrid);
-		m_dcGrid.BitBlt(0, 0, m_nClientWidth, m_nClientHeight, dc, 0, 0, SRCCOPY);
+		dc.SelectObject(m_bitmapGrid);
+		m_dcGrid.BitBlt(0, 0, m_nClientWidth, m_nClientHeight, &dc, 0, 0, SRCCOPY);
 		m_pbitmapOldGrid = m_dcGrid.SelectObject(&m_bitmapGrid);
 	}
 
-	//m_dcGrid.SetBkColor(RGB(0, 0, 0));
-	//m_dcGrid.SetBkMode(OPAQUE);
 
-	//m_dcGrid.FillRect(m_rectClient, &m_brushBack);
+	// if we don't have one yet, set up a memory dc for the plot
 
-	CString szText;
-
-	//SelectObject(*dc, GetStockObject(NULL_BRUSH));
-	//SelectObject(*dc, hPenClay);
-	//MoveToEx(*dc, 0, 0, NULL);
-	//LineTo(*dc, 0, m_rectClient.bottom);
-
-	// plot trail
-	//if (ready) {
-
-	//		Ellipse(*dc, rect.Width() / 2 - (int)(gazeBuffer.front().x * conv) - 4,
-	//			rect.Height() / 2 + (int)(gazeBuffer.front().y * conv) - 4,
-	//			rect.Width() / 2 - (int)(gazeBuffer.front().x * conv) + 4,
-	//			rect.Height() / 2 + (int)(gazeBuffer.front().y * conv) + 4);
-	//
-	//}
-
-
-	// x/y plot
-
-	//m_dcGrid.SelectObject(&headFont);
-	//SetTextColor(m_dcGrid, RGB(254, 152, 0));
-	//szText.Format(TEXT("PUPIL OFFSET"));
-	//m_dcGrid.TextOutW(m_rectClient.Width() / 2 - 60, 10, szText);
-
-
-	//dc->SelectObject(&consBig);
-
-	//szText.Format(TEXT("x:"));
-	//dc->TextOutW(m_rectClient.Width() / 2 - 80, m_rectClient.Height() / 11, szText);
-	//szText.Format(TEXT("y:"));
-	//dc->TextOutW(m_rectClient.Width() / 2 + 30, m_rectClient.Height() / 11, szText);
-
-	//dc->SelectObject(consSmall);
-
-
-
-	//szText.Format(TEXT("Current Pos [px]"));
-	//dc->TextOutW(15, m_rectClient.Height() - 40, szText);
-	//szText.Format(TEXT("x:"));
-	//dc->TextOutW(15, m_rectClient.Height() - 20, szText);
-	//szText.Format(TEXT("y:"));
-	//dc->TextOutW(70, m_rectClient.Height() - 20, szText);
-
-	//szText.Format(TEXT("Locked Pos [px]"));
-	//dc->TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 40, szText);
-	//szText.Format(TEXT("x:"));
-	//dc->TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 20, szText);
-	//szText.Format(TEXT("y:"));
-	//dc->TextOutW(m_rectClient.Width() / 2 + 115, m_rectClient.Height() - 20, szText);
-
-
-	//
-
-
-
-		// at this point we are done filling the the grid bitmap, 
-		// no more drawing to this bitmap is needed until the setting are changed
-
-		// if we don't have one yet, set up a memory dc for the plot
 	if (m_dcPlot.GetSafeHdc() == NULL)
 	{
-		m_dcPlot.CreateCompatibleDC(dc);
-		m_bitmapPlot.CreateCompatibleBitmap(dc, m_nClientWidth, m_nClientHeight);
+		m_dcPlot.CreateCompatibleDC(&dc);
+		m_bitmapPlot.CreateCompatibleBitmap(&dc, m_nClientWidth, m_nClientHeight);
 		m_pbitmapOldPlot = m_dcPlot.SelectObject(&m_bitmapPlot);
 	}
-
-
-//	m_dcPlot.SetBkColor(bkgrndCol);
-//	m_dcPlot.FillRect(m_rectClient, &m_brushBack);
-
-	// finally, force the plot area to redraw
-	InvalidateRect(m_rectClient);
-	
-	delete dc;
 
 }
 
@@ -216,73 +92,110 @@ void OffsetTracker::OnPaint()
 
 	memDC.CreateCompatibleDC(&dc);
 	memBitmap.CreateCompatibleBitmap(&dc, m_nClientWidth, m_nClientHeight);
-	oldBitmap = (CBitmap *)memDC.SelectObject(&memBitmap);
+	oldBitmap = (CBitmap*)memDC.SelectObject(&memBitmap);
 
 	if (memDC.GetSafeHdc() != NULL)
 	{
 		// first drop the grid on the memory dc
-		memDC.BitBlt(0, 0, m_nClientWidth, m_nClientHeight,
-			&m_dcGrid, 0, 0, SRCCOPY);
+		memDC.BitBlt(0, 0, m_nClientWidth, m_nClientHeight,	&m_dcGrid, 0, 0, SRCCOPY);
 
 		// now add the plot on top as a "pattern" via SRCPAINT.
 		// works well with dark background and a light plot
-		memDC.BitBlt(0, 0, m_nClientWidth, m_nClientHeight,
-			&m_dcPlot, 0, 0, SRCPAINT);  //SRCPAINT
-										 // finally send the result to the display
+		memDC.BitBlt(0, 0, m_nClientWidth, m_nClientHeight,	&m_dcPlot, 0, 0, SRCPAINT);  //SRCPAINT
+		
+		// finally send the result to the display
+		dc.BitBlt(0, 0, m_nClientWidth, m_nClientHeight, &memDC, 0, 0, SRCCOPY);
 
-		dc.BitBlt(0, 0, m_nClientWidth, m_nClientHeight,
-			&memDC, 0, 0, SRCCOPY);
 	}
 
 	memDC.SelectObject(oldBitmap);
 
 }
 
+void OffsetTracker::DrawTitle() {
 
-void OffsetTracker::AddPoint(coords<double, double> dNewPoint)
+	m_dcGrid.SetBkColor(RGB(0, 0, 0));
+	m_dcGrid.SetBkMode(TRANSPARENT);
+
+	CString szText;
+
+	// x/y plot
+
+	SetTextColor(m_dcGrid, darkyellow);
+	szText.Format(TEXT("PUPIL OFFSET"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 - 40, 10, szText);
+
+	szText.Format(TEXT("x:"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 - 80, m_rectClient.Height() / 11, szText);
+	szText.Format(TEXT("y:"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 30, m_rectClient.Height() / 11, szText);
+
+	szText.Format(TEXT("Current Pos [px]"));
+	m_dcGrid.TextOutW(15, m_rectClient.Height() - 40, szText);
+	szText.Format(TEXT("x:"));
+	m_dcGrid.TextOutW(15, m_rectClient.Height() - 20, szText);
+	szText.Format(TEXT("y:"));
+	m_dcGrid.TextOutW(70, m_rectClient.Height() - 20, szText);
+
+	szText.Format(TEXT("Locked Pos [px]"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 40, szText);
+	szText.Format(TEXT("x:"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 20, szText);
+	szText.Format(TEXT("y:"));
+	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 115, m_rectClient.Height() - 20, szText);
+
+	// at this point we are done filling the the grid bitmap, 
+	// no more drawing to this bitmap is needed until the setting are changed
+
+}
+
+
+void OffsetTracker::AddPositions(coords<double, double> current, coords<double, double> locked)
 {
-	// store current position
-	dCurrentPosition = dNewPoint;
+	// store current offset position in a queue
 
+	m_dCurrentPosition = current;
+	m_dLockedPosition = locked;
+
+	if (locked.x != 0 && locked.y != 0)
+		m_dOffset = current - locked;
+	else
+		m_dOffset.x = m_dOffset.y = 0;
 
 		if (trail.size() < 40) {
-			trail.push_front(dNewPoint);
+			trail.push_front(m_dOffset);
 		}
 
 		else {
-			m_dCurrentPosition = trail.back();
 			trail.pop_back();
+			trail.push_front(m_dOffset);
 		}
 
 
-}
-
-void OffsetTracker::setLockedPos(coords<double, double>lockedPos) {
-
-	dLockedPosition = lockedPos;
+	Invalidate();
 
 }
 
-void OffsetTracker::DrawPoint() {
+void OffsetTracker::DrawOffset() {
 
 	if (m_dcPlot.GetSafeHdc() != NULL) {
 		
 		// make sure the plot bitmap is cleared
 		//if (!infinity)
-		//	m_dcPlot.FillRect(m_rectClient, &m_brushBack);
+		//m_dcPlot.FillRect(m_rectClient, &m_brushBack);
 
 		// draw offset into x/y plot
-		int y = 40;
+		SelectObject(m_dcPlot, GetStockObject(HOLLOW_BRUSH));
+		int y = 39;
 
 		for (auto it = trail.begin(); it != trail.end(); it++) {
 
 			SelectObject(m_dcPlot, hPenPal[y]);
-			SelectObject(m_dcPlot, GetStockObject(HOLLOW_BRUSH));
 
-			Ellipse(m_dcPlot, m_nClientWidth / 2 - (int)(it->x * conv) - 4,
-				m_nClientHeight / 2 + (int)(it->y * conv) - 4,
-				m_nClientWidth / 2 - (int)(it->x * conv) + 4,
-				m_nClientHeight / 2 + (int)(it->y * conv) + 4);
+			Ellipse(m_dcPlot, m_nClientWidth / 2 - (int)(it->x * conv) - 3,
+				m_nClientHeight / 2 + (int)(it->y * conv) - 3,
+				m_nClientWidth / 2 - (int)(it->x * conv) + 3,
+				m_nClientHeight / 2 + (int)(it->y * conv) + 3);
 			y--;
 		
 		}
@@ -294,35 +207,33 @@ void OffsetTracker::DrawPoint() {
 void OffsetTracker::DrawValues() {
 
 	CString szText;
-
-	coords<double, double> offset(dCurrentPosition - dLockedPosition);
+	
+	m_dcPlot.SetBkColor(black);
 
 	if (m_dcPlot.GetSafeHdc() != NULL)
 	{
-
-		m_dcPlot.SelectObject(&consBig);
+		 
+		SetTextColor(m_dcPlot, darkblue);
 
 		// offset
-		szText.Format(L"%.2f", -1 * offset.x);
+		szText.Format(L"%.2f", -1 * m_dOffset.x);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 - 60, m_rectClient.Height() / 11, szText);
-		szText.Format(L"%.2f", -1 * offset.y);
+		szText.Format(L"%.2f", -1 * m_dOffset.y);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 50, m_rectClient.Height() / 11, szText);
 
-		m_dcPlot.SelectObject(&consSmall);
-
 		// current position
-		SetTextColor(m_dcPlot, RGB(204, 96, 97));
-		szText.Format(TEXT("%.1f"), dCurrentPosition.x);
+		SetTextColor(m_dcPlot, lightblue);
+		szText.Format(TEXT("%.1f"), m_dCurrentPosition.x);
 		m_dcPlot.TextOutW(30, m_rectClient.Height() - 20, szText);
-		szText.Format(TEXT("%.1f"), dCurrentPosition.y);
+		szText.Format(TEXT("%.1f"), m_dCurrentPosition.y);
 
 		m_dcPlot.TextOutW(85, m_rectClient.Height() - 20, szText);
 
 		// locked position
-		SetTextColor(m_dcPlot, RGB(155, 152, 254));
-		szText.Format(TEXT("%.1f"), dLockedPosition.x);
+		SetTextColor(m_dcPlot, lightgreen);
+		szText.Format(TEXT("%.1f"), m_dLockedPosition.x);
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 75, m_rectClient.Height() - 20, szText);
-		szText.Format(TEXT("%.1f"), dLockedPosition.y);
+		szText.Format(TEXT("%.1f"), m_dLockedPosition.y);
 		
 		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 130, m_rectClient.Height() - 20, szText);
 

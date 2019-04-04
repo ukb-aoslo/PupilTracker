@@ -16,9 +16,7 @@
 //		Link with	Ws2_32.lib
 // ***************************************************************************
 
-#include "stdafx.h"
 #include "WinSock2Async.h"							//Socket for Requesting data
-
 
 #ifdef __AFX_H__
 	#ifdef _DEBUG
@@ -122,7 +120,9 @@ CWinSock2Async::CWinSock2Async() :
 	TRACE( _T("CWinSock2Async::CWinSock2Async()\n") );
 	InitializeCriticalSection( &m_csRecieve );
 	InitializeCriticalSection( &m_csSend );
+
 }
+
 
 CWinSock2Async::~CWinSock2Async()
 {
@@ -663,6 +663,7 @@ void CWinSock2Async::OnConnect( int nError )
 {
 	TRACE( _T("CWinSock2Async::OnConnect(%d)\n"), nError );
 	m_bConnected = ( nError == 0 );
+
 }
 
 
@@ -688,6 +689,7 @@ void CWinSock2Async::OnAccept( int nError )
 //	{
 //		//TODO: Some error display
 //	}
+	
 }
 
 
@@ -712,6 +714,8 @@ bool CWinSock2Async::Accept( CWinSock2Async *pSockNew, sockaddr* lpSockAddr, int
 		return false;
 
 	return pSockNew->SetupEvents( sockNew );
+
+
 }
 
 
@@ -775,7 +779,7 @@ void CWinSock2Async::ThreadRunner()
 			WSAGetLastErrorMessage( szWASError );
 			TRACE( _T("*** ERROR : In Event Enum.: %s\n"), szWASError );
 			//TODO : Do something with this error type
-			ShutdownConnection();
+
 		} 
 		else 
 		{

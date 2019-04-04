@@ -8,8 +8,6 @@
 #endif
 
 #include "resource.h"		// main symbols
-#include "PupilTrackerMainFrame.h"
-
 
 // CPupilTrackerApp:
 // See PupilTracker.cpp for the implementation of this class.

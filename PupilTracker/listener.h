@@ -29,12 +29,14 @@
 #include "Pupil.h"
 #include "Settings.h"
 
+#include <iostream>
+#include <stdio.h>
+
 class CPupilTrackerMainFrame;
 
 #define MESSAGEDEVICELOST WM_USER+90
 #define MESSAGE_OFFSET_PROCESSED WM_USER+91
 #define MESSAGE_PUPILDIA_PROCESSED WM_USER+92
-#define MESSAGE_OFFSET_LOCKEDPOS WM_USER+93
 
 using namespace DShowLib;
 
@@ -48,20 +50,19 @@ class CListener : public GrabberListener
 		int getFramesCounted() { return MediaSampleDesc.FrameNumber; };
 
 		Pupil				pupil;				// the pupil itself
-		Pupil				purkinje;			// technically not a pupil, but same tracking method
-		Pupil				AOSLO_beam;			// just the beam that comes out of the AOSLO
+		Pupil				purkinje;			// technically not a pupil, but same storage class
+		Pupil				AOSLO_beam;			// beam coming out of the AOSLO
 
 		CPoint				purkinjePoints[4];  // assistance for TCO experiments
 
 		bool				record;				// are we recording?
-		bool				pupilfind;			// time for a pupil (true) or purkinje (false)
 		bool				freeze;				// is the pupil locked?
-		bool				purkinje_assist;	// purkinje assistance 
+		bool				purkinje_assist;	// need purkinje assistance?
 		bool				beam;				// show supposed AOSLO beam
 		int					Width, Height;		// video frame size	
 		int					recIndex;			// where did we begin recording?
 		double				purkinje_dist;		// half distance of neighboring spots for purkinje validation assist (in mm)
-		
+				
 		std::vector<SYSTEMTIME>	timestamps;
 
 	protected:
@@ -78,29 +79,34 @@ class CListener : public GrabberListener
 		tsMediaSampleDesc	MediaSampleDesc;
 		SYSTEMTIME			getTimeStamp();
 		
-		void DoImageProcessing(smart_ptr<MemBuffer> pBuffer);			// pre-frank
-		void frank(BYTE* pImageData, Settings *setting);				// core pupil calculation
-		virtual void DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer);	// post-frank, for subclasses
+		void		DoImageProcessing(smart_ptr<MemBuffer> pBuffer);	// pre-processing
+		void		frank(BYTE* pImageData, Settings* setting);			// core pupil calculation
+		void		getPurkinje(BYTE* pImageData, Settings* setting);	// find purkinje inside beam
+		virtual void DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer);	// postprocessing, for subclasses
 		virtual void overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,	const tsMediaSampleDesc& MediaSampleDesc);
-		void frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
-		void deviceLost(Grabber& param);
+		void		frameReady(Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
+		void		deviceLost(Grabber& param);
 	
 	public:
 
+		int	calcThresh();										// auto threshold calculation
 		void freezePupil();
 		void setBeam();
 		void setSnap(bool b);
-		void SetParent(CWnd* pParent);
+		void setParent(CWnd* pParent);
 		void init(int cx, int cy);
 
 
 	private:
 
-		bool snap;				// for snapshots
 		CString outputfile;
-		void makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
+		bool	snap;				// for snapshots
+		
+		void	makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber);
 		
 		int *x, *y;				// some heap memory for frank
+
+		int average_purkinje_thresh; // for automatic threshold calculation
 		
 };
 

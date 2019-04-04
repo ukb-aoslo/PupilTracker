@@ -36,8 +36,8 @@ protected:
 
 public:
 
-	afx_msg void OnPaint();
 	void drawOffline();
-
+	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
+
 };

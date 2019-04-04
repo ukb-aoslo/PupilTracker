@@ -1,7 +1,6 @@
 #pragma once
 #include "listener.h"
 
-
 class PupilDiaTracker : public CWnd
 {
 
@@ -10,37 +9,25 @@ public:
 	virtual ~PupilDiaTracker();
 
 
-	struct THEPOINT
-	{
-		coords<double, double> 	dCurrentPosition;   // current position
-		coords<double, double> 	dPreviousPosition;  // previous position
-		double	dLowerLimit;
-		double	dUpperLimit;
-		double	dRange;
-		double	dVerticalFactor;
-		int		nYDecimals;
-		CPen	penPlot;
-		bool	bUsed;
-	} m_Point[40];
-
-
 	void InvalidateCtrl();
 	void DrawPoint();
-	void DrawPoints();
+	void DrawTitle();
 	double AppendPoint(double dia);
+	void SetRange(double dLower, double dUpper, int nDecimalPlaces);
+	void SetPlotColor(COLORREF rgb);
+	int m_nShiftPixels;          // amount to shift with each new point 
+	int m_nYDecimals;
 
 private:
 
 	CDC			m_dcGrid;
 	CDC			m_dcPlot;
-
+	CPen		m_penPlot;
 
 	int m_nHalfShiftPixels;
 	int m_nPlotShiftPixels;
 	int m_nPlotHeight;
 	int m_nPlotWidth;
-	int m_nShiftPixels;          // amount to shift with each new point 
-
 
 	int			m_nClientWidth, m_nClientHeight;
 
@@ -54,13 +41,14 @@ private:
 	CBitmap		*m_pbitmapOldGrid;
 	CBitmap		*m_pbitmapOldPlot;
 
-	HPEN		hPenWht, hPenMag, hPenBge, hPenGrey, hPenClay;
-	CBrush		brushBack;
-	CFont		headFont, consBig;
 	double		m_dCurrentPosition;
+	double		m_dPreviousPosition;  
 	
-	double m_dRange;
-	double m_dVerticalFactor;
+	double		m_dRange;
+	double		m_dVerticalFactor;
+
+	double		m_dLowerLimit;        // lower bounds
+	double		m_dUpperLimit;        // upper bounds
 
 
 protected:

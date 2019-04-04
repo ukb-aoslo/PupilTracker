@@ -1,11 +1,8 @@
 // Parameters.cpp : implementation file
 //
-
 #include "stdafx.h"
-#include "PupilTracker.h"
 #include "Parameters.h"
-#include "afxdialogex.h"
-#include "PupilTrackerMainFrame.h"
+#include "PupilTracker.h"
 
 // Parameters dialog
 IMPLEMENT_DYNAMIC(Parameters, CDialogEx)
@@ -49,20 +46,8 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 		delete ppData;
 	}
 
-	// load purkinje settings from registry
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"purkinje_spotsize", &ppData, &n)) {
-		purkinje.spot_size = (BYTE)ppData[0];
-		delete ppData;
-	}
-
-	if (AfxGetApp()->GetProfileBinary(L"Settings", L"purkinje_boxsize", &ppData, &n)) {
-		purkinje.box_size = (BYTE)ppData[0];
-		delete ppData;
-	}
-
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"purkinje_thresh", &ppData, &n)) {
-		purkinje.threshold = (BYTE)ppData[0];
+		pupil.threshold = (BYTE)ppData[0];
 		delete ppData;
 	}
 
@@ -77,13 +62,13 @@ Parameters::~Parameters()
 BEGIN_MESSAGE_MAP(Parameters, CDialogEx)
 	ON_BN_CLICKED(IDC_OK, &Parameters::OnBnClickedOk)
 	ON_WM_SHOWWINDOW()
-	ON_WM_HSCROLL()
 	ON_WM_VSCROLL()
 	ON_BN_CLICKED(IDC_DEFAULTPARAMS, &Parameters::OnBnClickedDefaultparams)
 	ON_COMMAND(IDC_CHECK1, &Parameters::OnCheck1)
 	ON_COMMAND(IDC_CHECK2, &Parameters::OnCheck2)
 	ON_COMMAND(IDC_CHECK3, &Parameters::OnCheck3)
 	ON_COMMAND(IDC_CHECK4, &Parameters::OnCheck4)
+	ON_COMMAND(IDC_CHECK5, &Parameters::OnCheck5)
 END_MESSAGE_MAP()
 
 void Parameters::DoDataExchange(CDataExchange* pDX)
@@ -95,14 +80,8 @@ void Parameters::DoDataExchange(CDataExchange* pDX)
 	DDX_Text(pDX, IDC_EDIT2, pupil.spot_size);
 	DDX_Text(pDX, IDE_THRESHVAL, pupil.threshold);
 	DDX_Text(pDX, IDE_THRESHVAL2, purkinje.threshold);
-	DDX_Text(pDX, IDC_EDIT3, purkinje.box_size);
-	DDX_Text(pDX, IDC_EDIT4, purkinje.spot_size);
-	DDX_Text(pDX, IDE_BUFVAL, buf_size);
 	DDV_MinMaxByte(pDX, pupil.box_size, 30, 255);
-	DDV_MinMaxByte(pDX, pupil.spot_size, 1, 100);
-	DDV_MinMaxByte(pDX, purkinje.box_size, 30, 255);
-	DDV_MinMaxByte(pDX, purkinje.spot_size, 1, 100);
-	DDV_MinMaxByte(pDX, buf_size, 0, 100);
+	DDV_MinMaxByte(pDX, pupil.spot_size, 1, 10);
 
 }
 
@@ -117,12 +96,13 @@ BOOL Parameters::OnInitDialog()
 	pSlider->SetTicFreq(1);
 	pSlider->SetPos(pupil.threshold);
 	pSlider->ModifyStyle(0, TBS_DOWNISLEFT, 0);
+
 	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER3);
-	pSlider->SetRange(0, 255);
+	pSlider->SetRange(150, 255);
 	pSlider->SetTicFreq(1);
 	pSlider->SetPos(purkinje.threshold);
 	pSlider->ModifyStyle(0, TBS_DOWNISLEFT, 0);
-
+	
 
 	short j = 1;
 	for (int i = IDC_CHECK1; i <= IDC_CHECK4; i++) {
@@ -140,11 +120,12 @@ void Parameters::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 {
 	// TODO: Add your message handler code here and/or call default
 	CSliderCtrl* pSlider = (CSliderCtrl*)pScrollBar;
-	//pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER1);
+
 	if (pSlider->GetDlgCtrlID() == IDC_SLIDER1) {
 		pupil.threshold = pSlider->GetPos();
 		SetDlgItemInt(IDE_THRESHVAL, pupil.threshold);
 	}
+
 	if (pSlider->GetDlgCtrlID() == IDC_SLIDER3) {
 		purkinje.threshold = pSlider->GetPos();
 		SetDlgItemInt(IDE_THRESHVAL2, purkinje.threshold);
@@ -167,11 +148,6 @@ void Parameters::OnBnClickedOk()
 		UpdateData(TRUE);
 		pSlider->SetPos(pupil.threshold);
 		break;
-	case IDE_THRESHVAL2:
-		pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER3);
-		UpdateData(TRUE);
-		pSlider->SetPos(purkinje.threshold);
-		break;
 
 	case IDC_EDIT1:
 		//pwndCtrlNext = GetDlgItem(IDC_EDIT2);
@@ -179,12 +155,7 @@ void Parameters::OnBnClickedOk()
 	case IDC_EDIT2:
 		//pwndCtrlNext = GetDlgItem(IDC_EDIT3);
 		break;
-	case IDC_EDIT3:
-		//pwndCtrlNext = GetDlgItem(IDC_EDIT4);
-		break;
-	case IDC_EDIT4:
-		//pwndCtrlNext = GetDlgItem(IDC_EDIT1);
-		break;
+
 	case IDC_OK:
 		CDialogEx::OnOK();
 		
@@ -192,12 +163,10 @@ void Parameters::OnBnClickedOk()
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"pupil_spotsize", &pupil.spot_size, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"pupil_boxsize", &pupil.box_size, 1);
 
-		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_thresh", &purkinje.threshold, 1);
-		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_spotsize", &purkinje.spot_size, 1);
-		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_boxsize", &purkinje.box_size, 1);
-
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_opts", &opts, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_bufsize", &buf_size, 1);
+
+		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_threshold", &purkinje.threshold, 1);
 
 		//ShowWindow(SW_HIDE);
 		break;
@@ -221,50 +190,29 @@ void Parameters::OnShowWindow(BOOL bShow, UINT nStatus)
 	pSlider->SetPos(pupil.threshold);
 	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER3);
 	pSlider->SetPos(purkinje.threshold);
-	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER2);
-	pSlider->SetPos(buf_size);
 
 }
-
-
-void Parameters::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
-{
-	// TODO: Add your message handler code here and/or call default
-	CSliderCtrl* pSlider;
-	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER2);
-	buf_size = pSlider->GetPos();
-	SetDlgItemInt(IDE_BUFVAL, buf_size);
-	
-}
-
 
 
 void Parameters::OnBnClickedDefaultparams()
 {
 	// TODO: Add your control notification handler code here
 
-	pupil.threshold = 100;
-	pupil.spot_size = 30;
+	pupil.threshold = 80;
+	pupil.spot_size = 10;
 	pupil.box_size = 30;
 
-	purkinje.threshold = 250;
-	purkinje.spot_size = 4;
-	purkinje.box_size = 100;
+	purkinje.threshold = 150;
 
 	SetDlgItemInt(IDC_EDIT1, pupil.box_size, 0);
 	SetDlgItemInt(IDC_EDIT2, pupil.spot_size, 0);
-	SetDlgItemInt(IDC_EDIT3, purkinje.box_size, 0);
-	SetDlgItemInt(IDC_EDIT4, purkinje.spot_size, 0);
 
 	SetDlgItemInt(IDE_THRESHVAL, pupil.threshold, 0);
 	SetDlgItemInt(IDE_THRESHVAL2, purkinje.threshold, 0);
-	SetDlgItemInt(IDE_BUFVAL, 0, 0);
 
 	CSliderCtrl* pSlider;
 	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER1);
 	pSlider->SetPos(pupil.threshold);
-	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER2);
-	pSlider->SetPos(0);
 	pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER3);
 	pSlider->SetPos(purkinje.threshold);
 
@@ -308,4 +256,12 @@ void Parameters::OnCheck4()
 	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK4);
 	if (cBox->GetCheck()) opts += FPS;
 	else opts -= FPS;
+}
+
+void Parameters::OnCheck5()
+{
+	// TODO: Add your command handler code here
+	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK5);
+	if (cBox->GetCheck()) purkinje.blob_detect = true;
+	else purkinje.blob_detect = false;
 }

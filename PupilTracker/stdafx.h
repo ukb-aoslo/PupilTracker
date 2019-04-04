@@ -27,8 +27,9 @@
 
 #include <queue>
 #include <iostream>
+
 #include <WinSock2.h>
-#include "WinSock2Async.h"
+#include <WinSock2Async.h>
 
 #define BUFFER_SIZE 1024
 
@@ -36,6 +37,16 @@
 #define PI (atan(1) * 4)
 #define MM_PER_PIXEL 0.030232211660616
 
+// palette to support users with achromatopsia
+static COLORREF white = RGB(255, 255, 255);
+static COLORREF lightblue = RGB(3, 159, 200);
+static COLORREF darkblue = RGB(2, 119, 181);
+static COLORREF rose = RGB(249, 191, 226);
+static COLORREF lightyellow = RGB(254, 255, 79);
+static COLORREF lightgreen = RGB(3, 141, 99);
+static COLORREF darkgreen = RGB(3, 106, 84);
+static COLORREF darkyellow = RGB(252, 191, 73);
+static COLORREF black = RGB(0, 0, 0);
 
 
 //#ifdef _DEBUG

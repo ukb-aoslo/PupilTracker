@@ -1,10 +1,20 @@
 #pragma once
+#include "stdafx.h"
 #include "ChildView.h"
 #include "Parameters.h"
-#include "FindComboButton.h"
+#include <SockClient.h>
+#include <SockListener.h>
 
 class CPupilTrackerMainFrame : public CFrameWndEx
 {
+
+private:
+
+	// data that is received from listener thread and used for plotting
+
+	coords<double, double>*				current;
+	coords<double, double>*				locked;
+	double*								pupilDia;
 
 public:
 
@@ -17,10 +27,10 @@ public:
 
 	Tracker								pupilTracking;
 
-	CSockClient*						m_pSock_AOMCONTROL;		// for communication with AOMCONTROL
 	CSockClient*						m_pSock_ICANDI;			// and ICANDI
+	CSockListener						m_pSock_AOMCONTROL;		// for communication with AOMCONTROL
 	
-	smart_com<IFrameFilter>				DeBayer;
+	smart_com<IFrameFilter>				DeNoise;
 	Parameters							params;
 	
 	CString								prefix;
@@ -28,7 +38,6 @@ public:
 	CString								fileName;
 	CString								timestamp;
 
-	coords<double, double>*				offset;
 
 	bool								offsetTrackingEnabled,
 										pupilDiaTrackingEnabled,
@@ -46,6 +55,7 @@ public:
 protected:
 	
 	HICON m_hIcon;
+
 	// Generated message map functions
 	afx_msg void OnPaint();
 	afx_msg void OnClose();
@@ -73,24 +83,20 @@ public:
 	afx_msg void OnUpdateRecord(CCmdUI *pCmdUI);
 	afx_msg void OnMakeSnapshot();
 	afx_msg void OnUpdateMakeSnapshot(CCmdUI *pCmdUI);
-	afx_msg void OnEditFindCombo();
-	afx_msg void OnEditFind();
-
-protected:
-	afx_msg LRESULT OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam);
-
-private:
-	LRESULT OnDeviceLost(WPARAM Brightness, LPARAM lParam);
-	afx_msg LRESULT OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnMessageOffsetLockedPos(WPARAM wParam, LPARAM lParam);
-public:
 	afx_msg void OnSetFocus(CWnd* pOldWnd);
-	//virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 	afx_msg void OnPickFolder();
 	afx_msg void OnButtonToggleLayers();
 	afx_msg void OnButtonEraseTrail();
 	afx_msg void OnToggleBeamoverlay();
 	afx_msg void OnUpdatePage(CCmdUI *pCmdUI);
 	afx_msg void OnButtonPurkinjeAssist();
+	afx_msg void OnResetPupil();
+
+private:
+	LRESULT OnDeviceLost(WPARAM Brightness, LPARAM lParam);
+	afx_msg LRESULT OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam);
+
+protected:
+	afx_msg LRESULT OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam);
 };

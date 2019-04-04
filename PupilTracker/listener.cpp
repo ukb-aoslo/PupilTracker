@@ -1,12 +1,10 @@
 //////////////////////////////////////////////////////////////////////
 // Listener.cpp: implementation of the CListener class.
-//
 //////////////////////////////////////////////////////////////////////
 
 #include "stdafx.h"
 #include "Listener.h"
 #include "PupilTrackerMainFrame.h"
-
 
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
@@ -20,7 +18,8 @@ CListener::CListener()
 	y = NULL;
 
 	pupil.pixels = NULL;
-	purkinje.pixels = NULL;
+	purkinje.pixels = NULL; 
+	average_purkinje_thresh = 0;
 
 	snap = false;
 	freeze = false;
@@ -42,6 +41,7 @@ CListener::CListener()
 		delete diameter;
 	}
 
+
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -58,11 +58,9 @@ CListener::~CListener()
 	if (y != NULL)
 		free(y);
 
-
-
 }
 
-void CListener::SetParent(CWnd *pParent)
+void CListener::setParent(CWnd *pParent)
 {
 
 	m_pParent = (CPupilTrackerMainFrame*)pParent;
@@ -84,6 +82,38 @@ void CListener::deviceLost( Grabber& param )
 
 	if( m_pParent != NULL)
 		m_pParent->PostMessage(MESSAGEDEVICELOST, 0, 0);
+
+}
+
+int CListener::calcThresh()
+{
+	
+	std::vector<vector<double>> threshold_candidates;
+	threshold_candidates.resize(255);
+	size_t size = pupil.diameter.size();
+	size_t opt = 0;
+
+	// compare each neighboring values for low diameter difference
+	// then store them in candidate array, if the diameter is between 3 and 9 mm
+	for (int i = 0; i < 254; i++) {
+		for (int j = i; j < 255; j++) {
+			if ((pupil.diameter[size - 255 + i] - pupil.diameter[size - 255 + j]) < 0.125) {
+				if (pupil.diameter[size - 255 + i] > 3.0 && pupil.diameter[size - 255 + i] < 9.0)
+					threshold_candidates[i].push_back(pupil.diameter[size - 255 + i]);
+			}
+		}
+	}
+
+	int j = 0;
+
+	for (int i = 1; i < 255; i++) {
+		if (threshold_candidates[i].size() > 1) {
+			opt = i;
+			j++;
+		}
+	}
+	
+	return opt-j;
 
 }
 
@@ -118,6 +148,81 @@ void CListener::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 {
 }
 
+void CListener::getPurkinje(BYTE* pImageData, Settings* setting) {
+
+	int dia = AOSLO_beam.current_diameter;
+	int x0 = AOSLO_beam.current_center.x - AOSLO_beam.current_diameter / 2;
+	int y0 = Height - AOSLO_beam.current_center.y - AOSLO_beam.current_diameter / 2;
+
+	int dim = pow(dia, 2);
+	ZeroMemory(purkinje.pixels, sizeof(coords<int, int>) * dim);
+
+	if ((x0 < 1) | (y0 < 1))
+		return;
+
+	int z = 0;
+
+	for (int i = 0; i < dia; i++) {
+		for (int j = 0; j < dia; j++) {
+			if (pImageData[(y0 + i) * Width + x0 + j] > setting->threshold) {
+				purkinje.pixels[z].x = x0 + j;
+				purkinje.pixels[z].y = y0 + i;
+				z++;
+			}
+
+		}
+
+	}
+
+	if (z == 0)
+	{
+		purkinje.current_center = { 0,0 };
+		return;
+	}
+
+	int i = 0;
+	double average_x, average_y;
+	average_x = average_y = 0;
+
+
+	if (setting->blob_detect) {
+
+		// have a vector of blobs
+		vector<coords<int, int>> blob;
+
+		for (int i = 0; i < z; i++) {
+
+			while (purkinje.pixels[i + 1].y == purkinje.pixels[i].y &&
+				purkinje.pixels[i + 1].x == purkinje.pixels[i].x - 1){
+				blob.push_back(purkinje.pixels[i]);
+				i++;
+			}
+
+		}
+
+		purkinje.current_center.x = average_x / blob.size();
+		purkinje.current_center.y = Height - average_y / blob.size();
+
+		purkinje.current_diameter = sqrt(blob.size());
+
+		return;
+	
+	}
+
+	while (i < z) {
+		average_x += purkinje.pixels[i].x;
+		average_y += purkinje.pixels[i].y;
+		i++;
+	}
+
+
+	purkinje.current_center.x = average_x / i;
+	purkinje.current_center.y = Height - average_y / i;
+
+	purkinje.current_diameter = sqrt(i);
+
+}
+
 
 void CListener::frank(BYTE* pImageData, Settings *setting) {
 
@@ -131,19 +236,16 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 	int n = 0;
 	int i, ii;
 
-	pupilfind ? ZeroMemory(pupil.pixels, sizeof(coords<int, int>) * (Width * Height))
-		: ZeroMemory(purkinje.pixels, sizeof(coords<int, int>) * (Width * Height));
+	ZeroMemory(pupil.pixels, sizeof(coords<int, int>) * (Width * Height));
 
-	ZeroMemory(x, sizeof(int) * (Width * Height));
-	ZeroMemory(y, sizeof(int) * (Width * Height));
-
-
+	ZeroMemory(x, sizeof(int) * (Width));
+	ZeroMemory(y, sizeof(int) * (Height));
 
 	/*****************************************************************************/
 	/*    Core pupil/purkinje detection happens here							 */
 	/*****************************************************************************/
 
-	// step 1: find pixels (20 off from frame margin) that are brighter than average * 0.4
+	// step 1: find pixels (20 off from frame margin) that are brighter than threshold
 	// and store their coordinates in an array of x[n], y[n] declared in Listener.h
 
 	n = 0;
@@ -156,7 +258,7 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 			{
 				x[n] = i;
 				y[n] = ii;
-				if (n < (Width * Height))n++;
+				n++;
 			}
 		}
 	}
@@ -182,6 +284,7 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 			x[i] < Width - setting->box_size &&
 			x[i] > setting->box_size)
 		{
+
 			for (ii = 0; ii < setting->spot_size; ii++)
 			{
 				if (pImageData[y[i] * Width + x[i] + ii] > setting->threshold) count_right++;
@@ -200,10 +303,7 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 			)
 		{
 			coords<int, int> c{ x[i], y[i] };
-			if (pupilfind)
-				pupil.pixels[n] = c;
-			else
-				purkinje.pixels[n] = c;
+			pupil.pixels[n] = c;
 			if (n < (Width * Height))
 				n++;
 		}
@@ -219,23 +319,11 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 
 	int n_right = 0; // number of pixels in left and right screen whose positions are averaged
 
-	if (pupilfind) {
 
-		for (int i = 0; i < n; i++) {
-			ave_xp_right = ave_xp_right + pupil.pixels[i].x;
-			ave_yp_right = ave_yp_right + pupil.pixels[i].y;
-			n_right++;
-		}
-
-	}
-
-	else {
-
-		for (int i = 0; i < n; i++) {
-			ave_xp_right = ave_xp_right + purkinje.pixels[i].x;
-			ave_yp_right = ave_yp_right + purkinje.pixels[i].y;
-			n_right++;
-		}
+	for (int i = 0; i < n; i++) {
+		ave_xp_right = ave_xp_right + pupil.pixels[i].x;
+		ave_yp_right = ave_yp_right + pupil.pixels[i].y;
+		n_right++;
 	}
 
 	if (n_right > 0)							// only if pixels are found, the average can be calculated
@@ -282,28 +370,15 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 	if (n_right > 0) // verify that pixels were found
 	{
 
-		if (pupilfind) { // is it a pupil or purkinje to store?
+		pupil.current_center.x = ave_x_right / n_right;
+		pupil.current_center.y = Height - ave_y_right / n_right;
 
-			pupil.current_center.x = ave_x_right / ((double)n_right);
-			pupil.current_center.y = Height - ave_y_right / ((double)n_right);
+		// pupil diameter in Pixels determined from n_right: circle area pi*r*r
+		pupil.current_diameter = 2 * sqrt(double(n_right) / PI);
 
-			// pupil diameter in Pixels determined from n_right: circle area pi*r*r
-			pupil.current_diameter = 2 * (sqrt(double(n_right) / PI));
-
-		}
-
-		else {
-
-			purkinje.current_center.x = ave_x_right / ((double)n_right);
-			purkinje.current_center.y = Height - ave_y_right / ((double)n_right);
-
-			// pupil diameter in Pixels determined from n_right: circle area pi*r*r
-			purkinje.current_diameter = 2 * (sqrt(double(n_right) / PI));
-
-		}
 	}
 
-	else if (pupilfind) {
+	else {
 
 		pupil.current_center.x = 0;
 		pupil.current_center.y = 0;
@@ -311,19 +386,11 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 
 	}
 
-		else {
-
-			purkinje.current_center.x = 0;
-			purkinje.current_center.y = 0;
-			purkinje.current_diameter = 0;
-
-	}
-
-
 
 }
 
 void CListener::init(int cx, int cy) {
+	
 	
 	Width = cx;
 	Height = cy;
@@ -340,7 +407,7 @@ void CListener::init(int cx, int cy) {
 	x = (int *)malloc(sizeof(int) * (Width * Height));
 	y = (int *)malloc(sizeof(int) * (Width * Height));
 	pupil.pixels = (coords<int, int>*) malloc(sizeof(coords<int, int>) * (Width * Height));
-	purkinje.pixels = (coords<int, int>*) malloc(sizeof(coords<int,int>) * (Width * Height));
+	purkinje.pixels = (coords<int, int>*) malloc(sizeof(coords<int ,int>) * pow((int)AOSLO_beam.current_diameter, 2));
 
 }
 
@@ -359,7 +426,7 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	BYTE* pImageData = pBuffer->getPtr();
 
 	if (pInf->biPlanes != 1) {
-		AfxMessageBox(_T("Wrong color format!\nNeed 8-bit mono!"), MB_ICONERROR);
+		AfxMessageBox(_T("Wrong color format!\nNeed 8-bit mono!\n(Select Y800 in camera settings)"), MB_ICONERROR);
 		PostQuitMessage(0);
 	}
 
@@ -370,10 +437,11 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	//	if (pImageData[i] > 133) pImageData[i] = 255;
 	//}
 
-
 	// calculate pupil center and diameter
-	pupilfind = true;
 	frank(pImageData, pupil_settings);
+
+	// calculate purkinje within pupil boundaries
+	getPurkinje(pImageData, purkinje_settings);
 
 	// subclass processing goes here
 	DoFurtherProcessing(pBuffer);
@@ -381,24 +449,14 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	// add timestamp
 	timestamps.push_back(getTimeStamp());
 	
-	// flip y-coordinate (frank's upside-down)
-	pupil.current_center.y = Height - pupil.current_center.y;
-
 	// store pupil calculation results 
 	pupil.center.push_back(pupil.current_center);
-	pupil.diameter.push_back(pupil.current_diameter);
-
-	// now use frank to obtain purkinje as well
-	pupilfind = false;
-	frank(pImageData, purkinje_settings);
-
-	// flip y-coordinate (frank's upside-down)
-	purkinje.current_center.y = Height - purkinje.current_center.y;
+	pupil.diameter.push_back(pupil.current_diameter * MM_PER_PIXEL);
 
 	// store purkinje calculation results
 	purkinje.center.push_back(purkinje.current_center);
 	purkinje.diameter.push_back(purkinje.current_diameter);
-	   
+
 }
 
 SYSTEMTIME CListener::getTimeStamp() {
@@ -433,16 +491,16 @@ void CListener::freezePupil() {
 	
 	freeze ? freeze = false : freeze = true;
 	
-	if (freeze){
+	if (freeze) {
 
-			pupil.frozen_center.x = pupil.current_center.x;
-			// flip y b/c frank is upside down
-			pupil.frozen_center.y = Height - pupil.current_center.y;
-			pupil.frozen_diameter = pupil.current_diameter;
+		pupil.frozen_center.x = pupil.current_center.x;
+		pupil.frozen_center.y = pupil.current_center.y;
+		pupil.frozen_diameter = pupil.current_diameter;
 
-			if (m_pParent != NULL)
-				m_pParent->PostMessage(MESSAGE_OFFSET_LOCKEDPOS, 0, reinterpret_cast<WPARAM>(&pupil.frozen_center));
-
+	}
+	else {
+		pupil.frozen_center.x = 0;
+		pupil.frozen_center.y = 0;
 	}
 
 }
@@ -457,5 +515,6 @@ void CListener::setBeam() {
 
 	AOSLO_beam.current_center = pupil.current_center;
 	AOSLO_beam.current_diameter = pupil.current_diameter;
+	init(Width, Height);
 
 }

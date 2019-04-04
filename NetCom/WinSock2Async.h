@@ -11,6 +11,7 @@
 #define WSA_ERROR_LEN				(50)			//WSA Error message length
 
 //#include <winnt.h>									//UNICODE def's if necessary
+#include "..\PupilTracker\stdafx.h"
 #include "mstcpip.h"
 
 #ifndef _WINSOCK2API_
@@ -29,6 +30,7 @@ public:
 
 // Operations
 public:
+	
 	CWinSock2Async();
 	~CWinSock2Async();
 	void	ThreadRunner();							//NEVER CALL THIS
@@ -85,7 +87,7 @@ private:
 	CRITICAL_SECTION	m_csRecieve;				//Recieve Critical section handler
 	CRITICAL_SECTION	m_csSend;					//Send ...
 
-    bool				m_bConnected;				//True if Connected
+    bool				m_bConnected;				//True if already connected
 
 };
 

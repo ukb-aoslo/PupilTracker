@@ -4,7 +4,6 @@
 #include "PupilTracker.h"
 #include "PupilTrackerMainFrame.h"
 
-
 // Save some typing...
 using namespace DShowLib;
 
@@ -24,19 +23,17 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_UPDATE_COMMAND_UI (ID_RECORD, &CPupilTrackerMainFrame::OnUpdateRecord)
 	ON_UPDATE_COMMAND_UI (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnUpdateMakeSnapshot)
 	ON_UPDATE_COMMAND_UI (ID_INDICATOR_LINK1, &CPupilTrackerMainFrame::OnUpdatePage)
-	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, &CPupilTrackerMainFrame::OnAfxWmResettoolbar)
-	ON_COMMAND(ID_EDIT_FIND_COMBO, &CPupilTrackerMainFrame::OnEditFindCombo)
-	ON_COMMAND(ID_EDIT_FIND, &CPupilTrackerMainFrame::OnEditFind)
 	ON_MESSAGE(MESSAGEDEVICELOST, OnDeviceLost)
 	ON_MESSAGE(MESSAGE_OFFSET_PROCESSED, &CPupilTrackerMainFrame::OnMessageOffsetProcessed)
 	ON_MESSAGE(MESSAGE_PUPILDIA_PROCESSED, &CPupilTrackerMainFrame::OnMessagePupilDiaProcessed)
-	ON_MESSAGE(MESSAGE_OFFSET_LOCKEDPOS, &CPupilTrackerMainFrame::OnMessageOffsetLockedPos)
+	ON_COMMAND(ID_RESET_PUPIL, &CPupilTrackerMainFrame::OnResetPupil)
 	ON_WM_SETFOCUS()
 	ON_COMMAND(ID_PICK_FOLDER, &CPupilTrackerMainFrame::OnPickFolder)
 	ON_COMMAND(ID_BUTTON_LAYERS, &CPupilTrackerMainFrame::OnButtonToggleLayers)
 	ON_COMMAND(ID_BUTTON_ERASER, &CPupilTrackerMainFrame::OnButtonEraseTrail)
 	ON_COMMAND(ID_TOGGLE_BEAMOVERLAY, &CPupilTrackerMainFrame::OnToggleBeamoverlay)
 	ON_COMMAND(ID_BUTTON_PURKINJE_ASSIST, &CPupilTrackerMainFrame::OnButtonPurkinjeAssist)
+	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, &CPupilTrackerMainFrame::OnAfxWmResettoolbar)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -49,8 +46,8 @@ static UINT indicators[] =
 CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	// Set active tracking method
 
-	offset = NULL;
-	m_pSock_AOMCONTROL = NULL;
+	current = locked = NULL;
+	pupilDia = NULL;
 	offsetTrackingEnabled = true;
 	pupilDiaTrackingEnabled = true;
 	overlayEnabled = true;
@@ -113,9 +110,15 @@ void CPupilTrackerMainFrame::setFilter() {
 			Grabber.stopLive();
 
 		// Create the new filter instances.
-		DeBayer = FilterLoader::createFilter("DeNoise");
-		Grabber.setDeviceFrameFilters(DeBayer.get());
+		DeNoise = FilterLoader::createFilter("DeNoise");
+		Grabber.setDeviceFrameFilters(DeNoise.get());
 
+		// set DeNoise level (2^level frames averaged)
+		long level = 3;
+
+		DeNoise->beginParamTransfer();
+		DeNoise->setParameter("DeNoise Level", level);
+		DeNoise->endParamTransfer();
 	}
 
 }
@@ -265,9 +268,6 @@ void CPupilTrackerMainFrame::OnBnClickedButtonimagesettings()
 
 void CPupilTrackerMainFrame::OnClose()
 {
-
-	if (m_pSock_AOMCONTROL != NULL)
-		delete m_pSock_AOMCONTROL;
 
 	// If live video is running, stop it.
 	OnStop();
@@ -439,7 +439,7 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	
 	Grabber.addListener(&pupilTracking, CListener::eOVERLAYCALLBACK | CListener::eFRAMEREADY);
-	pupilTracking.SetParent(this);
+	pupilTracking.CListener::setParent(this);
 
 	// Set filter
 	//setFilter();
@@ -505,40 +505,34 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		AfxMessageBox(Grabber.getLastError().toStringW().c_str());
 	}
 
-	// try to remote connect to AOMControl in intervals
-	//OnTimer(NULL);
-	SetTimer(0, 2000, NULL);
-
 	reAdjustView();
 	updateWindowTitle();
 	OnPlay();
 		
-	return 0;
+	// open listener for AOMControl data requests
+	CSockListener::SocketInit();
+	m_pSock_AOMCONTROL.SetParent(this);
 
-
-}
-
-
-afx_msg LRESULT CPupilTrackerMainFrame::OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam)
-{
-
-	UINT uiToolBarId = (UINT)wParam;
-
-	switch (uiToolBarId)
+	if (!m_pSock_AOMCONTROL.Create(L"127.0.0.1", 8015))
 	{
-	case IDR_MAINFRAME:
-	{
+		TCHAR szErrorMsg[WSA_ERROR_LEN];
+		CSockClient::WSAGetLastErrorMessage(szErrorMsg);
 
-		CFindComboButton combo(ID_EDIT_FIND_COMBO, GetCmdMgr()->GetCmdImage(ID_EDIT_FIND), CBS_DROPDOWNLIST, 100);
-		m_wndToolBar.ReplaceButton(ID_EDIT_FIND, combo);
+		CString error;
+		error.Format(L"Socket Create/Connect failed Error:\n%s", szErrorMsg);
+		AfxMessageBox(error, MB_OK | MB_ICONERROR, 0);
+		//TRACE(_T("Socket Create/Connect failed Error: %s"), szErrorMsg);
 
 	}
 
-	break;
+	else
+		m_pSock_AOMCONTROL.Listen();
 
-	}
+	// set update interval for Pupil Diameter plot
+	SetTimer(2, 50, NULL);
 
 	return 0;
+
 
 }
 
@@ -549,21 +543,18 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 
 	CWnd* wnd = GetFocus();
 
-
 	if (pMsg->message == WM_KEYDOWN) {
 
 		switch (pMsg->wParam) {
 
 		case VK_SPACE:
 
-			if (wnd->GetDlgCtrlID() == ID_EDIT_FIND_COMBO)
-				break;
-
 			if (pupilTracking.record && pupilTracking.freeze) {
 				pupilTracking.record = false;
 				OnStop();
 				Save();
 				pupilTracking.pupil.reset();
+				pupilTracking.purkinje.reset();
 				OnPlay();
 
 			}
@@ -575,6 +566,7 @@ BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 			return true;
 
 		default:
+
 			return false;
 
 		}
@@ -592,7 +584,6 @@ void CPupilTrackerMainFrame::OnViewParameters()
 	
 }
 
-
 void CPupilTrackerMainFrame::OnRecord()
 {
 	// TODO: Add your command handler code here
@@ -603,6 +594,7 @@ void CPupilTrackerMainFrame::OnRecord()
 		OnStop();
 		Save();
 		pupilTracking.pupil.reset();
+		pupilTracking.purkinje.reset();
 		pupilTracking.timestamps.clear();
 		OnPlay();
 
@@ -643,25 +635,6 @@ void CPupilTrackerMainFrame::OnUpdateMakeSnapshot(CCmdUI *pCmdUI)
 }
 
 
-void CPupilTrackerMainFrame::OnEditFindCombo()
-{
-	// TODO: Add your command handler code here
-	CObList listButtons;
-	m_wndToolBar.GetCommandButtons(ID_EDIT_FIND_COMBO, listButtons);
-	
-}
-
-
-void CPupilTrackerMainFrame::OnEditFind()
-{
-	// TODO: Add your command handler code here
-
-	if(m_wndToolBar.IsLastCommandFromButton(m_wndToolBar.GetButton(ID_EDIT_FIND)))
-	{
-	}
-
-}
-
 void CPupilTrackerMainFrame::getSysTime(CString &buf) {
 
 	time_t rawtime;
@@ -693,7 +666,7 @@ void CPupilTrackerMainFrame::Save() {
 			pupil_offsetMM_x,
 			pupil_offsetMM_y;
 
-	CString header[7];
+	CString header[8];
 
 	header[0].Format(_T("**************************************************************************************\n"));
 	header[1].Format(_T("********** %ls %ls Offset Tracker Data							**********\n"), name.GetString(), version.GetString());
@@ -702,9 +675,10 @@ void CPupilTrackerMainFrame::Save() {
 	header[3].Format(_T("\nNOTE: offset data is in (sub)pixels\n"));
 	header[4].Format(_T("\nMagnifiction [mm/px]: %2.15f"), MM_PER_PIXEL);
 	header[5].Format(_T("\nLocked position [px]: x:%2.1f y:%2.1f"), pupilTracking.pupil.frozen_center.x, pupilTracking.pupil.frozen_center.y);
-	header[6].Format(_T("\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], purkinje center [pxx], purkinje center [pxy], center offset horizontal [mm], center offset vertical [mm]\n\n"));
+	header[6].Format(_T("\nAOSLO-Beam center: x:%2.1f y:%2.1f"), pupilTracking.AOSLO_beam.current_center.x, pupilTracking.AOSLO_beam.current_center.y);
+	header[7].Format(_T("\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], purkinje center [pxx], purkinje center [pxy], pupil center offset horizontal [mm], pupil center offset vertical [mm]\n\n"));
 
-	for (int i = 0; i < 7; i++)
+	for (int i = 0; i < 8; i++)
 		sstream << header[i].GetString();
 
 		for (size_t i = pupilTracking.recIndex; i < pupilTracking.pupil.center.size(); i++)
@@ -715,7 +689,7 @@ void CPupilTrackerMainFrame::Save() {
 			seconds.Format(_T("%02d:"), pupilTracking.timestamps[i].wSecond);
 			milliseconds.Format(_T("%04d"), pupilTracking.timestamps[i].wMilliseconds);
 			pupildiameter.Format(_T("\t%f"), pupilTracking.pupil.diameter[i]);
-			pupilCenter_x.Format(_T("\t%2.2f"), pupilTracking.pupil.center[i].x);
+			pupilCenter_x.Format(_T("\t%2.1f"), pupilTracking.pupil.center[i].x);
 			pupilCenter_y.Format(_T("\t%2.1f"), pupilTracking.pupil.center[i].y);
 			purkinje_center_x.Format(_T("\t%2.1f"), pupilTracking.purkinje.center[i].x);
 			purkinje_center_y.Format(_T("\t%2.1f"), pupilTracking.purkinje.center[i].y);
@@ -773,34 +747,26 @@ void CPupilTrackerMainFrame::Save() {
 
 void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 {
+	switch (nIDEvent) {
+		case 0:
+			// still unused
+			break;
 
-	// try to connect to AOMCONTROL 
-	if (m_pSock_AOMCONTROL == NULL) {
-		m_pSock_AOMCONTROL = new CSockClient();
-		CSockClient::SocketInit();
+		case 1:
+			// what to do if device lost
+			break;
 
-		if (!m_pSock_AOMCONTROL->Create())
-		{
-			TCHAR szErrorMsg[WSA_ERROR_LEN];
-			CSockClient::WSAGetLastErrorMessage(szErrorMsg);
+		case 2:
+			// plot pupil diameter in timely manner
+			if (pupilDia) {
+				m_wndView.wndPupilDia.AppendPoint(*pupilDia * MM_PER_PIXEL);
+				m_wndView.wndPupilDia.DrawPoint();
+				m_wndView.wndPupilDia.DrawTitle();
+			}
 
-			CString error;
-			error.Format(L"Socket Create/Connect failed Error:\n%s", szErrorMsg);
-			AfxMessageBox(error, MB_OK | MB_ICONERROR, 0);
-			//TRACE(_T("Socket Create/Connect failed Error: %s"), szErrorMsg);
+			break;
 
 		}
-
-	}
-
-	if (m_pSock_AOMCONTROL && !m_pSock_AOMCONTROL->IsConnected())
-		m_pSock_AOMCONTROL->Connect(L"127.0.0.1", 8015);
-
-	if (m_pSock_AOMCONTROL->shutdown) {
-		delete m_pSock_AOMCONTROL;
-		m_pSock_AOMCONTROL = NULL;
-	}
-
 
 
 	//KillTimer(1);
@@ -828,52 +794,31 @@ void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 afx_msg LRESULT CPupilTrackerMainFrame::OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam)
 {
 
-	if (wParam != 0) {
+	if (wParam != 0 && lParam != 0) {
 
-		offset = reinterpret_cast<coords<double, double>*>(wParam);
-		m_wndView.wndOffset.AddPoint(*offset);
-		m_wndView.wndOffset.DrawPoint();
+		current = reinterpret_cast<coords<double, double>*>(wParam);
+		locked = reinterpret_cast<coords<double, double>*>(lParam);
+		m_wndView.wndOffset.AddPositions(*current, *locked);
+		m_wndView.wndOffset.DrawOffset();
 		m_wndView.wndOffset.DrawValues();
+		m_wndView.wndOffset.DrawTitle();
+
 	}
-
-	//else {
-	//	coords <double, double> c{ 0.0, 0.0 };
-	//	m_wndView.wndOffset.AddPoint(c);
-	//	m_wndView.wndOffset.DrawPoint();
-	//	m_wndView.wndOffset.DrawValues();
-	//}
-
-	m_wndView.wndOffset.InvalidateCtrl();
 
 	return 0;
 	
 }
 
-afx_msg LRESULT CPupilTrackerMainFrame::OnMessageOffsetLockedPos(WPARAM wParam, LPARAM lParam) {
-
-	if (wParam != 0) {
-
-		coords<double, double> *lockedPos;
-		lockedPos = reinterpret_cast<coords<double, double>*>(wParam);
-		m_wndView.wndOffset.setLockedPos(*lockedPos);
-	}
-
-	return 0;
-
-}
-
-
 afx_msg LRESULT CPupilTrackerMainFrame::OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam)
 {
 
 	if (wParam != 0) {
-		double pupilDia = wParam;
-		m_wndView.wndPupilDia.AppendPoint(pupilDia);
-		m_wndView.wndPupilDia.DrawPoints();
+		pupilDia = reinterpret_cast<double*>(wParam);
 	}
+
 	else {
 		m_wndView.wndPupilDia.AppendPoint(0);
-		m_wndView.wndPupilDia.DrawPoints();
+		m_wndView.wndPupilDia.DrawPoint();
 	}
 
 	return 0;
@@ -893,15 +838,6 @@ void CPupilTrackerMainFrame::OnSetFocus(CWnd* pOldWnd)
 	// TODO: Add your message handler code here
 }
 
-
-//BOOL CPupilTrackerMainFrame::OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo)
-//{
-//	// TODO: Add your specialized code here and/or call the base class
-//	if (m_wndView.OnCmdMsg(nID, nCode, pExtra, pHandlerInfo))
-//		return true;
-//	return CFrameWndEx::OnCmdMsg(nID, nCode, pExtra, pHandlerInfo);
-//}
-//
 
 void CPupilTrackerMainFrame::OnPickFolder()
 {
@@ -967,8 +903,15 @@ void CPupilTrackerMainFrame::OnToggleBeamoverlay()
 {
 	pupilTracking.beam ? pupilTracking.beam = false : pupilTracking.beam = true;
 
+	// can't do this without stopping the listener
+	if (Grabber.isLive())
+		OnStop();
+
 	BOOL bCtrl = ::GetKeyState(VK_CONTROL) & 0x8000;
 	if (bCtrl) pupilTracking.setBeam();
+	
+	// resume live view
+	OnPlay();
 	
 }
 
@@ -979,13 +922,14 @@ void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
 
 	case ID_INDICATOR_LINK1:
 
-		if (m_pSock_AOMCONTROL && m_pSock_AOMCONTROL->IsConnected()) {
-		
+		if (m_pSock_AOMCONTROL.isConnectionEstablished()) {
 			pCmdUI->Enable();
 			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
 			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(0, 200, 0), 1);
 		}
+
 		else
+
 		{
 			pCmdUI->Enable();
 			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
@@ -1014,16 +958,48 @@ void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
 
 }
 
-
-
-
 void CPupilTrackerMainFrame::OnButtonPurkinjeAssist()
 {
 	// TODO: Add your command handler code here
-	pupilTracking.purkinje_assist ? pupilTracking.purkinje_assist = false : pupilTracking.purkinje_assist = true;
-	pupilTracking.purkinjePoints[0] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
-	pupilTracking.purkinjePoints[1] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
-	pupilTracking.purkinjePoints[2] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
-	pupilTracking.purkinjePoints[3] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
 
+	if (pupilTracking.purkinje.center.size() > 4) {
+		pupilTracking.purkinje_assist ? pupilTracking.purkinje_assist = false : pupilTracking.purkinje_assist = true;
+		pupilTracking.purkinjePoints[0] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
+		pupilTracking.purkinjePoints[1] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2));
+		pupilTracking.purkinjePoints[2] = CPoint((int)pupilTracking.purkinje.center.back().x - (int)(pupilTracking.purkinje_dist + pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
+		pupilTracking.purkinjePoints[3] = CPoint((int)pupilTracking.purkinje.center.back().x + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2), (int)pupilTracking.purkinje.center.back().y + (int)(pupilTracking.purkinje_dist - pupilTracking.purkinje.diameter.back() / 2));
+	}
+
+}
+
+void CPupilTrackerMainFrame::OnResetPupil()
+{
+	if (pupilTracking.freeze)
+		pupilTracking.freezePupil();
+	pupilTracking.threshCount = 0;
+	while (pupilTracking.threshCount < 255);
+	params.pupil.threshold = pupilTracking.calcThresh();
+
+}
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam)
+{
+
+	UINT uiToolBarId = (UINT)wParam;
+	TRACE("CMainFrame::OnToolbarReset : %i\n", uiToolBarId);
+
+	switch (uiToolBarId)
+	{
+	case IDR_MAINFRAME:
+
+		CMFCToolBarEditBoxButton editBox(ID_FINDCOMBO, GetCmdMgr()->GetCmdImage(ID_FINDCOMBO));
+		m_wndToolBar.ReplaceButton(ID_FINDCOMBO, editBox);
+
+		break;
+
+	}
+
+
+	return 0;
 }

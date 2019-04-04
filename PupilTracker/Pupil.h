@@ -33,7 +33,7 @@ public:
 	coords <int, int> *pixels;						// pixels supposed to be inside the pupil
 
 	std::vector<coords<double, double>>	center;		// pupil center
-	std::vector<double>					diameter;	// pupil diameter
+	std::vector<double>					diameter;	// pupil diameter in mm
 	
 	std::vector<coords<double, double>>offsetPX;	// pupil offset in pixels
 	std::vector<coords<double, double>>offsetMM;	// pupil offset in mm

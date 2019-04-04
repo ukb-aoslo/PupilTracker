@@ -2,8 +2,6 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="ChildView.cpp" />
-    <ClCompile Include="FindComboBox.cpp" />
-    <ClCompile Include="FindComboButton.cpp" />
     <ClCompile Include="listener.cpp" />
     <ClCompile Include="Parameters.cpp" />
     <ClCompile Include="Pupil.cpp" />
@@ -14,20 +12,18 @@
     <ClCompile Include="PupilDiaTracker.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="Tracker.cpp" />
-    <ClCompile Include="..\netcomm\SockClient.cpp">
-      <Filter>netcomm</Filter>
+    <ClCompile Include="..\NetCom\SockClient.cpp">
+      <Filter>NetCom</Filter>
     </ClCompile>
-    <ClCompile Include="..\netcomm\SockListener.cpp">
-      <Filter>netcomm</Filter>
+    <ClCompile Include="..\NetCom\SockListener.cpp">
+      <Filter>NetCom</Filter>
     </ClCompile>
-    <ClCompile Include="..\netcomm\WinSock2Async.cpp">
-      <Filter>netcomm</Filter>
+    <ClCompile Include="..\NetCom\WinSock2Async.cpp">
+      <Filter>NetCom</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ChildView.h" />
-    <ClInclude Include="FindComboBox.h" />
-    <ClInclude Include="FindComboButton.h" />
     <ClInclude Include="listener.h" />
     <ClInclude Include="Parameters.h" />
     <ClInclude Include="Pupil.h" />
@@ -39,14 +35,14 @@
     <ClInclude Include="PupilDiaTracker.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="Tracker.h" />
-    <ClInclude Include="..\netcomm\SockClient.h">
-      <Filter>netcomm</Filter>
+    <ClInclude Include="..\NetCom\SockClient.h">
+      <Filter>NetCom</Filter>
     </ClInclude>
-    <ClInclude Include="..\netcomm\SockListener.h">
-      <Filter>netcomm</Filter>
+    <ClInclude Include="..\NetCom\SockListener.h">
+      <Filter>NetCom</Filter>
     </ClInclude>
-    <ClInclude Include="..\netcomm\WinSock2Async.h">
-      <Filter>netcomm</Filter>
+    <ClInclude Include="..\NetCom\WinSock2Async.h">
+      <Filter>NetCom</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -77,11 +73,11 @@
     <None Include="res\PupilTracker.rc2" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="netcomm">
-      <UniqueIdentifier>{8093064c-7d0c-4b38-894d-57e60022faa8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Bitmaps">
       <UniqueIdentifier>{ee2c1316-4166-48e5-8beb-22058a56ec93}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="NetCom">
+      <UniqueIdentifier>{10d3be94-8797-4eff-8b34-a17d55ff1435}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

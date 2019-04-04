@@ -8,6 +8,8 @@ Tracker::Tracker() {
 	display = 0;
 	frames = 0;
 
+	threshCount = 255;
+
 	bufchange = false;
 	beam = false;
 	purkinje_assist = false;
@@ -19,16 +21,18 @@ Tracker::~Tracker() {
 
 }
 
-
 void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
+
+	// trigger automatic threshold calculation
+	if (threshCount < 255) {
+		pupil_settings->threshold = threshCount;
+		threshCount++;
+	}
 
 	if (bufchange) {				// buffer change?
 		median_pupil.reset();
 		bufchange = false;
 	}
-
-	// reduce pupil jitter if desired
-	if (*buf_size > 2) reduceJitter();
 
 	else {
 		median_pupil.current_diameter = pupil.current_diameter;
@@ -36,12 +40,6 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.current_center.y = pupil.current_center.y;
 	}
 
-	// Send purkinje data to AOMControl via netcomm
-	if (m_pParent->m_pSock_AOMCONTROL)
-		if (!m_pParent->m_pSock_AOMCONTROL->shutdown && m_pParent->m_pSock_AOMCONTROL->IsConnected()) {
-			m_pParent->m_pSock_AOMCONTROL->coords[0] = purkinje.current_center.x;
-			m_pParent->m_pSock_AOMCONTROL->coords[1] = purkinje.current_center.y;
-		}
 
 	if (freeze) {
 		offset.x = (pupil.frozen_center.x - pupil.current_center.x);
@@ -65,15 +63,13 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 void Tracker::postOffset() {
 
 	// Send pupil offset to OffsetTracker Window for painting
-
-	m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&offset, 0);
+	m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&pupil.current_center, (LPARAM)&pupil.frozen_center);
 
 }
 
 void Tracker::postDiameter() {
 
-	if (m_pParent != NULL)
-		m_pParent->PostMessage(MESSAGE_PUPILDIA_PROCESSED, pupil.current_diameter, 0);
+	m_pParent->PostMessage(MESSAGE_PUPILDIA_PROCESSED, (WPARAM)&pupil.current_diameter, 0);
 
 }
 
@@ -127,7 +123,6 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 			pBitmap->drawText(RGB(255, 255, 0), 570, 12, LPCTSTR(szText));
 		}
 
-
 		// draw yellow box in life video to show the range in which the pupil should be
 
 		if (*opts & BoxBoundary) {
@@ -135,11 +130,6 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 				pupil_settings->box_size,
 				Width - pupil_settings->box_size,
 				Height - pupil_settings->box_size));
-
-			pBitmap->drawFrameRect(RGB(150, 0, 0), CRect(purkinje_settings->box_size,
-				purkinje_settings->box_size,
-				Width - purkinje_settings->box_size,
-				Height - purkinje_settings->box_size));
 		}
 
 		// pixels supposed to be in the pupil
@@ -147,29 +137,29 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 		if (*opts & PupilPixels)
 				for (size_t i = 0; i < 1000; i++)
 					if (pupil.pixels[i].x < Width && pupil.pixels[i].y < Height)
-					pBitmap->drawSolidEllipse(RGB(255, 0, 255), CRect(
-						pupil.pixels[i].x - 2,
-						Height - pupil.pixels[i].y - 2,
-						pupil.pixels[i].x + 2,
-						Height - pupil.pixels[i].y + 2
-					)
+						pBitmap->drawSolidEllipse(RGB(255, 0, 255), CRect(
+							pupil.pixels[i].x - 2,
+							Height - pupil.pixels[i].y - 2,
+							pupil.pixels[i].x + 2,
+							Height - pupil.pixels[i].y + 2
+						)
 				);
-				
+
 		// draw pupil outline
 
 		pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect(
-			(int)median_pupil.current_center.x - (int)median_pupil.current_diameter / 2,
-			(int)median_pupil.current_center.y - (int)median_pupil.current_diameter / 2,
-			(int)median_pupil.current_center.x + (int)median_pupil.current_diameter / 2,
-			(int)median_pupil.current_center.y + (int)median_pupil.current_diameter / 2));
+			median_pupil.current_center.x - median_pupil.current_diameter / 2,
+			median_pupil.current_center.y - median_pupil.current_diameter / 2,
+			median_pupil.current_center.x + median_pupil.current_diameter / 2,
+			median_pupil.current_center.y + median_pupil.current_diameter / 2));
 
 		// draw purkinje
 
 		pBitmap->drawSolidEllipse(RGB(255, 0, 0), CRect(
-			(int)purkinje.current_center.x - (int)purkinje.current_diameter / 2,
-			(int)Height - purkinje.current_center.y - (int)purkinje.current_diameter / 2,
-			(int)purkinje.current_center.x + (int)purkinje.current_diameter / 2,
-			(int)Height - purkinje.current_center.y + (int)purkinje.current_diameter / 2));
+			purkinje.current_center.x - purkinje.current_diameter / 2,
+			purkinje.current_center.y - purkinje.current_diameter / 2,
+			purkinje.current_center.x + purkinje.current_diameter / 2,
+			purkinje.current_center.y + purkinje.current_diameter / 2));
 
 		// draw purkinje assist
 
@@ -178,35 +168,22 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 			SIZE sz{ purkinje.diameter.back(), purkinje.diameter.back() };
 			for (size_t i = 0; i < 4; i++)
 				pBitmap->drawFrameEllipse(RGB(255, 0, 0), CRect(purkinjePoints[i], sz));
+
 		}
 
 		// draw pupil center
 
 		pBitmap->drawLine(RGB(0, 255, 0),
-			(int)median_pupil.current_center.x,
-			(int)median_pupil.current_center.y - 1,
-			(int)median_pupil.current_center.x,
-			(int)median_pupil.current_center.y + 2);
+			median_pupil.current_center.x,
+			median_pupil.current_center.y - 1,
+			median_pupil.current_center.x,
+			median_pupil.current_center.y + 2);
 
 		pBitmap->drawLine(RGB(0, 255, 0),
-			(int)median_pupil.current_center.x - 1,
-			(int)median_pupil.current_center.y,
-			(int)median_pupil.current_center.x + 2,
-			(int)median_pupil.current_center.y);
-
-		//// draw purkinje center
-
-		//pBitmap->drawLine(RGB(255, 0, 0),
-		//	(int)purkinje.current_center.x,
-		//	(int)Height - purkinje.current_center.y - 1,
-		//	(int)purkinje.current_center.x,
-		//	(int)Height - purkinje.current_center.y + 2);
-
-		//pBitmap->drawLine(RGB(255, 0, 0),
-		//	(int)purkinje.current_center.x - 1,
-		//	(int)Height - purkinje.current_center.y,
-		//	(int)purkinje.current_center.x + 2,
-		//	(int)Height - purkinje.current_center.y);
+			median_pupil.current_center.x - 1,
+			median_pupil.current_center.y,
+			median_pupil.current_center.x + 2,
+			median_pupil.current_center.y);
 
 
 		if (freeze) {
