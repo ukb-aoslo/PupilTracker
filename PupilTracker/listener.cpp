@@ -150,12 +150,16 @@ void CListener::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 void CListener::getPurkinje(BYTE* pImageData, Settings* setting) {
 
-	int dia = AOSLO_beam.current_diameter;
-	int x0 = AOSLO_beam.current_center.x - AOSLO_beam.current_diameter / 2;
-	int y0 = Height - AOSLO_beam.current_center.y - AOSLO_beam.current_diameter / 2;
+	//int dia = AOSLO_beam.current_diameter / 2;
+	//int x0 = AOSLO_beam.current_center.x - dia / 2;
+	//int y0 = Height - AOSLO_beam.current_center.y - dia / 2;
 
-	int dim = pow(dia, 2);
-	ZeroMemory(purkinje.pixels, sizeof(coords<int, int>) * dim);
+	int dia = pupil.current_diameter / 2;
+	int x0 = pupil.current_center.x - dia / 2;
+	int y0 = Height - pupil.current_center.y - dia / 2;
+
+	purkinje.pxdim = pow(dia, 2);
+	ZeroMemory(purkinje.pixels, sizeof(coords<int, int>) * purkinje.pxdim);
 
 	if ((x0 < 1) | (y0 < 1))
 		return;
@@ -407,7 +411,7 @@ void CListener::init(int cx, int cy) {
 	x = (int *)malloc(sizeof(int) * (Width * Height));
 	y = (int *)malloc(sizeof(int) * (Width * Height));
 	pupil.pixels = (coords<int, int>*) malloc(sizeof(coords<int, int>) * (Width * Height));
-	purkinje.pixels = (coords<int, int>*) malloc(sizeof(coords<int ,int>) * pow((int)AOSLO_beam.current_diameter, 2));
+	purkinje.pixels = (coords<int, int>*) malloc(sizeof(coords<int ,int>) * (Width * Height));
 
 }
 

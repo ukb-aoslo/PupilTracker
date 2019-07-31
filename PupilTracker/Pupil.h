@@ -31,6 +31,8 @@ public:
 	~Pupil();
 
 	coords <int, int> *pixels;						// pixels supposed to be inside the pupil
+	int pxdim;										// number of pixels
+
 
 	std::vector<coords<double, double>>	center;		// pupil center
 	std::vector<double>					diameter;	// pupil diameter in mm

@@ -43,10 +43,10 @@ BEGIN
     LTEXT           "Min. Spot Size",IDC_STATIC,19,103,46,8
     LTEXT           "px",IDC_STATIC,99,85,9,8
     LTEXT           "px",IDC_STATIC,99,103,9,8
-    GROUPBOX        "Video Overlay",IDC_STATIC,6,132,75,78
+    GROUPBOX        "Video Overlay",IDC_STATIC,6,132,85,78
     CONTROL         "Margin",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,14,147,37,10
     CONTROL         "Framecounter",IDC_CHECK2,"Button",BS_AUTOCHECKBOX,14,162,61,10
-    CONTROL         "Pupil Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX,14,177,51,10
+    CONTROL         "Pupil/Purkinje Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX,14,177,79,10
     CONTROL         "FPS",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,14,192,28,10
     PUSHBUTTON      "Default",IDC_DEFAULTPARAMS,7,220,50,14,NOT WS_TABSTOP
     GROUPBOX        "Purkinje Detection",IDC_STATIC,131,3,115,123
@@ -54,8 +54,7 @@ BEGIN
     CONTROL         "",IDC_SLIDER3,"msctls_trackbar32",TBS_VERT,143,18,21,60
     LTEXT           "Threshold",IDC_STATIC,167,27,32,8
     LTEXT           "[px val]",IDC_STATIC,167,53,26,8
-    GROUPBOX        "General",IDC_STATIC,91,132,156,78
-    CONTROL         "Consider Blobs",IDC_CHECK5,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,145,85,63,10
+    GROUPBOX        "General",IDC_STATIC,103,132,144,78
 END
 
 
@@ -179,7 +178,6 @@ BEGIN
     BUTTON      ID_VIEW_PARAMETERS
     SEPARATOR
     BUTTON      ID_PICK_FOLDER
-    BUTTON      ID_FINDCOMBO
     BUTTON      ID_PLAY
     BUTTON      ID_STOP
     BUTTON      ID_RECORD
@@ -190,6 +188,9 @@ BEGIN
     BUTTON      ID_RESET_PUPIL
     BUTTON      ID_BUTTON_PURKINJE_ASSIST
     BUTTON      ID_MAKE_SNAPSHOT
+    SEPARATOR
+    BUTTON      ID_FINDCOMBO
+    BUTTON      ID_SAVE2AVI
 END
 
 
@@ -199,8 +200,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,6,0
- PRODUCTVERSION 1,3,6,0
+ FILEVERSION 1,3,6,1
+ PRODUCTVERSION 1,3,6,1
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -217,12 +218,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.6.0"
+            VALUE "FileVersion", "1.3.6.1"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.6.0"
+            VALUE "ProductVersion", "1.3.6.1"
         END
     END
     BLOCK "VarFileInfo"

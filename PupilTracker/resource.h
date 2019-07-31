@@ -44,13 +44,15 @@
 #define ID_TOGGLE_BEAMOVERLAY           32801
 #define ID_BUTTON_PURKINJE_ASSIST       32802
 #define ID_RESET_PUPIL                  32804
+#define ID_BUTTON32810                  32810
+#define ID_SAVE2AVI                     32810
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        161
-#define _APS_NEXT_COMMAND_VALUE         32810
+#define _APS_NEXT_COMMAND_VALUE         32811
 #define _APS_NEXT_CONTROL_VALUE         1024
 #define _APS_NEXT_SYMED_VALUE           104
 #endif

@@ -145,6 +145,19 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 						)
 				);
 
+		// pixels supposed to be in the purkinje
+		
+		if (*opts & PupilPixels)
+			for (size_t i = 0; i < purkinje.pxdim; i++)
+				if (purkinje.pixels[i].x < Width && purkinje.pixels[i].y < Height)
+					pBitmap->drawSolidEllipse(RGB(155, 0, 155), CRect(
+						purkinje.pixels[i].x - 2,
+						Height - purkinje.pixels[i].y - 2,
+						purkinje.pixels[i].x + 2,
+						Height - purkinje.pixels[i].y + 2
+					)
+				);
+
 		// draw pupil outline
 
 		pBitmap->drawFrameEllipse(RGB(0, 255, 0), CRect(

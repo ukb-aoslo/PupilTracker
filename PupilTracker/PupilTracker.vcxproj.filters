@@ -1,17 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="ChildView.cpp" />
-    <ClCompile Include="listener.cpp" />
-    <ClCompile Include="Parameters.cpp" />
-    <ClCompile Include="Pupil.cpp" />
-    <ClCompile Include="PupilTracker.cpp" />
-    <ClCompile Include="PupilTrackerMainFrame.cpp" />
-    <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="OffsetTracker.cpp" />
-    <ClCompile Include="PupilDiaTracker.cpp" />
-    <ClCompile Include="Settings.cpp" />
-    <ClCompile Include="Tracker.cpp" />
     <ClCompile Include="..\NetCom\SockClient.cpp">
       <Filter>NetCom</Filter>
     </ClCompile>
@@ -21,20 +10,41 @@
     <ClCompile Include="..\NetCom\WinSock2Async.cpp">
       <Filter>NetCom</Filter>
     </ClCompile>
+    <ClCompile Include="ChildView.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="listener.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="OffsetTracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Parameters.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Pupil.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PupilDiaTracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PupilTracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Settings.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Tracker.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="PupilTrackerMainFrame.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ChildView.h" />
-    <ClInclude Include="listener.h" />
-    <ClInclude Include="Parameters.h" />
-    <ClInclude Include="Pupil.h" />
-    <ClInclude Include="PupilTracker.h" />
-    <ClInclude Include="PupilTrackerMainFrame.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="OffsetTracker.h" />
-    <ClInclude Include="PupilDiaTracker.h" />
-    <ClInclude Include="Settings.h" />
-    <ClInclude Include="Tracker.h" />
     <ClInclude Include="..\NetCom\SockClient.h">
       <Filter>NetCom</Filter>
     </ClInclude>
@@ -44,12 +54,44 @@
     <ClInclude Include="..\NetCom\WinSock2Async.h">
       <Filter>NetCom</Filter>
     </ClInclude>
+    <ClInclude Include="ChildView.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="listener.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="OffsetTracker.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Parameters.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Pupil.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="PupilDiaTracker.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="PupilTracker.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Settings.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Tracker.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="PupilTrackerMainFrame.h">
+      <Filter>Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="PupilTracker.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="res\PupilTracker.ico" />
     <Image Include="res\bitmap2.bmp">
       <Filter>Bitmaps</Filter>
     </Image>
@@ -68,9 +110,9 @@
     <Image Include="res\Toolbar.bmp">
       <Filter>Bitmaps</Filter>
     </Image>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="res\PupilTracker.rc2" />
+    <Image Include="res\PupilTracker.ico">
+      <Filter>Resource</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Bitmaps">
@@ -79,5 +121,24 @@
     <Filter Include="NetCom">
       <UniqueIdentifier>{10d3be94-8797-4eff-8b34-a17d55ff1435}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{a1c65177-9409-4939-b290-9aeada87144c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{2cd9623c-a3f1-4856-a003-d15f55ebb68a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{b66cc7ad-031c-4458-9d1d-e9f0763f5879}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="PupilTracker.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="res\PupilTracker.rc2">
+      <Filter>Resource</Filter>
+    </None>
   </ItemGroup>
 </Project>

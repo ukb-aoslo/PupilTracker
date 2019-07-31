@@ -2,10 +2,12 @@
 #include "Pupil.h"
 
 
-Pupil::Pupil() :current_diameter(0),
-				frozen_diameter(0),
-				current_center(coords<double, double> { 0, 0 }),
-				frozen_center(coords<double, double> { 0, 0 })
+Pupil::Pupil() :
+	current_diameter(0),
+	frozen_diameter(0),
+	current_center(coords<double, double> { 0, 0 }),
+	frozen_center(coords<double, double> { 0, 0 }),
+	pxdim(0)
 {
 }
 
