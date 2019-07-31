@@ -30,8 +30,8 @@ class Tracker;
 		Parameters(CWnd* pParent = NULL);   // standard constructor
 		virtual ~Parameters();
 
-		Settings pupil { 75, 10, 30, true };		// just some 
-		Settings purkinje{ 150, 10, 0, true };
+		Settings pupil { 75, 10, 30 };		// init some defaults
+		Settings purkinje{ 150, 10, 0 };	// init some defaults
 
 		BYTE buf_size;
 		BYTE opts;
@@ -58,5 +58,4 @@ public:
 	afx_msg void OnCheck2();
 	afx_msg void OnCheck3();
 	afx_msg void OnCheck4();
-	afx_msg void OnCheck5();
 	};

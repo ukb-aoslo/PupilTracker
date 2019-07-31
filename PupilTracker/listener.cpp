@@ -188,31 +188,6 @@ void CListener::getPurkinje(BYTE* pImageData, Settings* setting) {
 	double average_x, average_y;
 	average_x = average_y = 0;
 
-
-	if (setting->blob_detect) {
-
-		// have a vector of blobs
-		vector<coords<int, int>> blob;
-
-		for (int i = 0; i < z; i++) {
-
-			while (purkinje.pixels[i + 1].y == purkinje.pixels[i].y &&
-				purkinje.pixels[i + 1].x == purkinje.pixels[i].x - 1){
-				blob.push_back(purkinje.pixels[i]);
-				i++;
-			}
-
-		}
-
-		purkinje.current_center.x = average_x / blob.size();
-		purkinje.current_center.y = Height - average_y / blob.size();
-
-		purkinje.current_diameter = sqrt(blob.size());
-
-		return;
-	
-	}
-
 	while (i < z) {
 		average_x += purkinje.pixels[i].x;
 		average_y += purkinje.pixels[i].y;

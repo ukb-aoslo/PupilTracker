@@ -68,7 +68,6 @@ BEGIN_MESSAGE_MAP(Parameters, CDialogEx)
 	ON_COMMAND(IDC_CHECK2, &Parameters::OnCheck2)
 	ON_COMMAND(IDC_CHECK3, &Parameters::OnCheck3)
 	ON_COMMAND(IDC_CHECK4, &Parameters::OnCheck4)
-	ON_COMMAND(IDC_CHECK5, &Parameters::OnCheck5)
 END_MESSAGE_MAP()
 
 void Parameters::DoDataExchange(CDataExchange* pDX)
@@ -256,12 +255,4 @@ void Parameters::OnCheck4()
 	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK4);
 	if (cBox->GetCheck()) opts += FPS;
 	else opts -= FPS;
-}
-
-void Parameters::OnCheck5()
-{
-	// TODO: Add your command handler code here
-	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK5);
-	if (cBox->GetCheck()) purkinje.blob_detect = true;
-	else purkinje.blob_detect = false;
 }
