@@ -38,13 +38,13 @@ BEGIN
     CONTROL         "",IDC_SLIDER1,"msctls_trackbar32",TBS_VERT,19,18,21,60
     LTEXT           "Threshold",IDC_STATIC,44,27,32,8
     GROUPBOX        "Pupil Detection",IDC_STATIC,6,3,116,123
-    LTEXT           "[px val]",IDC_STATIC,44,52,26,8
+    LTEXT           "[px val]",IDC_STATIC,45,52,26,8
     LTEXT           "Margin",IDC_STATIC,19,85,22,8
     LTEXT           "Min. Spot Size",IDC_STATIC,19,103,46,8
     LTEXT           "px",IDC_STATIC,99,85,9,8
     LTEXT           "px",IDC_STATIC,99,103,9,8
-    GROUPBOX        "Video Overlay",IDC_STATIC,6,132,85,78
-    CONTROL         "Margin",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,14,147,37,10
+    GROUPBOX        "Video Overlay",IDC_STATIC,6,132,90,78
+    CONTROL         "Searchbox",IDC_CHECK1,"Button",BS_AUTOCHECKBOX,14,147,50,10
     CONTROL         "Framecounter",IDC_CHECK2,"Button",BS_AUTOCHECKBOX,14,162,61,10
     CONTROL         "Pupil/Purkinje Pixels",IDC_CHECK3,"Button",BS_AUTOCHECKBOX,14,177,79,10
     CONTROL         "FPS",IDC_CHECK4,"Button",BS_AUTOCHECKBOX,14,192,28,10
@@ -53,7 +53,7 @@ BEGIN
     EDITTEXT        IDE_THRESHVAL2,167,38,20,12,ES_AUTOHSCROLL
     CONTROL         "",IDC_SLIDER3,"msctls_trackbar32",TBS_VERT,143,18,21,60
     LTEXT           "Threshold",IDC_STATIC,167,27,32,8
-    LTEXT           "[px val]",IDC_STATIC,167,53,26,8
+    LTEXT           "[px val]",IDC_STATIC,168,53,26,8
     GROUPBOX        "General",IDC_STATIC,103,132,144,78
 END
 
@@ -199,8 +199,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,6,2
- PRODUCTVERSION 1,3,6,2
+ FILEVERSION 1,3,6,3
+ PRODUCTVERSION 1,3,6,3
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -217,12 +217,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.6.2"
+            VALUE "FileVersion", "1.3.6.3"
             VALUE "InternalName", "PupilTracker.exe"
             VALUE "LegalCopyright", "(C)2018 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.6.2"
+            VALUE "ProductVersion", "1.3.6.3"
         END
     END
     BLOCK "VarFileInfo"

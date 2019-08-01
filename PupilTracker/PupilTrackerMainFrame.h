@@ -38,7 +38,6 @@ public:
 	CString								fileName;
 	CString								timestamp;
 
-
 	bool								offsetTrackingEnabled,
 										pupilDiaTrackingEnabled,
 										overlayEnabled;

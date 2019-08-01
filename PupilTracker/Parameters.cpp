@@ -47,7 +47,7 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 	}
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"purkinje_thresh", &ppData, &n)) {
-		pupil.threshold = (BYTE)ppData[0];
+		purkinje.threshold = (BYTE)ppData[0];
 		delete ppData;
 	}
 
@@ -165,7 +165,7 @@ void Parameters::OnBnClickedOk()
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_opts", &opts, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_bufsize", &buf_size, 1);
 
-		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_threshold", &purkinje.threshold, 1);
+		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_thresh", &purkinje.threshold, 1);
 
 		//ShowWindow(SW_HIDE);
 		break;

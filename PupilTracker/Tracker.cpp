@@ -126,10 +126,19 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 		// draw yellow box in life video to show the range in which the pupil should be
 
 		if (*opts & BoxBoundary) {
-			pBitmap->drawFrameRect(RGB(0, 150, 0), CRect(pupil_settings->box_size,
+			pBitmap->drawFrameRect(RGB(0, 150, 0), CRect(
+				pupil_settings->box_size,
 				pupil_settings->box_size,
 				Width - pupil_settings->box_size,
-				Height - pupil_settings->box_size));
+				Height - pupil_settings->box_size)
+			);
+
+			pBitmap->drawFrameRect(RGB(250, 0, 0), CRect(
+				pupil.current_center.x - sqrt(purkinje.pxdim) / 2,
+				pupil.current_center.y - sqrt(purkinje.pxdim) / 2,
+				pupil.current_center.x + sqrt(purkinje.pxdim) / 2,
+				pupil.current_center.y + sqrt(purkinje.pxdim) / 2)
+			);
 		}
 
 		// pixels supposed to be in the pupil

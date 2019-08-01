@@ -150,10 +150,6 @@ void CListener::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitma
 
 void CListener::getPurkinje(BYTE* pImageData, Settings* setting) {
 
-	//int dia = AOSLO_beam.current_diameter / 2;
-	//int x0 = AOSLO_beam.current_center.x - dia / 2;
-	//int y0 = Height - AOSLO_beam.current_center.y - dia / 2;
-
 	int dia = pupil.current_diameter / 2;
 	int x0 = pupil.current_center.x - dia / 2;
 	int y0 = Height - pupil.current_center.y - dia / 2;
@@ -207,7 +203,7 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 
 
 	double pupil_right = 0;
-	int max;		// for pupil center coarse and fine
+	int max;							// for pupil center coarse and fine
 
 	double ave_xp_right, ave_yp_right;	// coarse pupil center
 	double ave_x_right, ave_y_right;	// precision pupil center
@@ -216,9 +212,6 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 	int i, ii;
 
 	ZeroMemory(pupil.pixels, sizeof(coords<int, int>) * (Width * Height));
-
-	ZeroMemory(x, sizeof(int) * (Width));
-	ZeroMemory(y, sizeof(int) * (Height));
 
 	/*****************************************************************************/
 	/*    Core pupil/purkinje detection happens here							 */
@@ -460,7 +453,7 @@ void CListener::makeSnapshot(smart_ptr<MemBuffer> pBuffer, DWORD FrameNumber) {
 
 void CListener::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
-	// whatever calculations may be necessary in certain subclasses
+	// whatever calculations may be necessary in subclasses
 	
 }
 
