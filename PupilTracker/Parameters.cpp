@@ -13,12 +13,21 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 	
 	opts = 0x0f;
 	buf_size = 0;
+	mm_per_pix = .04;
+
+	LoadParams();
+
+	pix_per_mm = 1 / mm_per_pix;
+
+}
+
+void Parameters::LoadParams() {
 
 	UINT n;
 	LPBYTE ppData;
 
-	// load overlay options from registry
-	
+	// load options from registry
+
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"Schaeffel_opts", &ppData, &n)) {
 		opts = (BYTE)ppData[0];
 		delete ppData;
@@ -35,7 +44,7 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 		pupil.spot_size = (BYTE)ppData[0];
 		delete ppData;
 	}
-	
+
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"pupil_boxsize", &ppData, &n)) {
 		pupil.box_size = (BYTE)ppData[0];
 		delete ppData;
@@ -51,12 +60,15 @@ Parameters::Parameters(CWnd* pParent /*=NULL*/)
 		delete ppData;
 	}
 
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"mm_per_pix", &ppData, &n)) {
+		memcpy(&mm_per_pix, ppData, sizeof(double));
+		delete ppData;
+	}
 }
 
 Parameters::~Parameters()
 {
 }
-
 
 // Parameters message handlers
 BEGIN_MESSAGE_MAP(Parameters, CDialogEx)
@@ -68,6 +80,7 @@ BEGIN_MESSAGE_MAP(Parameters, CDialogEx)
 	ON_COMMAND(IDC_CHECK2, &Parameters::OnCheck2)
 	ON_COMMAND(IDC_CHECK3, &Parameters::OnCheck3)
 	ON_COMMAND(IDC_CHECK4, &Parameters::OnCheck4)
+	ON_COMMAND(IDC_CANCEL, &Parameters::OnCancel)
 END_MESSAGE_MAP()
 
 void Parameters::DoDataExchange(CDataExchange* pDX)
@@ -77,6 +90,7 @@ void Parameters::DoDataExchange(CDataExchange* pDX)
 	
 	DDX_Text(pDX, IDC_EDIT1, pupil.box_size);
 	DDX_Text(pDX, IDC_EDIT2, pupil.spot_size);
+	DDX_Text(pDX, IDC_EDIT3, pix_per_mm);
 	DDX_Text(pDX, IDE_THRESHVAL, pupil.threshold);
 	DDX_Text(pDX, IDE_THRESHVAL2, purkinje.threshold);
 	DDV_MinMaxByte(pDX, pupil.box_size, 30, 255);
@@ -102,7 +116,6 @@ BOOL Parameters::OnInitDialog()
 	pSlider->SetPos(purkinje.threshold);
 	pSlider->ModifyStyle(0, TBS_DOWNISLEFT, 0);
 	
-
 	short j = 1;
 	for (int i = IDC_CHECK1; i <= IDC_CHECK4; i++) {
 		CheckDlgButton(i, (opts & j));
@@ -110,9 +123,9 @@ BOOL Parameters::OnInitDialog()
 		
 	}
 
-
 	return TRUE;  // return TRUE unless you set the focus to a control
 				  // EXCEPTION: OCX Property Pages should return FALSE
+
 }
 
 void Parameters::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
@@ -142,6 +155,7 @@ void Parameters::OnBnClickedOk()
 	int ctrl_ID = pwndCtrl->GetDlgCtrlID();
 
 	switch (ctrl_ID) {
+
 	case IDE_THRESHVAL:
 		pSlider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER1);
 		UpdateData(TRUE);
@@ -158,30 +172,37 @@ void Parameters::OnBnClickedOk()
 	case IDC_OK:
 		CDialogEx::OnOK();
 		
+		mm_per_pix = 1 / pix_per_mm;
+		
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"pupil_thresh", &pupil.threshold, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"pupil_spotsize", &pupil.spot_size, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"pupil_boxsize", &pupil.box_size, 1);
-
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_opts", &opts, 1);
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"Schaeffel_bufsize", &buf_size, 1);
-
 		AfxGetApp()->WriteProfileBinary(L"Settings", L"purkinje_thresh", &purkinje.threshold, 1);
+		AfxGetApp()->WriteProfileBinary(L"Settings", L"mm_per_pix", (LPBYTE)&mm_per_pix, sizeof(double));
 
 		//ShowWindow(SW_HIDE);
 		break;
 
-	default:
-		break;
 	}
 	//pwndCtrlNext->SetFocus();
+
 	UpdateData(TRUE);
 
 }
 
+void Parameters::OnCancel()
+{
+	// TODO: Add your command handler code here
+	LoadParams();
+	CDialogEx::OnCancel();
+}
 
 void Parameters::OnShowWindow(BOOL bShow, UINT nStatus)
 {
 	// TODO: Add your message handler code here
+
 	CDialogEx::OnShowWindow(bShow, nStatus);
 
 	CSliderCtrl* pSlider;
@@ -191,7 +212,6 @@ void Parameters::OnShowWindow(BOOL bShow, UINT nStatus)
 	pSlider->SetPos(purkinje.threshold);
 
 }
-
 
 void Parameters::OnBnClickedDefaultparams()
 {
@@ -205,6 +225,7 @@ void Parameters::OnBnClickedDefaultparams()
 
 	SetDlgItemInt(IDC_EDIT1, pupil.box_size, 0);
 	SetDlgItemInt(IDC_EDIT2, pupil.spot_size, 0);
+	SetDlgItemInt(IDC_EDIT3, 1 / mm_per_pix, 0);
 
 	SetDlgItemInt(IDE_THRESHVAL, pupil.threshold, 0);
 	SetDlgItemInt(IDE_THRESHVAL2, purkinje.threshold, 0);
@@ -217,8 +238,6 @@ void Parameters::OnBnClickedDefaultparams()
 
 }
 
-
-
 void Parameters::OnCheck1()
 {
 	// TODO: Add your command handler code here
@@ -226,9 +245,7 @@ void Parameters::OnCheck1()
 	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK1);
 	if (cBox->GetCheck()) opts += BoxBoundary;
 	else opts -= BoxBoundary;
-
 }
-
 
 void Parameters::OnCheck2()
 {
@@ -236,9 +253,7 @@ void Parameters::OnCheck2()
 	CButton* cBox = (CButton*)GetDlgItem(IDC_CHECK2);
 	if (cBox->GetCheck()) opts += FrameCounter;
 	else opts -= FrameCounter;
-
 }
-
 
 void Parameters::OnCheck3()
 {
@@ -247,7 +262,6 @@ void Parameters::OnCheck3()
 	if (cBox->GetCheck()) opts += PupilPixels;
 	else opts -= PupilPixels;
 }
-
 
 void Parameters::OnCheck4()
 {

@@ -12,7 +12,8 @@ public:
 	Settings(
 		int threshold,
 		int spot_size,
-		int box_size);
+		int box_size
+	);
 
 	Settings();
 	~Settings();

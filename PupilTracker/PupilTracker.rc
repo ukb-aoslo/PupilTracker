@@ -54,7 +54,10 @@ BEGIN
     CONTROL         "",IDC_SLIDER3,"msctls_trackbar32",TBS_VERT,143,18,21,60
     LTEXT           "Threshold",IDC_STATIC,167,27,32,8
     LTEXT           "[px val]",IDC_STATIC,168,53,26,8
-    GROUPBOX        "General",IDC_STATIC,103,132,144,78
+    GROUPBOX        "Camera",IDC_STATIC,103,132,144,78
+    LTEXT           "pix / mm",IDC_STATIC,215,147,28,8
+    EDITTEXT        IDC_EDIT3,189,145,23,14,ES_AUTOHSCROLL
+    LTEXT           "Magnification",IDC_STATIC,116,147,43,8
 END
 
 
@@ -185,11 +188,30 @@ BEGIN
     BUTTON      ID_BUTTON_ERASER
     BUTTON      ID_TOGGLE_BEAMOVERLAY
     BUTTON      ID_BUTTON_LAYERS
+    BUTTON      ID_BLACK_OR_WHITE
     BUTTON      ID_RESET_PUPIL
-    BUTTON      ID_BUTTON_PURKINJE_ASSIST
     BUTTON      ID_MAKE_SNAPSHOT
-    SEPARATOR
+    BUTTON      ID_PURKINJE_ASSIST
+    BUTTON      ID_SAFE_BACKGROUND
     BUTTON      ID_FINDCOMBO
+    SEPARATOR
+    BUTTON      ID_MX_STATIC
+    SEPARATOR
+    BUTTON      ID_MX
+    SEPARATOR
+    BUTTON      ID_XOFF_STATIC
+    SEPARATOR
+    BUTTON      ID_XOFF
+    SEPARATOR
+    BUTTON      ID_MY_STATIC
+    SEPARATOR
+    BUTTON      ID_MY
+    SEPARATOR
+    BUTTON      ID_YOFF_STATIC
+    SEPARATOR
+    BUTTON      ID_YOFF
+    SEPARATOR
+    BUTTON      ID_TOOLBAR_END
 END
 
 
@@ -199,8 +221,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,3,6,3
- PRODUCTVERSION 1,3,6,3
+ FILEVERSION 1,3,7,0
+ PRODUCTVERSION 1,3,7,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -217,12 +239,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "AG Harmening"
             VALUE "FileDescription", "Pupil Tracker"
-            VALUE "FileVersion", "1.3.6.3"
+            VALUE "FileVersion", "1.3.7.0"
             VALUE "InternalName", "PupilTracker.exe"
-            VALUE "LegalCopyright", "(C)2018 AG Harmening"
+            VALUE "LegalCopyright", "(C)2019 AG Harmening"
             VALUE "OriginalFilename", "PupilTracker.exe"
             VALUE "ProductName", "PupilTracker"
-            VALUE "ProductVersion", "1.3.6.3"
+            VALUE "ProductVersion", "1.3.7.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -261,20 +283,27 @@ END
 STRINGTABLE
 BEGIN
     ID_BUTTON_LAYERS        "Toggle drawing of overlay"
-    ID_FINDCOMBO            "Subject ID(appending 'BAK')"
+    ID_FINDCOMBO            "Pick Subject ID for filename"
     ID_BUTTON_ERASER        "Erase trail in Offset Tracking"
 END
 
 STRINGTABLE
 BEGIN
     ID_TOGGLE_BEAMOVERLAY   "Toggle drawing of AOSLO beam (Keep CTRL pressed to set / reset)"
+    ID_PURKINJE_ASSIST      "Reference points for purkinje offset"
     ID_RESET_PUPIL          "(Re-)Set automatic pupil threshold"
+    ID_BLACK_OR_WHITE       "Flip between Black or White Pupil Tracking"
 END
 
 STRINGTABLE
 BEGIN
     ID_INDICATOR_LINK1      "AOMControl"
     ID_INDICATOR_LINK2      "IGUIDE"
+END
+
+STRINGTABLE
+BEGIN
+    ID_SAFE_BACKGROUND      "Safe background"
 END
 
 #endif    // English (United States) resources

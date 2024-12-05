@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "PupilDiaTracker.h"
 #include "resource.h"
-#include "ChildView.h"
+//#include "ChildView.h"
 
 // Paint Jobs for Pupil Diameter Tracking
 

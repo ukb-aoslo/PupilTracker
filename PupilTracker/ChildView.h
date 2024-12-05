@@ -21,12 +21,10 @@ public:
 private:
 
 	CRect						clientArea;
-
 	DECLARE_MESSAGE_MAP()
 
 public:
 	virtual BOOL Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID, CCreateContext* pContext = NULL);
-	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 	void showBuffer(const DShowLib::Grabber::tMemBufferPtr& pBuffer);
 	afx_msg void OnWindowPosChanging(WINDOWPOS* lpwndpos);
 
@@ -39,5 +37,4 @@ public:
 	void drawOffline();
 	afx_msg void OnPaint();
 	afx_msg BOOL OnEraseBkgnd(CDC* pDC);
-
 };

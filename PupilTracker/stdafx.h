@@ -10,7 +10,12 @@
 // turns off MFC's hiding of some common and often safely ignored warning messages
 #define _AFX_ALL_WARNINGS
 
-#define WM_UPDATE_CONTROL    WM_APP + 0x10
+#define WM_UPDATE_CONTROL   WM_APP + 0x10
+
+#define UPDATE_MX_VALUE		WM_USER + 100
+#define UPDATE_XOFF_VALUE	WM_USER + 101
+#define UPDATE_MY_VALUE		WM_USER + 102
+#define UPDATE_YOFF_VALUE	WM_USER + 103
 
 #include <afxwin.h>         // MFC core and standard components
 #include <afxext.h>         // MFC extensions
@@ -35,7 +40,6 @@
 
 // user defines
 #define PI (atan(1) * 4)
-#define MM_PER_PIXEL 0.030232211660616
 
 // palette to support users with achromatopsia
 static COLORREF white = RGB(255, 255, 255);
@@ -47,6 +51,10 @@ static COLORREF lightgreen = RGB(3, 141, 99);
 static COLORREF darkgreen = RGB(3, 106, 84);
 static COLORREF darkyellow = RGB(252, 191, 73);
 static COLORREF black = RGB(0, 0, 0);
+static COLORREF darkmagenta = RGB(179, 89, 187);
+static COLORREF darkazure = RGB(55, 181, 155);
+static COLORREF background = RGB(15, 15, 15);
+static COLORREF lightgrey = RGB(150, 150, 150);
 
 
 //#ifdef _DEBUG

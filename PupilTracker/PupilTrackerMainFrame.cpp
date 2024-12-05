@@ -10,13 +10,13 @@ using namespace DShowLib;
 BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_WM_PAINT()
 	ON_WM_CLOSE()
-	ON_WM_SHOWWINDOW()
 	ON_WM_CREATE()
 	ON_WM_TIMER()
 	ON_COMMAND (ID_CAMERA_DEVICES, OnBnClickedButtondevice)
 	ON_COMMAND (ID_CAMERA_SETTINGS, OnBnClickedButtonimagesettings)
 	ON_COMMAND (ID_STOP, OnStop)
 	ON_COMMAND (ID_PLAY, OnPlay)
+	ON_COMMAND (ID_SAFE_BACKGROUND, OnSaveBackgound)
 	ON_COMMAND (ID_VIEW_PARAMETERS, &CPupilTrackerMainFrame::OnViewParameters)
 	ON_COMMAND (ID_RECORD, &CPupilTrackerMainFrame::OnRecord)
 	ON_COMMAND (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnMakeSnapshot)
@@ -24,7 +24,8 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_UPDATE_COMMAND_UI (ID_MAKE_SNAPSHOT, &CPupilTrackerMainFrame::OnUpdateMakeSnapshot)
 	ON_UPDATE_COMMAND_UI (ID_INDICATOR_LINK1, &CPupilTrackerMainFrame::OnUpdatePage)
 	ON_MESSAGE(MESSAGEDEVICELOST, OnDeviceLost)
-	ON_MESSAGE(MESSAGE_OFFSET_PROCESSED, &CPupilTrackerMainFrame::OnMessageOffsetProcessed)
+	ON_MESSAGE(MESSAGE_PUPIL_PROCESSED, &CPupilTrackerMainFrame::OnMessagePupilProcessed)
+	ON_MESSAGE(MESSAGE_PURKINJE_PROCESSED, &CPupilTrackerMainFrame::OnMessagePurkinjeProcessed)
 	ON_MESSAGE(MESSAGE_PUPILDIA_PROCESSED, &CPupilTrackerMainFrame::OnMessagePupilDiaProcessed)
 	ON_COMMAND(ID_RESET_PUPIL, &CPupilTrackerMainFrame::OnResetPupil)
 	ON_WM_SETFOCUS()
@@ -32,8 +33,12 @@ BEGIN_MESSAGE_MAP(CPupilTrackerMainFrame, CFrameWndEx)
 	ON_COMMAND(ID_BUTTON_LAYERS, &CPupilTrackerMainFrame::OnButtonToggleLayers)
 	ON_COMMAND(ID_BUTTON_ERASER, &CPupilTrackerMainFrame::OnButtonEraseTrail)
 	ON_COMMAND(ID_TOGGLE_BEAMOVERLAY, &CPupilTrackerMainFrame::OnToggleBeamoverlay)
-	ON_COMMAND(ID_BUTTON_PURKINJE_ASSIST, &CPupilTrackerMainFrame::OnButtonPurkinjeAssist)
-	ON_REGISTERED_MESSAGE(AFX_WM_RESETTOOLBAR, &CPupilTrackerMainFrame::OnAfxWmResettoolbar)
+	ON_COMMAND(ID_PURKINJE_ASSIST, &CPupilTrackerMainFrame::OnButtonPurkinjeAssist)
+	ON_COMMAND(ID_BLACK_OR_WHITE, &CPupilTrackerMainFrame::OnBlackOrWhite)
+	ON_MESSAGE(UPDATE_MX_VALUE, &CPupilTrackerMainFrame::OnUpdateMxValue)
+	ON_MESSAGE(UPDATE_XOFF_VALUE, &CPupilTrackerMainFrame::OnUpdateXoffValue)
+	ON_MESSAGE(UPDATE_MY_VALUE, &CPupilTrackerMainFrame::OnUpdateMyValue)
+	ON_MESSAGE(UPDATE_YOFF_VALUE, &CPupilTrackerMainFrame::OnUpdateYoffValue)
 END_MESSAGE_MAP()
 
 static UINT indicators[] =
@@ -46,7 +51,8 @@ static UINT indicators[] =
 CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 	// Set active tracking method
 
-	current = locked = NULL;
+	current = NULL;
+	locked = NULL;
 	pupilDia = NULL;
 	offsetTrackingEnabled = true;
 	pupilDiaTrackingEnabled = true;
@@ -56,6 +62,11 @@ CPupilTrackerMainFrame::CPupilTrackerMainFrame(){
 
 CPupilTrackerMainFrame::~CPupilTrackerMainFrame()
 {
+	if (Grabber.isDevValid()) {
+
+		Grabber.saveDeviceStateToFile("device.xml");
+
+	}
 
 }
 
@@ -75,7 +86,7 @@ void CPupilTrackerMainFrame::initCam() {
 	Grabber::tVidFmtListPtr pVidFmtList = Grabber.getAvailableVideoFormats();
 	if (pVidFmtList == 0) // No video formats available?
 	{
-		std::string str = "Error : " + Grabber.getLastError().toString();
+		std::string str = "Error: " + Grabber.getLastError().toString();
 		AfxMessageBox((CString)str.c_str(), MB_OK);
 
 	}
@@ -120,7 +131,6 @@ void CPupilTrackerMainFrame::setFilter() {
 		DeNoise->setParameter("DeNoise Level", level);
 		DeNoise->endParamTransfer();
 	}
-
 }
 
 
@@ -274,6 +284,8 @@ void CPupilTrackerMainFrame::OnClose()
 
 	AfxGetApp()->WriteProfileBinary(L"Settings", L"beam_coords", (LPBYTE)&pupilTracking.AOSLO_beam.current_center, sizeof(coords<double, double>));
 	AfxGetApp()->WriteProfileBinary(L"Settings", L"beam_diameter", (LPBYTE)&pupilTracking.AOSLO_beam.current_diameter, sizeof(double));
+	AfxGetApp()->WriteProfileBinary(L"Settings", L"black_or_white", (LPBYTE)&pupilTracking.black, sizeof(bool));
+
 
 	CFrameWndEx::OnClose();
 
@@ -361,7 +373,44 @@ void CPupilTrackerMainFrame::OnStop()
 
 }
 
+void CPupilTrackerMainFrame::OnSaveBackgound()
+{
+	if (!Grabber.isLive())
+	{
+		// This error should never happen.
+		AfxMessageBox(TEXT("Camera is not running!"));
+		return;
+	}
 
+	FrameTypeInfo info;
+	Sink->getOutputFrameType(info);
+
+	// Create buffer
+	BYTE* pbImgData = new BYTE[info.buffersize];
+	// Create a FrameQueueBuffer that objects that wraps the memory of our user buffer
+	tFrameQueueBufferPtr ptr;
+	Error err = createFrameQueueBuffer(ptr, info, pbImgData, info.buffersize, NULL);
+	if (err.isError()) {
+		std::cerr << "Failed to create buffer due to " << err.toString() << "\n";
+		return;
+	}
+
+	// Copy background image to the buffer in GrabberListener
+	memcpy(pupilTracking.m_pBkgndBuff, pbImgData, info.buffersize * sizeof(BYTE));
+
+	wchar_t buf[MAX_PATH] = {};
+	if (GetFileAttributes(L"background") == INVALID_FILE_ATTRIBUTES)
+		CreateDirectory(L"background", NULL);
+	swprintf_s(buf, L"background\\background.bmp");
+	err = DShowLib::saveToFileBMP(*(ptr), buf);
+	if (err.isError()) {
+		AfxMessageBox((CString)(err.toString().c_str()));
+		std::cerr << "Failed to save buffer due to " << err.toString() << "\n";
+		return;
+	}
+
+	AfxMessageBox(TEXT("Background is saved!"));
+}
 
 void CPupilTrackerMainFrame::drawOverlay(DShowLib::tPathPosition pos)
 {
@@ -371,20 +420,12 @@ void CPupilTrackerMainFrame::drawOverlay(DShowLib::tPathPosition pos)
 
 }
 
-
-void CPupilTrackerMainFrame::OnShowWindow(BOOL bShow, UINT nStatus)
-{
-	CFrameWndEx::OnShowWindow(bShow, nStatus);
-	// TODO: Add your message handler code here
-
-	reAdjustView();
-}
-
 void CPupilTrackerMainFrame::reAdjustView(){
 
 	//Grabber.stopLive();
 	CRect m_tbRect, m_vidRect, m_offsetRect, m_graphRect, m_stRect;
 	CSize tbSize;
+	int index = 0;
 
 	Grabber.getWindowPosition(m_vidRect.left, m_vidRect.top, m_vidRect.right, m_vidRect.bottom);
 	if (m_wndToolBar.IsVisible()) 
@@ -392,6 +433,11 @@ void CPupilTrackerMainFrame::reAdjustView(){
 		//m_wndToolBar.GetClientRect(&m_tbRect);
 	if (m_wndStatusBar.IsVisible()) {
 		m_wndStatusBar.GetClientRect(&m_stRect);
+		while (index < 3){
+			m_wndStatusBar.SetPaneBackgroundColor(index, black);
+			m_wndStatusBar.SetPaneTextColor(index, lightgrey);
+			index++;
+		}
 	}
 
 	if (offsetTrackingEnabled) {
@@ -409,10 +455,10 @@ void CPupilTrackerMainFrame::reAdjustView(){
 	GetWindowRect(&wRect);
 	AdjustWindowRectEx(&cRect, this->GetStyle(), TRUE, this->GetExStyle());
 
-	MoveWindow(wRect.left, wRect.top, cRect.Width(), cRect.Height(), true);
+	MoveWindow(wRect.left, wRect.top, cRect.Width() + 1, cRect.Height(), true);
 
 	//Resize the video window to 640*480 pixels.
-	m_wndView.wndVideo.SetWindowPos(NULL,0, tbSize.cy + 3 ,640,480, SWP_NOZORDER);
+	m_wndView.wndVideo.SetWindowPos(NULL, 0, tbSize.cy + 1, 640, 480, SWP_NOZORDER);
 
 	//m_cListener.SetDrawWindow(Grabber.getAcqSizeMaxX(), Grabber.getAcqSizeMaxY());
 
@@ -423,21 +469,23 @@ void CPupilTrackerMainFrame::reAdjustView(){
 	Grabber.setDefaultWindowPosition(false);
 	Grabber.setWindowSize(m_vidRect.Width(), m_vidRect.Height());
 
-	m_wndView.wndOffset.MoveWindow(m_vidRect.Width(), m_tbRect.Height() + tbSize.cy + 3, m_offsetRect.right, m_offsetRect.Height(), false);
-	m_wndView.wndPupilDia.MoveWindow(0, m_vidRect.Height() + tbSize.cy + 3, m_graphRect.Width(), m_graphRect.Height() + 40, false);
-
+	m_wndView.wndOffset.MoveWindow(m_vidRect.Width() + 1, m_tbRect.Height() + tbSize.cy + 1, m_offsetRect.right, m_offsetRect.Height(), false);
+	m_wndView.wndPupilDia.MoveWindow(0, m_vidRect.Height() + tbSize.cy + 2, m_graphRect.Width() + 1, m_graphRect.Height() + 40, false);
 	
+	m_wndToolBar.SetPaneStyle(m_wndToolBar.GetPaneStyle()& ~(CBRS_GRIPPER));
+	
+	m_wndToolBar.SetBorders();
+	m_wndStatusBar.SetBorders();
+
 }
 
 int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	
+
 	if (CFrameWndEx::OnCreate(lpCreateStruct) == -1)
 		return -1;
 
 	// Add listener(s) to grabber
-
-	
 	Grabber.addListener(&pupilTracking, CListener::eOVERLAYCALLBACK | CListener::eFRAMEREADY);
 	pupilTracking.CListener::setParent(this);
 
@@ -446,11 +494,10 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// Set the sink
 	setSink();
-	
+
 	m_hIcon = LoadIcon(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
 	SetIcon(m_hIcon, FALSE);
 
-	
 	// Try to load the previously used video capture device.
 	if (!Grabber.loadDeviceStateFromFile("device.xml"))
 		Grabber.showDevicePage(this->m_hWnd);
@@ -458,17 +505,19 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	initCam();
 
 	DWORD dwCtrlStyle = WS_VISIBLE | WS_CHILD | CBRS_TOP | CBRS_TOOLTIPS | CBRS_FLYBY;
-	DWORD dwStyle = AFX_DEFAULT_TOOLBAR_STYLE;
-
-
-	if (!m_wndToolBar.Create(this, dwCtrlStyle, dwStyle) || !m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
+	
+	if (!m_wndToolBar.CreateEx(this, dwCtrlStyle, NULL) || !m_wndToolBar.LoadToolBar(IDR_MAINFRAME))
 	{
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // failed to create
 	}
 
+	// add special control elements to toolbar
+
 	EnableDocking(CBRS_ALIGN_ANY);
 	DockPane(&m_wndToolBar);
+
+	m_wndToolBar.Customize();
 
 	if (!m_wndStatusBar.Create(this))
 	{
@@ -481,7 +530,7 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// Attach View to active tracking Method
 
 	if (!m_wndView.Create(NULL, NULL, AFX_WS_DEFAULT_VIEW,
-		CRect(0, 0, 0, 0), this, AFX_IDW_PANE_FIRST, NULL))
+		CRect(), this, AFX_IDW_PANE_FIRST, NULL))
 	{
 		TRACE0("Failed to create view window\n");
 		return -1;
@@ -530,18 +579,15 @@ int CPupilTrackerMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 	// set update interval for Pupil Diameter plot
 	SetTimer(2, 50, NULL);
+	SetTimer(3, 125, NULL);
 
 	return 0;
 
-
 }
-
 
 BOOL CPupilTrackerMainFrame::PreTranslateMessage(MSG* pMsg)
 {
 	// TODO: Add your specialized code here and/or call the base class
-
-	CWnd* wnd = GetFocus();
 
 	if (pMsg->message == WM_KEYDOWN) {
 
@@ -669,11 +715,11 @@ void CPupilTrackerMainFrame::Save() {
 	CString header[8];
 
 	header[0].Format(_T("**************************************************************************************\n"));
-	header[1].Format(_T("********** %ls %ls Offset Tracker Data							**********\n"), name.GetString(), version.GetString());
+	header[1].Format(_T("********** %ls %ls Offset Tracker Data			    **********\n"), name.GetString(), version.GetString());
 	header[2].Format(_T("**************************************************************************************\n\n"));
 
 	header[3].Format(_T("\nNOTE: offset data is in (sub)pixels\n"));
-	header[4].Format(_T("\nMagnifiction [mm/px]: %2.15f"), MM_PER_PIXEL);
+	header[4].Format(_T("\nMagnification [mm/px]: %2.15f"), params.mm_per_pix);
 	header[5].Format(_T("\nLocked position [px]: x:%2.1f y:%2.1f"), pupilTracking.pupil.frozen_center.x, pupilTracking.pupil.frozen_center.y);
 	header[6].Format(_T("\nAOSLO-Beam center: x:%2.1f y:%2.1f"), pupilTracking.AOSLO_beam.current_center.x, pupilTracking.AOSLO_beam.current_center.y);
 	header[7].Format(_T("\n\ndata is: time [hour:min:sec:msec] frame number, pupil size [mm], pupil center [pxx], pupil center [pxy], purkinje center [pxx], purkinje center [pxy], pupil center offset horizontal [mm], pupil center offset vertical [mm]\n\n"));
@@ -717,10 +763,12 @@ void CPupilTrackerMainFrame::Save() {
 			if (outputDir.IsEmpty())
 				OnPickFolder();
 
-			fileName = L"output.txt";
+			m_wndToolBar.BAK_ID.GetLBText(m_wndToolBar.BAK_ID.GetCurSel(), fileName);
+			
 		
 			getSysTime(timestamp);
-			fileName = L"\\" + timestamp + L"_" + fileName;
+			fileName = L"\\" + fileName + L"_" + timestamp;
+			fileName.Append(L".txt");
 
 			CStdioFile outputFile(outputDir + fileName, CFile::modeCreate | CFile::modeWrite | CFile::typeText);
 			outputFile.WriteString(sstream.str().c_str());
@@ -759,15 +807,18 @@ void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 		case 2:
 			// plot pupil diameter in timely manner
 			if (pupilDia) {
-				m_wndView.wndPupilDia.AppendPoint(*pupilDia * MM_PER_PIXEL);
+				m_wndView.wndPupilDia.AppendPoint(*pupilDia * params.mm_per_pix);
 				m_wndView.wndPupilDia.DrawPoint();
 				m_wndView.wndPupilDia.DrawTitle();
 			}
+			break;
+
+		case 3:
+			m_wndView.wndOffset.DrawValues();
 
 			break;
 
 		}
-
 
 	//KillTimer(1);
 	//if (Grabber.loadDeviceStateFromFile("device.xml"))
@@ -788,25 +839,43 @@ void CPupilTrackerMainFrame::OnTimer(UINT_PTR nIDEvent)
 	//}
 
 	CFrameWndEx::OnTimer(nIDEvent);
+
 }
 
 
-afx_msg LRESULT CPupilTrackerMainFrame::OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam)
+afx_msg LRESULT CPupilTrackerMainFrame::OnMessagePupilProcessed(WPARAM wParam, LPARAM lParam)
 {
 
 	if (wParam != 0 && lParam != 0) {
 
 		current = reinterpret_cast<coords<double, double>*>(wParam);
 		locked = reinterpret_cast<coords<double, double>*>(lParam);
-		m_wndView.wndOffset.AddPositions(*current, *locked);
-		m_wndView.wndOffset.DrawOffset();
-		m_wndView.wndOffset.DrawValues();
-		m_wndView.wndOffset.DrawTitle();
+		m_wndView.wndOffset.AddPupilPositions(*current, *locked, params.mm_per_pix);
+		m_wndView.wndOffset.PlotOffset();
+		//m_wndView.wndOffset.DrawValues();
 
 	}
 
 	return 0;
 	
+}
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnMessagePurkinjeProcessed(WPARAM wParam, LPARAM lParam)
+{
+
+	if (wParam != 0 && lParam != 0) {
+
+		current = reinterpret_cast<coords<double, double>*>(wParam);
+		locked = reinterpret_cast<coords<double, double>*>(lParam);
+		m_wndView.wndOffset.AddPurkinjePositions(*current, *locked, params.mm_per_pix);
+		//m_wndView.wndOffset.PlotOffset();
+		//m_wndView.wndOffset.DrawValues();
+
+	}
+
+	return 0;
+
 }
 
 afx_msg LRESULT CPupilTrackerMainFrame::OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam)
@@ -945,7 +1014,9 @@ void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
 			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
 			m_wndStatusBar.SetPaneBackgroundColor(pCmdUI->m_nIndex, RGB(0, 200, 0), 1);
 		}
+
 		else
+
 		{
 			pCmdUI->Enable();
 			m_wndStatusBar.SetPaneTextColor(pCmdUI->m_nIndex, RGB(255, 255, 255), 1);
@@ -961,6 +1032,8 @@ void CPupilTrackerMainFrame::OnUpdatePage(CCmdUI * pCmdUI)
 void CPupilTrackerMainFrame::OnButtonPurkinjeAssist()
 {
 	// TODO: Add your command handler code here
+	
+	pupilTracking.purkinje_dist = 0.2 * 1 / params.mm_per_pix;
 
 	if (pupilTracking.purkinje.center.size() > 4) {
 		pupilTracking.purkinje_assist ? pupilTracking.purkinje_assist = false : pupilTracking.purkinje_assist = true;
@@ -982,24 +1055,57 @@ void CPupilTrackerMainFrame::OnResetPupil()
 
 }
 
-
-afx_msg LRESULT CPupilTrackerMainFrame::OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam)
+void CPupilTrackerMainFrame::OnBlackOrWhite()
 {
+	// TODO: Add your command handler code here
+	 pupilTracking.black ? pupilTracking.black = false : pupilTracking.black = true;
 
-	UINT uiToolBarId = (UINT)wParam;
-	TRACE("CMainFrame::OnToolbarReset : %i\n", uiToolBarId);
+}
 
-	switch (uiToolBarId)
-	{
-	case IDR_MAINFRAME:
 
-		CMFCToolBarEditBoxButton editBox(ID_FINDCOMBO, GetCmdMgr()->GetCmdImage(ID_FINDCOMBO));
-		m_wndToolBar.ReplaceButton(ID_FINDCOMBO, editBox);
-
-		break;
-
-	}
-
+afx_msg LRESULT CPupilTrackerMainFrame::OnUpdateMxValue(WPARAM wParam, LPARAM lParam)
+{
+	CString* val = (CString*)wParam;
+	m_wndView.wndOffset.tco.mx = _ttof(val->GetString());
 
 	return 0;
+}
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnUpdateXoffValue(WPARAM wParam, LPARAM lParam)
+{
+	CString* val = (CString*)wParam;
+	m_wndView.wndOffset.tco.xoff = _ttof(val->GetString());
+
+	return 0;
+}
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnUpdateMyValue(WPARAM wParam, LPARAM lParam)
+{
+	CString* val = (CString*)wParam;
+	m_wndView.wndOffset.tco.my = _ttof(val->GetString());
+
+	return 0;
+}
+
+
+afx_msg LRESULT CPupilTrackerMainFrame::OnUpdateYoffValue(WPARAM wParam, LPARAM lParam)
+{
+	CString* val = (CString*)wParam;
+	m_wndView.wndOffset.tco.yoff = _ttof(val->GetString());
+
+	return 0;
+}
+
+
+BOOL CPupilTrackerMainFrame::PreCreateWindow(CREATESTRUCT& cs)
+{
+	// uncomment cs.style for fancy borderless style
+
+	if (!CFrameWndEx::PreCreateWindow(cs))
+		return FALSE;
+	//cs.style = WS_POPUP;
+
+	return TRUE;
 }

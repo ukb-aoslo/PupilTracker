@@ -4,6 +4,7 @@
 #include "Parameters.h"
 #include <SockClient.h>
 #include <SockListener.h>
+#include "CustomToolbar.h"
 
 class CPupilTrackerMainFrame : public CFrameWndEx
 {
@@ -14,6 +15,7 @@ private:
 
 	coords<double, double>*				current;
 	coords<double, double>*				locked;
+
 	double*								pupilDia;
 
 public:
@@ -27,8 +29,8 @@ public:
 
 	Tracker								pupilTracking;
 
-	CSockClient*						m_pSock_ICANDI;			// and ICANDI
 	CSockListener						m_pSock_AOMCONTROL;		// for communication with AOMCONTROL
+	CSockClient*						m_pSock_ICANDI;			// and ICANDI
 	
 	smart_com<IFrameFilter>				DeNoise;
 	Parameters							params;
@@ -49,6 +51,7 @@ public:
 	void setFilter();
 	void initCam();
 	void Save();
+	
 	void getSysTime(CString &buf);
 	
 protected:
@@ -66,15 +69,13 @@ protected:
 	// For Window construction
 	CChildView							m_wndView;
 	CMFCStatusBar						m_wndStatusBar;
-	CMFCToolBar							m_wndToolBar;
+	CustomToolbar						m_wndToolBar;
 
 public:
 
 	virtual BOOL PreTranslateMessage(MSG* pMsg);
-
 	afx_msg void OnBnClickedButtondevice();
 	afx_msg void OnBnClickedButtonimagesettings();
-	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	afx_msg void OnViewParameters();
 	afx_msg void OnRecord();
@@ -90,12 +91,19 @@ public:
 	afx_msg void OnUpdatePage(CCmdUI *pCmdUI);
 	afx_msg void OnButtonPurkinjeAssist();
 	afx_msg void OnResetPupil();
+	afx_msg void OnBlackOrWhite();
+	afx_msg void OnSaveBackgound();
+
+	afx_msg LRESULT OnUpdateMxValue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateXoffValue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateMyValue(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnUpdateYoffValue(WPARAM wParam, LPARAM lParam);
 
 private:
 	LRESULT OnDeviceLost(WPARAM Brightness, LPARAM lParam);
-	afx_msg LRESULT OnMessageOffsetProcessed(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMessagePupilProcessed(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMessagePurkinjeProcessed(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMessagePupilDiaProcessed(WPARAM wParam, LPARAM lParam);
 
-protected:
-	afx_msg LRESULT OnAfxWmResettoolbar(WPARAM wParam, LPARAM lParam);
+	virtual BOOL PreCreateWindow(CREATESTRUCT& cs);
 };

@@ -35,8 +35,9 @@
 class CPupilTrackerMainFrame;
 
 #define MESSAGEDEVICELOST WM_USER+90
-#define MESSAGE_OFFSET_PROCESSED WM_USER+91
-#define MESSAGE_PUPILDIA_PROCESSED WM_USER+92
+#define MESSAGE_PUPIL_PROCESSED WM_USER+91
+#define MESSAGE_PURKINJE_PROCESSED WM_USER+92
+#define MESSAGE_PUPILDIA_PROCESSED WM_USER+93
 
 using namespace DShowLib;
 
@@ -55,10 +56,13 @@ class CListener : public GrabberListener
 
 		CPoint				purkinjePoints[4];  // assistance for TCO experiments
 
+		BYTE*				m_pBkgndBuff;	// pointer to backgound image
+
 		bool				record;				// are we recording?
 		bool				freeze;				// is the pupil locked?
 		bool				purkinje_assist;	// need purkinje assistance?
 		bool				beam;				// show supposed AOSLO beam
+		bool				black;				// black or white pupil tracking?
 		int					Width, Height;		// video frame size	
 		int					recIndex;			// where did we begin recording?
 		double				purkinje_dist;		// half distance of neighboring spots for purkinje validation assist (in mm)
@@ -72,8 +76,9 @@ class CListener : public GrabberListener
 		Settings*			pupil_settings;
 		Settings*			purkinje_settings;
 
-		BYTE* opts;								// checkbox options for overlay items
-		BYTE* buf_size;							// buffer size for jitter reduction
+		BYTE*				opts;				// checkbox options for overlay items
+		BYTE*				buf_size;			// buffer size for jitter reduction
+		double*				mm_per_pix;
 
 		SIZE				m_WindowSize;		// Size of the window in which to draw the buffer.
 		tsMediaSampleDesc	MediaSampleDesc;
@@ -95,7 +100,7 @@ class CListener : public GrabberListener
 		void setSnap(bool b);
 		void setParent(CWnd* pParent);
 		void init(int cx, int cy);
-
+		void SubtractBackground(BYTE* pImageData);
 
 	private:
 

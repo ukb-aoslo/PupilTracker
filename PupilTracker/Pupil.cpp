@@ -16,9 +16,9 @@ Pupil::~Pupil()
 {
 }
 
-void Pupil::saveOffset(coords<double, double> &offset) {
+void Pupil::saveOffset(coords<double, double> &offset, double res) {
 
-	coords<double, double> conv{ MM_PER_PIXEL, MM_PER_PIXEL };
+	coords<double, double> conv{ res, res };
 	offsetMM.push_back(offset * conv);
 	offsetPX.push_back(offset);
 

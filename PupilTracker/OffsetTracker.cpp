@@ -3,14 +3,20 @@
 #include "resource.h"
 #include "ChildView.h"
 
+
 // Paint Jobs for Offset Tracking
 
 OffsetTracker::OffsetTracker()
 {
 
-	magnif = (double) MM_PER_PIXEL;
-	conv = 150/0.25 * magnif;	// mapping pixels on plot with .25mm range
-
+	smallValueFont.CreatePointFont(124, _T("Arial Narrow"));
+	
+	LOGFONT logFont;
+	smallValueFont.GetLogFont(&logFont);
+	logFont.lfWeight = FW_BOLD;
+	logFont.lfHeight = 25;
+	
+	bigValueFont.CreateFontIndirect(&logFont);
 	
 	m_brushBack.CreateSolidBrush(black);
 
@@ -25,6 +31,16 @@ OffsetTracker::OffsetTracker()
 	// protected bitmaps to restore the memory DC's
 	m_pbitmapOldGrid = NULL;
 	m_pbitmapOldPlot = NULL;
+
+	m_dCurrentPupilPosition = { 0, 0 };
+	m_dCurrentPurkinjePosition = { 0, 0 };
+
+	m_dLockedPupilPosition = { 0, 0 };
+	m_dLockedPurkinjePosition = { 0, 0 };
+
+	// mapping pixels on plot with .5mm range
+	//conv = (150 / 0.5) * res;	
+	conv = 10;
 
 }
 
@@ -112,71 +128,48 @@ void OffsetTracker::OnPaint()
 
 }
 
-void OffsetTracker::DrawTitle() {
-
-	m_dcGrid.SetBkColor(RGB(0, 0, 0));
-	m_dcGrid.SetBkMode(TRANSPARENT);
-
-	CString szText;
-
-	// x/y plot
-
-	SetTextColor(m_dcGrid, darkyellow);
-	szText.Format(TEXT("PUPIL OFFSET"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 - 40, 10, szText);
-
-	szText.Format(TEXT("x:"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 - 80, m_rectClient.Height() / 11, szText);
-	szText.Format(TEXT("y:"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 30, m_rectClient.Height() / 11, szText);
-
-	szText.Format(TEXT("Current Pos [px]"));
-	m_dcGrid.TextOutW(15, m_rectClient.Height() - 40, szText);
-	szText.Format(TEXT("x:"));
-	m_dcGrid.TextOutW(15, m_rectClient.Height() - 20, szText);
-	szText.Format(TEXT("y:"));
-	m_dcGrid.TextOutW(70, m_rectClient.Height() - 20, szText);
-
-	szText.Format(TEXT("Locked Pos [px]"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 40, szText);
-	szText.Format(TEXT("x:"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 60, m_rectClient.Height() - 20, szText);
-	szText.Format(TEXT("y:"));
-	m_dcGrid.TextOutW(m_rectClient.Width() / 2 + 115, m_rectClient.Height() - 20, szText);
-
-	// at this point we are done filling the the grid bitmap, 
-	// no more drawing to this bitmap is needed until the setting are changed
-
-}
-
-
-void OffsetTracker::AddPositions(coords<double, double> current, coords<double, double> locked)
+void OffsetTracker::AddPupilPositions(coords<double, double> currentPupil, coords<double, double> lockedPupil, double res)
 {
 	// store current offset position in a queue
 
-	m_dCurrentPosition = current;
-	m_dLockedPosition = locked;
+	m_dCurrentPupilPosition = currentPupil;
+	m_dLockedPupilPosition = lockedPupil;
 
-	if (locked.x != 0 && locked.y != 0)
-		m_dOffset = current - locked;
+	if (lockedPupil.x != 0 && lockedPupil.y != 0)
+		m_dPupilOffset = currentPupil - lockedPupil;
 	else
-		m_dOffset.x = m_dOffset.y = 0;
+		m_dPupilOffset.x = m_dPupilOffset.y = 0;
 
 		if (trail.size() < 40) {
-			trail.push_front(m_dOffset);
+			trail.push_front(m_dPupilOffset);
 		}
 
 		else {
 			trail.pop_back();
-			trail.push_front(m_dOffset);
+			trail.push_front(m_dPupilOffset);
 		}
-
 
 	Invalidate();
 
 }
 
-void OffsetTracker::DrawOffset() {
+void OffsetTracker::AddPurkinjePositions(coords<double, double> currentPurkinje, coords<double, double> lockedPurkinje, double res) {
+
+	m_dCurrentPurkinjePosition = currentPurkinje;
+	m_dLockedPurkinjePosition = lockedPurkinje;
+
+	if (lockedPurkinje.x != 0 && lockedPurkinje.y != 0)
+		m_dPurkinjeOffset = currentPurkinje - lockedPurkinje;
+	else
+		m_dPurkinjeOffset.x = m_dPurkinjeOffset.y = 0;
+
+	tco.x = tco.mx * (currentPurkinje.x - 320) + tco.xoff;
+	tco.y = tco.my * (currentPurkinje.y - 240) + tco.yoff;
+
+}
+
+
+void OffsetTracker::PlotOffset() {
 
 	if (m_dcPlot.GetSafeHdc() != NULL) {
 		
@@ -186,17 +179,17 @@ void OffsetTracker::DrawOffset() {
 
 		// draw offset into x/y plot
 		SelectObject(m_dcPlot, GetStockObject(HOLLOW_BRUSH));
-		int y = 39;
+		int y = 0;
 
-		for (auto it = trail.begin(); it != trail.end(); it++) {
+		for (auto it = trail.rbegin(); it != trail.rend(); it++) {
 
 			SelectObject(m_dcPlot, hPenPal[y]);
 
-			Ellipse(m_dcPlot, m_nClientWidth / 2 - (int)(it->x * conv) - 3,
-				m_nClientHeight / 2 + (int)(it->y * conv) - 3,
-				m_nClientWidth / 2 - (int)(it->x * conv) + 3,
-				m_nClientHeight / 2 + (int)(it->y * conv) + 3);
-			y--;
+			Ellipse(m_dcPlot, m_nClientWidth / 2 - (conv * it->x) - 3,
+				m_nClientHeight / 2 + (conv * it->y) - 3,
+				m_nClientWidth / 2 - (conv * it->x) + 3,
+				m_nClientHeight / 2 + (conv * it->y) + 3);
+			y++;
 		
 		}
 
@@ -206,36 +199,58 @@ void OffsetTracker::DrawOffset() {
 
 void OffsetTracker::DrawValues() {
 
-	CString szText;
+	#define MARGIN_TOP 19
+	#define MARGIN_BOTTOM 24
 	
+	CString szText;
+
 	m_dcPlot.SetBkColor(black);
+	m_dcPlot.FillRect(CRect(0, 0, 400, 45), &m_brushBack);
+	m_dcPlot.FillRect(CRect(0, 437, 400, 480), &m_brushBack);
 
 	if (m_dcPlot.GetSafeHdc() != NULL)
+
 	{
-		 
-		SetTextColor(m_dcPlot, darkblue);
 
-		// offset
-		szText.Format(L"%.2f", -1 * m_dOffset.x);
-		m_dcPlot.TextOutW(m_rectClient.Width() / 2 - 60, m_rectClient.Height() / 11, szText);
-		szText.Format(L"%.2f", -1 * m_dOffset.y);
-		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 50, m_rectClient.Height() / 11, szText);
-
-		// current position
+		m_dcPlot.SelectObject(&smallValueFont);
+				 
+		// current PUPIL position
 		SetTextColor(m_dcPlot, lightblue);
-		szText.Format(TEXT("%.1f"), m_dCurrentPosition.x);
-		m_dcPlot.TextOutW(30, m_rectClient.Height() - 20, szText);
-		szText.Format(TEXT("%.1f"), m_dCurrentPosition.y);
+		szText.Format(TEXT("%.1f"), m_dCurrentPupilPosition.x);
+		m_dcPlot.TextOutW(m_rectClient.left + 81, m_rectClient.top + MARGIN_TOP, szText);
+		szText.Format(TEXT("%.1f"), m_dCurrentPupilPosition.y);
+		m_dcPlot.TextOutW(m_rectClient.left + 128, m_rectClient.top + MARGIN_TOP, szText);
 
-		m_dcPlot.TextOutW(85, m_rectClient.Height() - 20, szText);
-
-		// locked position
+		// locked PUPIL position
 		SetTextColor(m_dcPlot, lightgreen);
-		szText.Format(TEXT("%.1f"), m_dLockedPosition.x);
-		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 75, m_rectClient.Height() - 20, szText);
-		szText.Format(TEXT("%.1f"), m_dLockedPosition.y);
-		
-		m_dcPlot.TextOutW(m_rectClient.Width() / 2 + 130, m_rectClient.Height() - 20, szText);
+		szText.Format(TEXT("%.1f "), m_dLockedPupilPosition.x);
+		m_dcPlot.TextOutW(m_rectClient.left + 192, m_rectClient.top + MARGIN_TOP, szText);
+		szText.Format(TEXT("%.1f "), m_dLockedPupilPosition.y);
+		m_dcPlot.TextOutW(m_rectClient.left + 239, m_rectClient.top + MARGIN_TOP, szText);
+
+		// pupil OFFSET
+		m_dcPlot.SelectObject(&bigValueFont);
+		SetTextColor(m_dcPlot, darkazure);
+		szText.Format(L"%5.1f", -1 * m_dPupilOffset.x);
+		m_dcPlot.TextOutW(m_rectClient.left + 295, m_rectClient.top + MARGIN_TOP - 3, szText);
+		szText.Format(L"%5.1f", -1 * m_dPupilOffset.y);
+		m_dcPlot.TextOutW(m_rectClient.left + 347, m_rectClient.top + MARGIN_TOP - 3, szText);
+
+		// current PURKINJE position
+		m_dcPlot.SelectObject(&smallValueFont);
+		SetTextColor(m_dcPlot, lightblue);
+		szText.Format(TEXT("%.1f"), m_dCurrentPurkinjePosition.x);
+		m_dcPlot.TextOutW(m_rectClient.left + 144, m_rectClient.bottom - MARGIN_BOTTOM, szText);
+		szText.Format(TEXT("%.1f"), m_dCurrentPurkinjePosition.y);
+		m_dcPlot.TextOutW(m_rectClient.left + 200, m_rectClient.bottom - MARGIN_BOTTOM, szText);
+
+		// TCO
+		m_dcPlot.SelectObject(&bigValueFont);
+		SetTextColor(m_dcPlot, darkmagenta);
+		szText.Format(L"%5.1f", tco.x);
+		m_dcPlot.TextOutW(m_rectClient.left + 267, m_rectClient.bottom - MARGIN_BOTTOM - 3, szText);
+		szText.Format(L"%5.1f", tco.y);
+		m_dcPlot.TextOutW(m_rectClient.left + 332, m_rectClient.bottom - MARGIN_BOTTOM - 3, szText);
 
 	}
 
@@ -274,6 +289,7 @@ void OffsetTracker::OnSize(UINT nType, int cx, int cy)
 	m_dcPlot.DeleteDC();
 	m_bitmapPlot.DeleteObject();
 	m_bitmapGrid.DeleteObject();
+
 	InvalidateCtrl();
 
 }

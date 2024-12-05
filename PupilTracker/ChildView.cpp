@@ -56,20 +56,6 @@ BOOL CChildView::Create(LPCTSTR lpszClassName, LPCTSTR lpszWindowName, DWORD dwS
 
 }
 
-BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
-{
-
-	if (!__super::PreCreateWindow(cs))
-		return FALSE;
-
-	cs.style &= ~WS_BORDER;
-	cs.lpszClass = AfxRegisterWndClass(CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS,
-		::LoadCursor(NULL, IDC_ARROW), reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1), NULL);
-
-	return TRUE;
-
-}
-
 void CChildView::showBuffer(const DShowLib::Grabber::tMemBufferPtr& pBuffer)
 {
 
@@ -90,8 +76,7 @@ void CChildView::OnWindowPosChanging(WINDOWPOS* lpwndpos)
 
 	wndOffset.GetClientRect(&offsetRect);
 	wndVideo.GetClientRect(&vidRect);
-
-	
+		
 	//wndOffset.MoveWindow(CRect(vidRect.Width(), lpwndpos->y + 2, vidRect.Width() + offsetRect.Width(), vidRect.Height()), TRUE);
 
 }
@@ -131,7 +116,6 @@ void CChildView::OnPaint()
 
 	}
 
-
 }
 
 void CChildView::drawOffline() {
@@ -167,5 +151,9 @@ void CChildView::drawOffline() {
 BOOL CChildView::OnEraseBkgnd(CDC* pDC)
 {
 	// TODO: Add your message handler code here and/or call default
-	return true;
+	CRect rect;
+	GetClientRect(&rect);
+	CBrush blackBrush{ RGB(160,160,160) };
+	pDC->FillRect(rect, &blackBrush);
+	return CWnd::OnEraseBkgnd(pDC);
 }

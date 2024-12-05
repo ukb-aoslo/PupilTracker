@@ -13,7 +13,7 @@ Tracker::Tracker() {
 	bufchange = false;
 	beam = false;
 	purkinje_assist = false;
-	purkinje_dist = 0.2 * 1 / MM_PER_PIXEL;
+
 
 }
 
@@ -40,7 +40,6 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 		median_pupil.current_center.y = pupil.current_center.y;
 	}
 
-
 	if (freeze) {
 		offset.x = (pupil.frozen_center.x - pupil.current_center.x);
 		offset.y = (pupil.frozen_center.y - pupil.current_center.y);
@@ -48,10 +47,11 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
 	else offset = (coords<double, double> {0, 0});
 
-	postOffset();
+	postPupil();
+	postPurkinje();
 
 	// save that offset too
-	pupil.saveOffset(offset);
+	pupil.saveOffset(offset, *mm_per_pix);
 
 	postDiameter();
 
@@ -60,15 +60,25 @@ void Tracker::DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer) {
 
 }
 
-void Tracker::postOffset() {
 
-	// Send pupil offset to OffsetTracker Window for painting
-	m_pParent->PostMessage(MESSAGE_OFFSET_PROCESSED, (WPARAM)&pupil.current_center, (LPARAM)&pupil.frozen_center);
+
+void Tracker::postPupil() {
+
+	// Send pupil data to OffsetTracker Window for painting
+	m_pParent->PostMessage(MESSAGE_PUPIL_PROCESSED, (WPARAM)&pupil.current_center, (LPARAM)&pupil.frozen_center);
+
+}
+
+void Tracker::postPurkinje() {
+
+	// Send purkinje data to OffsetTracker Window for painting
+	m_pParent->PostMessage(MESSAGE_PURKINJE_PROCESSED, (WPARAM)&purkinje.current_center, (LPARAM)&purkinje.frozen_center);
 
 }
 
 void Tracker::postDiameter() {
-
+	
+	// Send pupil diameter data to OffsetTracker Window for painting
 	m_pParent->PostMessage(MESSAGE_PUPILDIA_PROCESSED, (WPARAM)&pupil.current_diameter, 0);
 
 }
@@ -186,7 +196,7 @@ void Tracker::overlayCallback(Grabber& caller, smart_ptr<OverlayBitmap> pBitmap,
 		// draw purkinje assist
 
 		if (purkinje_assist) {
-
+			
 			SIZE sz{ purkinje.diameter.back(), purkinje.diameter.back() };
 			for (size_t i = 0; i < 4; i++)
 				pBitmap->drawFrameEllipse(RGB(255, 0, 0), CRect(purkinjePoints[i], sz));

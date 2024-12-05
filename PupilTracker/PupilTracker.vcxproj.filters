@@ -43,6 +43,9 @@
     <ClCompile Include="PupilTrackerMainFrame.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="CustomToolbar.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\NetCom\SockClient.h">
@@ -88,6 +91,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="PupilTrackerMainFrame.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomToolbar.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

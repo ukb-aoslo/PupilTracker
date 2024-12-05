@@ -33,7 +33,8 @@ protected:
 private:
 	void DoFurtherProcessing(smart_ptr<MemBuffer> pBuffer);
 	void overlayCallback(Grabber& param, smart_ptr<OverlayBitmap> pBitmap, const tsMediaSampleDesc&);
-	void postOffset();
+	void postPupil();
+	void postPurkinje();
 	void postDiameter();
 
 };

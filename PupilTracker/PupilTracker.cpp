@@ -29,13 +29,12 @@ CPupilTrackerApp theApp;
 
 BOOL CPupilTrackerApp::InitInstance()
 {
-	// INDISPENSABLE DEBUG CODE FOR CLEARING MEMORY LEAKS
+//	 INDISPENSABLE DEBUG CODE FOR CLEARING MEMORY LEAKS
 //#ifdef _DEBUG
 //	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 //	_CrtSetBreakAlloc(452);
 //#endif
 //
-
 	// Init IC Imaging Control 
 
 	if( !DShowLib::InitLibrary() )
@@ -68,7 +67,7 @@ BOOL CPupilTrackerApp::InitInstance()
 	CPupilTrackerMainFrame* pFrame = new CPupilTrackerMainFrame();
 	m_pMainWnd = pFrame;
 
-	DWORD dwStyle = (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_CLIPCHILDREN);
+	DWORD dwStyle =  (WS_CAPTION | WS_SYSMENU);
 
 	pFrame->Create(NULL,
 		NULL,
@@ -77,8 +76,6 @@ BOOL CPupilTrackerApp::InitInstance()
 		NULL,
 		NULL
 	);
-
-
 	pFrame->ShowWindow(SW_SHOW);
 	pFrame->UpdateWindow();
 

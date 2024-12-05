@@ -26,10 +26,12 @@ CListener::CListener()
 	record = false;
 	
 	m_pParent = NULL;
+	m_pBkgndBuff = NULL;
 
 	UINT n;
 	coords<double, double>* ppData;
 	double* diameter;
+	bool* bw;
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"beam_coords", (LPBYTE*)&ppData, &n)) {
 		AOSLO_beam.current_center = (coords<double, double>)*ppData;
@@ -37,8 +39,13 @@ CListener::CListener()
 	}
 
 	if (AfxGetApp()->GetProfileBinary(L"Settings", L"beam_diameter", (LPBYTE*)&diameter, &n)) {
-		AOSLO_beam.current_diameter = ((double)*diameter);
+		AOSLO_beam.current_diameter = (double)*diameter;
 		delete diameter;
+	}
+
+	if (AfxGetApp()->GetProfileBinary(L"Settings", L"black_or_white", (LPBYTE*)&bw, &n)) {
+		black = (bool)*bw;
+		delete bw;
 	}
 
 
@@ -69,6 +76,7 @@ void CListener::setParent(CWnd *pParent)
 	purkinje_settings = &m_pParent->params.purkinje;
 	opts = &m_pParent->params.opts;
 	buf_size = &m_pParent->params.buf_size;
+	mm_per_pix = &m_pParent->params.mm_per_pix;
 
 }
 
@@ -130,13 +138,37 @@ void CListener::frameReady( Grabber& param, smart_ptr<MemBuffer> pBuffer, DWORD 
 	if (snap) 
 		makeSnapshot(pBuffer, FrameNumber);
 	
-	// go find that pupil / purkinje
+	// go find pupil / purkinje
 	DoImageProcessing(pBuffer);
 
 	pBuffer->unlock();
 
 }
 
+void CListener::SubtractBackground(BYTE* pImageData)
+{
+	if (m_pBkgndBuff == NULL)
+		return; 
+
+	long  i;
+	BYTE* buf_f_ptr;
+	BYTE* buf_b_ptr;
+
+	// Read the current spots on the screen into buf_f
+	buf_f_ptr = pImageData;
+	buf_b_ptr = m_pBkgndBuff;
+
+	for (i = 0; i < Height * Width; i++)
+	{
+		if (*(buf_f_ptr) >= *(buf_b_ptr))
+			*(buf_f_ptr) = *(buf_f_ptr)-*(buf_b_ptr);
+		else
+			*(buf_f_ptr) = 0;
+
+		buf_f_ptr++;
+		buf_b_ptr++;
+	}
+}
 
 //////////////////////////////////////////////////////////////////////////
 /*! The overlayCallback() method draws the number of the current frame. The
@@ -157,8 +189,11 @@ void CListener::getPurkinje(BYTE* pImageData, Settings* setting) {
 	purkinje.pxdim = pow(dia, 2);
 	ZeroMemory(purkinje.pixels, sizeof(coords<int, int>) * purkinje.pxdim);
 
-	if ((x0 < 1) | (y0 < 1))
+	if ((x0 < 1) | (y0 < 1)) {
+		purkinje.current_center = { 0, 0 };
+		purkinje.current_diameter = 0;
 		return;
+	}
 
 	int z = 0;
 
@@ -212,6 +247,17 @@ void CListener::frank(BYTE* pImageData, Settings *setting) {
 	int i, ii;
 
 	ZeroMemory(pupil.pixels, sizeof(coords<int, int>) * (Width * Height));
+
+
+	// preparation: black or white pupil tracking?
+
+	if (black)
+		// invert image
+		for (int i = 0; i < Height * Width; i++)
+		{
+			pImageData[i] = 255 - pImageData[i];
+		}
+
 
 	/*****************************************************************************/
 	/*    Core pupil/purkinje detection happens here							 */
@@ -367,6 +413,13 @@ void CListener::init(int cx, int cy) {
 	Width = cx;
 	Height = cy;
 
+	if (m_pBkgndBuff == NULL)
+	{
+		m_pBkgndBuff = new BYTE[Height * Width];
+
+		ZeroMemory(m_pBkgndBuff, Height * Width * sizeof(BYTE));
+	}
+
 	if (x != NULL)
 		free (x);
 	if (y != NULL)
@@ -397,17 +450,13 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 
 	BYTE* pImageData = pBuffer->getPtr();
 
+
 	if (pInf->biPlanes != 1) {
 		AfxMessageBox(_T("Wrong color format!\nNeed 8-bit mono!\n(Select Y800 in camera settings)"), MB_ICONERROR);
 		PostQuitMessage(0);
 	}
 
-	// make negative image for black pupil tracker
-	//for (int i = 0; i < iImageSize; i++)
-	//{
-	//	//pImageData[i] = 255 - pImageData[i];
-	//	if (pImageData[i] > 133) pImageData[i] = 255;
-	//}
+	SubtractBackground(pImageData);
 
 	// calculate pupil center and diameter
 	frank(pImageData, pupil_settings);
@@ -423,7 +472,7 @@ void CListener::DoImageProcessing(smart_ptr<MemBuffer> pBuffer)
 	
 	// store pupil calculation results 
 	pupil.center.push_back(pupil.current_center);
-	pupil.diameter.push_back(pupil.current_diameter * MM_PER_PIXEL);
+	pupil.diameter.push_back(pupil.current_diameter * *mm_per_pix);
 
 	// store purkinje calculation results
 	purkinje.center.push_back(purkinje.current_center);
@@ -469,10 +518,16 @@ void CListener::freezePupil() {
 		pupil.frozen_center.y = pupil.current_center.y;
 		pupil.frozen_diameter = pupil.current_diameter;
 
+		purkinje.frozen_center.x = purkinje.current_center.x;
+		purkinje.frozen_center.y = purkinje.current_center.y;
+		purkinje.frozen_diameter = purkinje.current_diameter;
+
 	}
 	else {
+
 		pupil.frozen_center.x = 0;
 		pupil.frozen_center.y = 0;
+
 	}
 
 }

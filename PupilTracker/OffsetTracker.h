@@ -3,6 +3,7 @@
 
 using namespace std;
 
+
 class OffsetTracker : public CWnd
 {
 
@@ -11,22 +12,34 @@ public:
 	OffsetTracker();
 	virtual ~OffsetTracker();
 
-	void AddPositions(coords<double, double> current, coords<double, double> locked);
-	void DrawOffset();
+	void AddPupilPositions(coords<double, double> current, coords<double, double> locked, double res);
+	void AddPurkinjePositions(coords<double, double> current, coords<double, double> locked, double res);
+	void PlotOffset();
 	void DrawValues();
-	void DrawTitle();
 	void InvalidateCtrl();
 	void eraseTrail();
+
+	struct TCO {
+		double mx, my, xoff, yoff;
+		double x, y;
+	} tco = { 0, 0, 0, 0, 0, 0 };
+
 
 private:
 
 	deque<coords<double, double>> trail;
-	coords<double, double> m_dCurrentPosition;
-	coords<double, double> m_dLockedPosition;
-	coords<double, double> m_dOffset;
 
-	double		magnif;		// magnification factor
-	double		conv;		// mapping factor
+	coords<double, double> m_dCurrentPupilPosition;
+	coords<double, double> m_dLockedPupilPosition;
+	coords<double, double> m_dCurrentPurkinjePosition;
+	coords<double, double> m_dLockedPurkinjePosition;
+	coords<double, double> m_dPupilOffset;
+	coords<double, double> m_dPurkinjeOffset;
+
+	CFont		bigValueFont;
+	CFont		smallValueFont;
+
+	double		conv;
 
 	HPEN		hPenGreen, hPenGrey, hPenWht, hPenClay;
 
@@ -50,9 +63,9 @@ private:
 
 protected:
 
+	DECLARE_MESSAGE_MAP();
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT nType, int cx, int cy);
-	DECLARE_MESSAGE_MAP()
 
 };
 
