@@ -65,6 +65,8 @@ CListener::~CListener()
 	if (y != NULL)
 		free(y);
 
+	if (m_pBkgndBuff != NULL)
+		delete[] m_pBkgndBuff;
 }
 
 void CListener::setParent(CWnd *pParent)

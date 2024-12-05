@@ -382,27 +382,24 @@ void CPupilTrackerMainFrame::OnSaveBackgound()
 		return;
 	}
 
+
+	// TODO: To fix bug, make BG all zeros and force camera to get the next frame!
+
 	FrameTypeInfo info;
 	Sink->getOutputFrameType(info);
-
+	smart_ptr<MemBuffer> ptr = Sink->getLastAcqMemBuffer();
 	// Create buffer
-	BYTE* pbImgData = new BYTE[info.buffersize];
-	// Create a FrameQueueBuffer that objects that wraps the memory of our user buffer
-	tFrameQueueBufferPtr ptr;
-	Error err = createFrameQueueBuffer(ptr, info, pbImgData, info.buffersize, NULL);
-	if (err.isError()) {
-		std::cerr << "Failed to create buffer due to " << err.toString() << "\n";
-		return;
-	}
+	BYTE* pbImgData = ptr->getPtr();
 
 	// Copy background image to the buffer in GrabberListener
 	memcpy(pupilTracking.m_pBkgndBuff, pbImgData, info.buffersize * sizeof(BYTE));
 
+	// save to file
 	wchar_t buf[MAX_PATH] = {};
 	if (GetFileAttributes(L"background") == INVALID_FILE_ATTRIBUTES)
 		CreateDirectory(L"background", NULL);
 	swprintf_s(buf, L"background\\background.bmp");
-	err = DShowLib::saveToFileBMP(*(ptr), buf);
+	Error err = DShowLib::saveToFileBMP(*(ptr), buf);
 	if (err.isError()) {
 		AfxMessageBox((CString)(err.toString().c_str()));
 		std::cerr << "Failed to save buffer due to " << err.toString() << "\n";
